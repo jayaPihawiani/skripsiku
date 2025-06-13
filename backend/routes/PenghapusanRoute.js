@@ -23,12 +23,7 @@ penghapusanRoute.delete(
 //   isAdmin,
 //   penghapusan.
 // );
-penghapusanRoute.get(
-  "/:id",
-  verifyUser,
-  isAdmin,
-  penghapusan.getPenghapusanById
-);
-penghapusanRoute.get("/", verifyUser, isAdmin, penghapusan.getPenghapusan);
+penghapusanRoute.get("/:id", verifyUser, penghapusan.getPenghapusanById);
+penghapusanRoute.get("/", verifyUser, penghapusan.getPenghapusan);
 
 export default penghapusanRoute;

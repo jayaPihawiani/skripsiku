@@ -1,20 +1,26 @@
 import React from "react";
 import {
-  BsArrowsMove,
-  BsCalendarXFill,
+  BsArrowsFullscreen,
+  BsBoxArrowInDown,
+  BsBoxArrowRight,
+  BsBoxArrowUp,
+  BsBoxSeamFill,
   BsCaretDownFill,
-  BsDoorOpenFill,
-  BsEnvelopePaperFill,
-  BsFileEarmarkPersonFill,
-  BsGeoAltFill,
+  BsClipboardCheckFill,
+  BsExclamationTriangleFill,
+  BsGraphUpArrow,
   BsGrid1X2Fill,
-  BsInboxesFill,
+  BsGridFill,
+  BsMapFill,
+  BsPersonBadgeFill,
   BsTagsFill,
+  BsTrash3Fill,
+  BsTruck,
 } from "react-icons/bs";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import "../css/sidebar.css";
-import { logoutUser, authStateReset } from "../features/authSlice";
+import { authStateReset, logoutUser } from "../features/authSlice";
 
 const SideBar = ({ children }) => {
   const dispatch = useDispatch();
@@ -43,134 +49,157 @@ const SideBar = ({ children }) => {
               </span>
               <span className="side-desc">Beranda</span>
             </Link>
+            {state.data && state.data.role === "user" && (
+              <Link to="/barang" className="nav-link">
+                <span className="icons">
+                  <BsBoxSeamFill />
+                </span>
+                <span className="side-desc">Data Barang</span>
+              </Link>
+            )}
             {/* dropdown menu */}
-            <Link
-              className="nav-link"
-              data-bs-toggle="collapse"
-              data-bs-target="#submenu"
-              aria-expanded="true"
-              aria-controls="submenu"
-            >
-              <span className="icon-down">
-                <BsCaretDownFill />
-              </span>
-              <span className="side-desc">Master Barang</span>
-            </Link>
+            {state.data && state.data.role === "admin" && (
+              <Link
+                className="nav-link d-flex justify-content-between"
+                data-bs-toggle="collapse"
+                data-bs-target="#submenu"
+                aria-expanded="true"
+                aria-controls="submenu"
+              >
+                <span className="side-desc">MASTER BARANG</span>
+                <span className="icon-down">
+                  <BsCaretDownFill />
+                </span>
+              </Link>
+            )}
             {/* dropdown menu */}
             {/* menu */}
             <div className="collapse side-bar-style" id="submenu">
               <Link to="/barang" className="nav-link">
                 <span className="icons">
-                  <BsInboxesFill />
+                  <BsBoxSeamFill />
                 </span>
                 <span className="side-desc">Data Barang</span>
               </Link>
 
               <Link to="/merk" className="nav-link">
                 <span className="icons">
-                  <BsCalendarXFill />
+                  <BsTagsFill />
                 </span>
                 <span className="side-desc">Data Merk</span>
               </Link>
 
               <Link to="/satuan" className="nav-link">
                 <span className="icons">
-                  <BsArrowsMove />
+                  <BsArrowsFullscreen />
                 </span>
                 <span className="side-desc">Data Satuan</span>
               </Link>
               {/* kategori */}
               <Link to="/kategori" className="nav-link">
                 <span className="icons">
-                  <BsArrowsMove />
+                  <BsGridFill />
                 </span>
                 <span className="side-desc">Data Kategori</span>
               </Link>
             </div>
             {/* menu */}
-            {/* permintaan */}
-            <Link to="/permintaan" className="nav-link">
-              <span className="icons">
-                <BsEnvelopePaperFill />
-              </span>
-              <span className="side-desc">Masa Ekonomis </span>
-            </Link>
             {/* dropdown menu */}
             <Link
-              className="nav-link"
+              className="nav-link d-flex justify-content-between"
               data-bs-toggle="collapse"
               data-bs-target="#menu-transaksi"
               aria-expanded="true"
               aria-controls="menu-transaksi"
             >
+              <span className="side-desc">TRANSAKSI</span>
               <span className="icon-down">
                 <BsCaretDownFill />
               </span>
-              <span className="side-desc">Transaksi</span>
             </Link>
+
             {/* dropdown menu */}
             {/* menu */}
             <div className="collapse side-bar-style" id="menu-transaksi">
               <Link to="/stock" className="nav-link">
                 <span className="icons">
-                  <BsInboxesFill />
+                  <BsBoxArrowInDown />
                 </span>
                 <span className="side-desc">Barang Masuk</span>
               </Link>
 
               <Link to="/penghapusan" className="nav-link">
                 <span className="icons">
-                  <BsCalendarXFill />
+                  <BsBoxArrowUp />
                 </span>
                 <span className="side-desc">Barang Keluar</span>
               </Link>
 
               <Link to="/pindah" className="nav-link">
                 <span className="icons">
-                  <BsArrowsMove />
+                  <BsExclamationTriangleFill />
                 </span>
                 <span className="side-desc">Kerusakan</span>
               </Link>
-              <Link to="/pindah" className="nav-link">
-                <span className="icons">
-                  <BsArrowsMove />
-                </span>
-                <span className="side-desc">Penghapusan</span>
-              </Link>
+              {state.data && state.data.role === "admin" && (
+                <Link to="/pindah" className="nav-link">
+                  <span className="icons">
+                    <BsTrash3Fill />
+                  </span>
+                  <span className="side-desc">Penghapusan</span>
+                </Link>
+              )}
             </div>
             {/* menu */}
-            {/* kategori */}
-            <Link to="/kategory" className="nav-link">
-              <span className="icons">
-                <BsTagsFill />
-              </span>
-              <span className="side-desc">Distribusi Barang</span>
-            </Link>
+            {/* permintaan */}
+            {state.data && state.data.role === "admin" && (
+              <>
+                {" "}
+                <Link to="/permintaan" className="nav-link">
+                  <span className="icons">
+                    <BsGraphUpArrow />
+                  </span>
+                  <span className="side-desc">Masa Ekonomis </span>
+                </Link>
+                {/* kategori */}
+                <Link to="/kategory" className="nav-link">
+                  <span className="icons">
+                    <BsTruck />
+                  </span>
+                  <span className="side-desc">Distribusi Barang</span>
+                </Link>
+              </>
+            )}
+
             {/* lokasi */}
-            <Link to="/lokasi" className="nav-link">
+            <Link to="/permintaan" className="nav-link">
               <span className="icons">
-                <BsGeoAltFill />
+                <BsClipboardCheckFill />
               </span>
               <span className="side-desc">Permintaan</span>
             </Link>
-            {/* user */}
-            <Link to="/user" className="nav-link">
-              <span className="icons">
-                <BsFileEarmarkPersonFill />
-              </span>
-              <span className="side-desc">User</span>
-            </Link>
-            {/* lokasi */}
-            <Link to="/user" className="nav-link">
-              <span className="icons">
-                <BsFileEarmarkPersonFill />
-              </span>
-              <span className="side-desc">Lokasi</span>
-            </Link>
+            {state.data && state.data.role === "admin" && (
+              <>
+                {/* user */}
+                <Link to="/user" className="nav-link">
+                  <span className="icons">
+                    <BsPersonBadgeFill />
+                  </span>
+                  <span className="side-desc">User</span>
+                </Link>
+                {/* lokasi */}
+                <Link to="/lokasi" className="nav-link">
+                  <span className="icons">
+                    <BsMapFill />
+                  </span>
+                  <span className="side-desc">Lokasi</span>
+                </Link>
+              </>
+            )}
             {/* logout */}
             <button to="/user" className="nav-link" onClick={handleLogout}>
               <span className="icons">
-                <BsDoorOpenFill />
+                <BsBoxArrowRight />
               </span>
               <span className="side-desc">Log out</span>
             </button>
@@ -181,14 +210,5 @@ const SideBar = ({ children }) => {
     </React.Fragment>
   );
 };
-
-// const SideLink = ({ linkTo, icon, classname }) => {
-//   return (
-//     <Link to={linkTo} className={classname}>
-//       <span className="icons">{icon}</span>
-//       <span className="side-desc">Dashboard</span>
-//     </Link>
-//   );
-// };
 
 export default SideBar;

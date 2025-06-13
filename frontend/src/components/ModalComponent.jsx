@@ -10,10 +10,11 @@ const ModalComponent = ({
   show,
   modalTitle,
   handleSubmit,
+  classStyle,
 }) => {
   return (
     <>
-      <Button variant="primary" onClick={handleShow}>
+      <Button variant="primary" onClick={handleShow} className={classStyle}>
         {btntTitle}
       </Button>
 

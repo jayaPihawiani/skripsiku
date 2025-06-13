@@ -3,24 +3,24 @@ import InputComponents from "./InputComponents";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
-const MerkBarangEdit = () => {
+const SatuanBarangEdit = () => {
   // variabel
-  const merkId = useParams().id;
+  const satuanId = useParams().id;
   const url = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  const [dataMerk, setDataMerk] = useState({});
-  const [inputDataMerk, setInputDataMerk] = useState({
-    name: "",
+  const [dataSatuan, setDataSatuan] = useState({});
+  const [inputdataSatuan, setInputdataSatuan] = useState({
+    name: dataSatuan.name,
     desc: "",
   });
   // function
   useEffect(() => {
     const getMerkById = async () => {
       try {
-        const response = await axios.get(`${url}/merk/${merkId}`);
+        const response = await axios.get(`${url}/satuan/${satuanId}`);
         if (response.status === 200) {
-          setDataMerk(response.data);
+          setDataSatuan(response.data);
         }
       } catch (error) {
         if (error.response) {
@@ -36,24 +36,28 @@ const MerkBarangEdit = () => {
   }, []);
 
   useEffect(() => {
-    if (dataMerk && dataMerk.name) {
-      setInputDataMerk({
-        name: dataMerk.name,
-        desc: dataMerk.desc,
+    if (dataSatuan && dataSatuan.name) {
+      setInputdataSatuan({
+        name: dataSatuan.name,
+        desc: dataSatuan.desc,
       });
     }
-  }, [dataMerk]);
+  }, [dataSatuan]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!inputdataSatuan.name || !inputdataSatuan.desc) {
+      alert("Data ada yang kosong! Harap isi semua data!");
+      return;
+    }
     try {
       const response = await axios.patch(
-        `${url}/merk/update/${merkId}`,
-        inputDataMerk
+        `${url}/satuan/update/${satuanId}`,
+        inputdataSatuan
       );
       if (response.status === 200) {
-        alert("Berhasil update data merk.");
-        navigate("/merk");
+        alert("Berhasil update data satuan.");
+        navigate("/satuan");
       }
     } catch (error) {
       if (error.response) {
@@ -68,22 +72,22 @@ const MerkBarangEdit = () => {
   return (
     <div className="card me-4">
       <div className="card-body">
-        <h2>Ubah Data Merk</h2>
+        <h2>Ubah Data Satuan</h2>
         <form onSubmit={handleSubmit} className="d-flex flex-column">
           <InputComponents
-            placeHolder=" Nama"
+            placeHolder="Nama"
             classStyle="w-100 p-2"
-            val={inputDataMerk.name ?? ""}
+            val={inputdataSatuan.name ?? ""}
             change={(e) =>
-              setInputDataMerk({ ...inputDataMerk, name: e.target.value })
+              setInputdataSatuan({ ...inputdataSatuan, name: e.target.value })
             }
           />
           <InputComponents
             placeHolder="Keterangan"
             classStyle="w-100 p-2 mt-2"
-            val={inputDataMerk.desc ?? ""}
+            val={inputdataSatuan.desc ?? ""}
             change={(e) =>
-              setInputDataMerk({ ...inputDataMerk, desc: e.target.value })
+              setInputdataSatuan({ ...inputdataSatuan, desc: e.target.value })
             }
           />
           <button className="btn btn-primary ms-auto mt-2" type="submit">
@@ -95,4 +99,4 @@ const MerkBarangEdit = () => {
   );
 };
 
-export default MerkBarangEdit;
+export default SatuanBarangEdit;

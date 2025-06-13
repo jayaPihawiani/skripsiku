@@ -5,67 +5,65 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
-import { getMerkBarang } from "../features/detailBarang";
+import { getDataLokasi } from "../features/detailBarang";
 
-const MerkBarang = () => {
+const LokasiPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const detailBarang = useSelector((state) => state.detail_barang);
-  const [merkBarang, setMerkBarang] = useState([]);
+  const detailLokasi = useSelector((state) => state.detail_barang);
+  const [dataLokasi, setDataLokasi] = useState([]);
   const [show, setShow] = useState(false);
-  const [dataMerk, setDataMerk] = useState({ name: "", desc: "" });
+  const [inputLokasi, setInputLokasi] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
+
+  const handleShow = () => setShow(true);
 
   const handleClose = () => {
     setShow(false);
-    setDataMerk({ name: "", desc: "" });
+    setInputLokasi({ name: "", desc: "" });
   };
-  const handleShow = () => setShow(true);
 
-  // USE EFFECT
+  // function
   useEffect(() => {
-    dispatch(getMerkBarang(inputQuery));
-  }, [dispatch, inputQuery.limit, inputQuery.page]);
+    dispatch(getDataLokasi(inputQuery));
+  }, [dispatch, inputQuery.page, inputQuery.limit]);
 
   useEffect(() => {
-    if (detailBarang.merk && detailBarang.isSuccess) {
-      setMerkBarang(detailBarang.merk.result);
+    if (detailLokasi.lokasi && detailLokasi.isSuccess) {
+      setDataLokasi(detailLokasi.lokasi.result);
     }
-  }, [detailBarang.merk, detailBarang.isSuccess]);
+  }, [detailLokasi.satuan, detailLokasi.isSuccess]);
 
-  // USE EFFECT
-  const deleteDataMerk = async (id) => {
+  const deleteDataLokasi = async (id) => {
     try {
-      const response = await axios.delete(`${url}/merk/del/${id}`);
+      const response = await axios.delete(`${url}/lokasi/del/${id}`);
       if (response.status === 200) {
-        setInputQuery({
-          ...inputQuery,
-          page: 0,
-        });
-
-        dispatch(getMerkBarang(inputQuery));
-        alert("Berhasil menghapus data.");
+        setInputQuery({ ...inputQuery, page: 0 });
+        dispatch(getDataLokasi(inputQuery));
+        alert("Berhasil menghapus data satuan.");
       }
     } catch (error) {
       console.error(error.response.data.msg);
     }
   };
 
-  // TAMBAH DATA MERK
-  const createDataMerk = async () => {
-    if (!dataMerk.name || !dataMerk.desc) {
+  const createDataLokasi = async () => {
+    if (!inputLokasi.name || !inputLokasi.desc) {
       alert("Data ada yang kosong! Harap isi semua data!");
       return;
     }
     try {
-      const response = await axios.post(`${url}/merk/create`, dataMerk);
+      const response = await axios.post(`${url}/lokasi/create`, inputLokasi);
       if (response.status === 201) {
-        setInputQuery({ ...inputQuery, page: 0 });
-        dispatch(getMerkBarang(inputQuery));
+        setInputQuery({
+          ...inputQuery,
+          page: 0,
+        });
+        dispatch(getDataLokasi(inputQuery));
         handleClose();
-        alert("Berhasil menambah data merk.");
+        alert("Berhasil menambah data lokasi.");
       }
     } catch (error) {
       console.error(error.response.data);
@@ -80,28 +78,32 @@ const MerkBarang = () => {
 
   return (
     <>
-      <h3>DATA MERK BARANG</h3>
+      <h3>DATA SATUAN LOKASI</h3>
       <ModalComponent
-        classStyle={"mt-4"}
+        classStyle="mt-4"
         btntTitle="Tambah"
-        modalTitle="Tambah Data Merk"
+        modalTitle="Tambah Data Lokasi"
         show={show}
         handleClose={handleClose}
         handleShow={handleShow}
-        handleSubmit={createDataMerk}
+        handleSubmit={createDataLokasi}
         inputField={
           <>
             <InputComponents
               classStyle="w-100 p-2"
-              placeHolder="Nama Merk"
-              change={(e) => setDataMerk({ ...dataMerk, name: e.target.value })}
-              val={dataMerk.name}
+              placeHolder="Nama Lokasi"
+              change={(e) =>
+                setInputLokasi({ ...inputLokasi, name: e.target.value })
+              }
+              val={inputLokasi.name}
             />
             <InputComponents
               classStyle="w-100 p-2 mt-2"
               placeHolder="Keterangan"
-              change={(e) => setDataMerk({ ...dataMerk, desc: e.target.value })}
-              val={dataMerk.desc}
+              change={(e) =>
+                setInputLokasi({ ...inputLokasi, desc: e.target.value })
+              }
+              val={inputLokasi.desc}
             />
           </>
         }
@@ -110,7 +112,12 @@ const MerkBarang = () => {
         <div className="mt-3 me-3 d-flex">
           <select
             className="py-2 px-1 ms-auto"
-            onChange={(e) => setInputQuery({ page: 0, limit: e.target.value })}
+            onChange={(e) => {
+              setInputQuery({
+                page: 0,
+                limit: e.target.value,
+              });
+            }}
           >
             <option value={10}>10</option>
             <option value={50}>50</option>
@@ -123,17 +130,18 @@ const MerkBarang = () => {
               <thead className="table-dark">
                 <tr>
                   <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Merk</td>
+                  <td>Nama Lokasi</td>
                   <td>Keterangan</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
               <tbody>
-                {merkBarang &&
-                  merkBarang.map((item, index) => {
+                {dataLokasi &&
+                  dataLokasi.map((item, index) => {
                     return (
                       <tr key={item.id}>
                         <td>
+                          {" "}
                           {index + 1 + inputQuery.page * inputQuery.limit}
                         </td>
                         <td>{item.name}</td>
@@ -147,7 +155,7 @@ const MerkBarang = () => {
                           </button>
                           <button
                             className="btn btn-danger ms-1"
-                            onClick={() => deleteDataMerk(item.id)}
+                            onClick={() => deleteDataLokasi(item.id)}
                           >
                             Hapus
                           </button>
@@ -157,23 +165,23 @@ const MerkBarang = () => {
                   })}
               </tbody>
             </table>
-            {detailBarang.merk && (
+            {detailLokasi.lokasi && (
               <p className="text-end">
-                Total row: <strong>{detailBarang.merk.count}</strong> page{" "}
+                Total row: <strong>{detailLokasi.lokasi.count}</strong> page{" "}
                 <strong>
-                  {detailBarang.merk.count ? detailBarang.merk.page + 1 : 0}
+                  {detailLokasi.lokasi.count ? detailLokasi.lokasi.page + 1 : 0}
                 </strong>{" "}
-                of <strong>{detailBarang.merk.totalPage}</strong>
+                of <strong>{detailLokasi.lokasi.totalPage}</strong>
               </p>
             )}
-            <nav key={(detailBarang.merk && detailBarang.merk.count) || 0}>
-              {detailBarang.merk && detailBarang.merk.totalPage > 0 && (
+            <nav key={detailLokasi.lokasi && detailLokasi.lokasi.count}>
+              {detailLokasi.lokasi && detailLokasi.lokasi.totalPage > 0 && (
                 <ReactPaginate
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
                   pageCount={
-                    detailBarang.merk ? detailBarang.merk.totalPage : 0
+                    detailLokasi.lokasi ? detailLokasi.lokasi.totalPage : 0
                   }
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
@@ -199,4 +207,4 @@ const MerkBarang = () => {
   );
 };
 
-export default MerkBarang;
+export default LokasiPage;

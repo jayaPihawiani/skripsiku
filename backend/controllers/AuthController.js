@@ -9,7 +9,7 @@ class AuthController {
     if (!username || !password) {
       return res
         .status(400)
-        .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
+        .json({ msg: "Email atau password tidak boleh kosong!" });
     }
 
     try {

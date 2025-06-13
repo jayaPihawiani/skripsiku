@@ -3,24 +3,24 @@ import InputComponents from "./InputComponents";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
-const MerkBarangEdit = () => {
+const KategoriBarangEdit = () => {
   // variabel
-  const merkId = useParams().id;
+  const kategoriId = useParams().id;
   const url = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  const [dataMerk, setDataMerk] = useState({});
-  const [inputDataMerk, setInputDataMerk] = useState({
+  const [dataKategori, setDataKategori] = useState({});
+  const [inputDataKategori, setInputDataKategori] = useState({
     name: "",
     desc: "",
   });
   // function
   useEffect(() => {
-    const getMerkById = async () => {
+    const getKategoriById = async () => {
       try {
-        const response = await axios.get(`${url}/merk/${merkId}`);
+        const response = await axios.get(`${url}/kategori/${kategoriId}`);
         if (response.status === 200) {
-          setDataMerk(response.data);
+          setDataKategori(response.data);
         }
       } catch (error) {
         if (error.response) {
@@ -32,28 +32,28 @@ const MerkBarangEdit = () => {
       }
     };
 
-    getMerkById();
+    getKategoriById();
   }, []);
 
   useEffect(() => {
-    if (dataMerk && dataMerk.name) {
-      setInputDataMerk({
-        name: dataMerk.name,
-        desc: dataMerk.desc,
+    if (dataKategori && dataKategori.name) {
+      setInputDataKategori({
+        name: dataKategori.name,
+        desc: dataKategori.desc,
       });
     }
-  }, [dataMerk]);
+  }, [dataKategori]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.patch(
-        `${url}/merk/update/${merkId}`,
-        inputDataMerk
+        `${url}/kategori/update/${kategoriId}`,
+        inputDataKategori
       );
       if (response.status === 200) {
-        alert("Berhasil update data merk.");
-        navigate("/merk");
+        alert("Berhasil update data kategori.");
+        navigate("/kategori");
       }
     } catch (error) {
       if (error.response) {
@@ -68,22 +68,28 @@ const MerkBarangEdit = () => {
   return (
     <div className="card me-4">
       <div className="card-body">
-        <h2>Ubah Data Merk</h2>
+        <h2>Ubah Data Kategori</h2>
         <form onSubmit={handleSubmit} className="d-flex flex-column">
           <InputComponents
             placeHolder=" Nama"
             classStyle="w-100 p-2"
-            val={inputDataMerk.name ?? ""}
+            val={inputDataKategori.name ?? ""}
             change={(e) =>
-              setInputDataMerk({ ...inputDataMerk, name: e.target.value })
+              setInputDataKategori({
+                ...inputDataKategori,
+                name: e.target.value,
+              })
             }
           />
           <InputComponents
             placeHolder="Keterangan"
             classStyle="w-100 p-2 mt-2"
-            val={inputDataMerk.desc ?? ""}
+            val={inputDataKategori.desc ?? ""}
             change={(e) =>
-              setInputDataMerk({ ...inputDataMerk, desc: e.target.value })
+              setInputDataKategori({
+                ...inputDataKategori,
+                desc: e.target.value,
+              })
             }
           />
           <button className="btn btn-primary ms-auto mt-2" type="submit">
@@ -95,4 +101,4 @@ const MerkBarangEdit = () => {
   );
 };
 
-export default MerkBarangEdit;
+export default KategoriBarangEdit;

@@ -21,6 +21,7 @@
 
 .sidebar .side-bar-style {
   background-color: #242424;
+  padding-left: 1.5rem;
 }
 
 .body-page {
@@ -49,6 +50,11 @@
 
   .body-page {
     padding-left: 90px;
+  }
+
+  .sidebar .side-bar-style {
+    background-color: #242424;
+    padding-left: 0;
   }
 }
 

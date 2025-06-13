@@ -1,3 +1,5 @@
+import { Op } from "sequelize";
+
 class BaseService {
   constructor({ model, isExistMsg, isEmptyMsg, subName }) {
     this.model = model;
@@ -30,11 +32,28 @@ class BaseService {
 
   //   GET
   getService = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+    const search = req.query.search || "";
+    const offset = limit * page;
+    let totalPage;
     try {
-      const checkData = await this.model.findAll({
+      const count = await this.model.count({
+        where: {
+          name: { [Op.like]: `%${search}%` },
+        },
+      });
+
+      totalPage = Math.ceil(count / limit);
+      const result = await this.model.findAll({
+        where: {
+          name: { [Op.like]: `%${search}%` },
+        },
+        limit,
+        offset,
         order: [["createdAt", "ASC"]],
       });
-      res.status(200).json(checkData);
+      res.status(200).json({ page, limit, totalPage, count, result });
     } catch (error) {
       res.status(500).json({ msg: "ERROR " + error.message });
     }
@@ -72,6 +91,12 @@ class BaseService {
   // UPDATE
   updateService = async (req, res) => {
     const { name, desc } = req.body;
+
+    if (!name || !desc) {
+      return res
+        .status(400)
+        .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
+    }
     try {
       const checkData = await this.model.findByPk(req.params.id);
 

@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { authStateReset, userInfo } from "../features/authSlice";
 import { getDataBarang } from "../features/barangSlice";
 
 const Barang = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const state = useSelector((state) => state.auth);
   const barang = useSelector((state) => state.barang);
+  const user = useSelector((state) => state.auth);
   const [newBarang, setNewBarang] = useState([]);
   // function
   useEffect(() => {
-    dispatch(userInfo());
     dispatch(getDataBarang());
   }, [dispatch]);
 
@@ -22,16 +18,15 @@ const Barang = () => {
     }
   }, [barang.data]);
 
-  useEffect(() => {
-    if (!state.data && state.isError) {
-      navigate("/login");
-      dispatch(authStateReset());
-    }
-  }, [state, navigate, dispatch]);
-
   return (
     <div className="w-100 pe-3">
-      <div className="card shadow-lg">
+      <h3>DATA STOK BARANG</h3>
+      <div className="card shadow-lg mb-4 mt-4">
+        {user.data && user.data.role === "admin" && (
+          <div className="ms-3 mt-3">
+            <button className="btn btn-primary">Cetak Laporan</button>
+          </div>
+        )}
         <div className="card-body">
           <table className="table table-striped table-bordered">
             <thead className="table-dark">
