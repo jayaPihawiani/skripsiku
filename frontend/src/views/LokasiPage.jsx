@@ -34,7 +34,7 @@ const LokasiPage = () => {
     if (detailLokasi.lokasi && detailLokasi.isSuccess) {
       setDataLokasi(detailLokasi.lokasi.result);
     }
-  }, [detailLokasi.satuan, detailLokasi.isSuccess]);
+  }, [detailLokasi.lokasi, detailLokasi.isSuccess]);
 
   const deleteDataLokasi = async (id) => {
     try {

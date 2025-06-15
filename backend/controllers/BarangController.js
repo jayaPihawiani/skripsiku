@@ -7,6 +7,7 @@ import BrgRusak from "../models/BarangRusakModel.js";
 import Lokasi from "../models/LokasiModel.js";
 import Penghapusan from "../models/PenghapusanModel.js";
 import supabase from "../config/supabase/supabaseClient.js";
+import { Op } from "sequelize";
 
 class BarangController {
   // ADD BARANG
@@ -107,8 +108,21 @@ class BarangController {
   };
 
   getBarang = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+    const search = req.query.search || "";
+    const offset = limit * page;
+    let totalPage;
     try {
+      const count = await Barang.count({
+        where: {
+          name: { [Op.like]: `%${search}%` },
+        },
+      });
+
+      totalPage = Math.ceil(count / limit);
       const barang = await Barang.findAll({
+        where: { name: { [Op.like]: `%${search}%` } },
         include: [
           { model: SatuanBrg, attributes: ["name", "desc"] },
           { model: MerkBrg, attributes: ["name", "desc"] },
@@ -147,8 +161,12 @@ class BarangController {
           "image",
           "url",
         ],
+        limit,
+
+        offset,
+        order: [["createdAt", "ASC"]],
       });
-      res.status(200).json(barang);
+      res.status(200).json({ page, limit, totalPage, count, barang });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

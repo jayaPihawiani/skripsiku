@@ -59,6 +59,15 @@ class BaseService {
     }
   };
 
+  getAllService = async (req, res) => {
+    try {
+      const response = await this.model.findAll();
+      res.status(200).json(response);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR " + error.message });
+    }
+  };
+
   //   GET BY ID
   getServiceById = async (req, res) => {
     try {

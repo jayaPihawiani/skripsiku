@@ -5,9 +5,11 @@ const url = import.meta.env.VITE_API_URL;
 
 export const getDataBarang = createAsyncThunk(
   "barang/getBarang",
-  async (_, thunkApi) => {
+  async (inputQuery, thunkApi) => {
     try {
-      const response = await axios.get(`${url}/barang`);
+      const response = await axios.get(
+        `${url}/barang?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+      );
       return response.data;
     } catch (error) {
       if (error.response) {

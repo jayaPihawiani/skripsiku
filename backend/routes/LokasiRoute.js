@@ -10,5 +10,6 @@ lokasiRoute.delete("/del/:id", verifyUser, isAdmin, lokasi.deleteService);
 lokasiRoute.patch("/update/:id", verifyUser, isAdmin, lokasi.updateService);
 lokasiRoute.get("/:id", verifyUser, isAdmin, lokasi.getServiceById);
 lokasiRoute.get("/", verifyUser, isAdmin, lokasi.getService);
+lokasiRoute.get("/all", verifyUser, isAdmin, lokasi.getAllService);
 
 export default lokasiRoute;
