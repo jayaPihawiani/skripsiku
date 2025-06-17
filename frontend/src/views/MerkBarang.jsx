@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import { getMerkBarang } from "../features/detailBarang";
+import { LoadingContext } from "../context/Loading";
+import { useContext } from "react";
 
 const MerkBarang = () => {
   // variabel
@@ -17,6 +19,7 @@ const MerkBarang = () => {
   const [show, setShow] = useState(false);
   const [dataMerk, setDataMerk] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
+  const { setLoading } = useContext(LoadingContext);
 
   const handleClose = () => {
     setShow(false);
@@ -59,10 +62,12 @@ const MerkBarang = () => {
       alert("Data ada yang kosong! Harap isi semua data!");
       return;
     }
+
     try {
+      setLoading(true);
       const response = await axios.post(`${url}/merk/create`, dataMerk);
       if (response.status === 201) {
-        setInputQuery({ ...inputQuery, page: 0 });
+        setDataMerk({ name: "", desc: "" });
         dispatch(getMerkBarang(inputQuery));
         handleClose();
         alert("Berhasil menambah data merk.");
@@ -70,6 +75,8 @@ const MerkBarang = () => {
     } catch (error) {
       console.error(error.response.data);
       alert(error.response.data.msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,7 +125,7 @@ const MerkBarang = () => {
           </select>
         </div>
         <div className="card-body">
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-scroll">
             <table className="table table-bordered table-striped">
               <thead className="table-dark">
                 <tr>

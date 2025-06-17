@@ -1,10 +1,11 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
+import { LoadingContext } from "../context/Loading";
 import { getSatuanBarang } from "../features/detailBarang";
 
 const SatuanBarang = () => {
@@ -17,7 +18,7 @@ const SatuanBarang = () => {
   const [show, setShow] = useState(false);
   const [inputSatuan, setInputSatuan] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
-
+  const { setLoading } = useContext(LoadingContext);
   const handleShow = () => setShow(true);
 
   const handleClose = () => {
@@ -55,12 +56,10 @@ const SatuanBarang = () => {
       return;
     }
     try {
+      setLoading(true);
       const response = await axios.post(`${url}/satuan/create`, inputSatuan);
       if (response.status === 201) {
-        setInputQuery({
-          ...inputQuery,
-          page: 0,
-        });
+        setInputSatuan({ name: "", desc: "" });
         dispatch(getSatuanBarang(inputQuery));
         handleClose();
         alert("Berhasil menambah data satuan.");
@@ -68,6 +67,8 @@ const SatuanBarang = () => {
     } catch (error) {
       console.error(error.response.data);
       alert(error.response.data.msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,7 +126,7 @@ const SatuanBarang = () => {
           </select>
         </div>
         <div className="card-body">
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-scroll">
             <table className="table table-bordered table-striped">
               <thead className="table-dark">
                 <tr>

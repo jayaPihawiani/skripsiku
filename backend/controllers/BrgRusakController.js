@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Barang from "../models/BarangModel.js";
 import BrgRusak from "../models/BarangRusakModel.js";
 
@@ -30,13 +31,44 @@ class BrgRusakController {
   };
 
   getBrgRusak = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+    const search = req.query.search || "";
+    const offset = limit * page;
+    let totalPage;
+
     try {
-      const brg_rusak = await BrgRusak.findAll({
-        include: { model: Barang, attributes: ["name", "desc", "qty"] },
-        attributes: ["id", "desc", "qty", "createdAt", "updatedAt"],
+      const count = await BrgRusak.count({
+        include: {
+          model: Barang,
+          where: { name: { [Op.like]: `%${search}%` } },
+        },
       });
 
-      res.status(200).json(brg_rusak);
+      totalPage = Math.ceil(count / limit);
+
+      const brg_rusak = await BrgRusak.findAll({
+        include: {
+          model: Barang,
+          attributes: [
+            "id",
+            "name",
+            "desc",
+            "qty",
+            "image",
+            "url",
+            "createdAt",
+            "updatedAt",
+          ],
+          where: { name: { [Op.like]: `%${search}%` } },
+        },
+        attributes: ["id", "desc", "qty", "createdAt", "updatedAt"],
+        limit,
+        offset,
+        order: [["createdAt", "ASC"]],
+      });
+
+      res.status(200).json({ page, limit, totalPage, count, brg_rusak });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

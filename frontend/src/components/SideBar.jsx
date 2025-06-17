@@ -135,14 +135,14 @@ const SideBar = ({ children }) => {
                 <span className="side-desc">Barang Keluar</span>
               </Link>
 
-              <Link to="/pindah" className="nav-link">
+              <Link to="/kerusakan" className="nav-link">
                 <span className="icons">
                   <BsExclamationTriangleFill />
                 </span>
                 <span className="side-desc">Kerusakan</span>
               </Link>
               {state.data && state.data.role === "admin" && (
-                <Link to="/pindah" className="nav-link">
+                <Link to="/penghapusan" className="nav-link">
                   <span className="icons">
                     <BsTrash3Fill />
                   </span>

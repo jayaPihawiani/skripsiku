@@ -1,10 +1,11 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
+import { LoadingContext } from "../context/Loading";
 import { getDataLokasi } from "../features/detailBarang";
 
 const LokasiPage = () => {
@@ -17,6 +18,7 @@ const LokasiPage = () => {
   const [show, setShow] = useState(false);
   const [inputLokasi, setInputLokasi] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
+  const { setLoading } = useContext(LoadingContext);
 
   const handleShow = () => setShow(true);
 
@@ -55,12 +57,10 @@ const LokasiPage = () => {
       return;
     }
     try {
+      setLoading(true);
       const response = await axios.post(`${url}/lokasi/create`, inputLokasi);
       if (response.status === 201) {
-        setInputQuery({
-          ...inputQuery,
-          page: 0,
-        });
+        setInputLokasi({ name: "", desc: "" });
         dispatch(getDataLokasi(inputQuery));
         handleClose();
         alert("Berhasil menambah data lokasi.");
@@ -68,6 +68,8 @@ const LokasiPage = () => {
     } catch (error) {
       console.error(error.response.data);
       alert(error.response.data.msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,7 +127,7 @@ const LokasiPage = () => {
           </select>
         </div>
         <div className="card-body">
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-scroll">
             <table className="table table-bordered table-striped">
               <thead className="table-dark">
                 <tr>

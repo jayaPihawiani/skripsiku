@@ -30,6 +30,8 @@ class BarangController {
       umur_ekonomis,
     } = req.body;
 
+    const dateFormat = tgl_beli.split("T")[0];
+
     // validasi
     if (
       !name ||
@@ -39,9 +41,6 @@ class BarangController {
       !harga ||
       !kondisi ||
       !riwayat_pemeliharaan ||
-      !penyebab_rsk ||
-      !stts_perbaikan ||
-      !tipe ||
       !satuan ||
       !merk ||
       !kategori
@@ -56,9 +55,15 @@ class BarangController {
     }
 
     const file = req.files.file;
+
+    if (file.size > 2 * 1024 * 1024) {
+      return res.status(400).json({ msg: "Ukuran file maksimal 2MB!" });
+    }
+
     const ext = `.${file.name.split(".").pop()}`;
+
     const fileName = `file_${Date.now()}${ext}`;
-    const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx", ".png"];
+    const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx"];
 
     if (!fileType.includes(ext.toLowerCase()))
       return res.status(400).json({ msg: "Format file tidak didukung!" });
@@ -86,7 +91,7 @@ class BarangController {
         name,
         desc,
         qty,
-        tgl_beli,
+        tgl_beli: dateFormat,
         harga,
         kondisi,
         riwayat_pemeliharaan,
@@ -97,7 +102,7 @@ class BarangController {
         merk,
         kategori,
         umur_ekonomis,
-        file: fileName,
+        image: fileName,
         url,
       });
 
@@ -143,7 +148,7 @@ class BarangController {
               { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
             ],
           },
-          { model: BrgRusak, attributes: ["qty", "desc"] },
+          { model: BrgRusak, attributes: ["id", "qty", "desc"] },
         ],
         attributes: [
           "id",
@@ -160,6 +165,7 @@ class BarangController {
           "umur_ekonomis",
           "image",
           "url",
+          "createdAt",
         ],
         limit,
 
@@ -224,6 +230,17 @@ class BarangController {
     }
   };
 
+  getAllBarang = async (req, res) => {
+    try {
+      const barang = await Barang.findAll({
+        attributes: ["id", "name", "desc", "qty"],
+      });
+      res.status(200).json(barang);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
   updateBarang = async (req, res) => {
     const {
       name,
@@ -279,6 +296,18 @@ class BarangController {
       const barang = await Barang.findByPk(req.params.id);
       if (!barang) {
         return res.status(404).json({ msg: "Data barang tidak ditemukan!" });
+      }
+
+      const removeImage = await supabase.storage
+        .from("product")
+        .remove([barang.image]);
+
+      if (removeImage.error) {
+        return res.status(400).json({
+          msg: " Gagal menghapus data gambar!",
+          err: removeImage.error.message,
+          stack: removeImage.error.stack,
+        });
       }
 
       await Barang.destroy({ where: { id: barang.id } });

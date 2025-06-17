@@ -13,85 +13,99 @@ import Login from "./views/Login";
 import LokasiPage from "./views/LokasiPage";
 import MerkBarang from "./views/MerkBarang";
 import SatuanBarang from "./views/SatuanBarang";
+import KerusakanPage from "./views/KerusakanPage";
+import PenghapusanPage from "./views/PenghapusanPage";
+import { LoadingProvider } from "./context/Loading";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="*"
-          element={
-            <React.Fragment>
-              <SideBar>
-                <UserAuthComponent>
-                  <Routes>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/barang" element={<Barang />} />
-                    <Route
-                      path="/merk"
-                      element={
-                        <AuthAccessComponent>
-                          <MerkBarang />
-                        </AuthAccessComponent>
-                      }
-                    />
-                    <Route
-                      path="/merk/edit/:id"
-                      element={
-                        <AuthAccessComponent>
-                          <MerkBarangEdit />
-                        </AuthAccessComponent>
-                      }
-                    />
-                    <Route
-                      path="/kategori/edit/:id"
-                      element={
-                        <AuthAccessComponent>
-                          <KategoriBarangEdit />
-                        </AuthAccessComponent>
-                      }
-                    />
-                    <Route
-                      path="/satuan/edit/:id"
-                      element={
-                        <AuthAccessComponent>
-                          <SatuanBarangEdit />
-                        </AuthAccessComponent>
-                      }
-                    />
-                    <Route
-                      path="/satuan"
-                      element={
-                        <AuthAccessComponent>
-                          <SatuanBarang />
-                        </AuthAccessComponent>
-                      }
-                    />
-                    <Route
-                      path="/kategori"
-                      element={
-                        <AuthAccessComponent>
-                          <KategoriPage />
-                        </AuthAccessComponent>
-                      }
-                    />
-                    <Route
-                      path="/lokasi"
-                      element={
-                        <AuthAccessComponent>
-                          <LokasiPage />
-                        </AuthAccessComponent>
-                      }
-                    />
-                  </Routes>
-                </UserAuthComponent>
-              </SideBar>
-            </React.Fragment>
-          }
-        />
-      </Routes>
+      <LoadingProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="*"
+            element={
+              <React.Fragment>
+                <SideBar>
+                  <UserAuthComponent>
+                    <Routes>
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/barang" element={<Barang />} />
+                      <Route
+                        path="/merk"
+                        element={
+                          <AuthAccessComponent>
+                            <MerkBarang />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/merk/edit/:id"
+                        element={
+                          <AuthAccessComponent>
+                            <MerkBarangEdit />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/kategori/edit/:id"
+                        element={
+                          <AuthAccessComponent>
+                            <KategoriBarangEdit />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/satuan/edit/:id"
+                        element={
+                          <AuthAccessComponent>
+                            <SatuanBarangEdit />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/satuan"
+                        element={
+                          <AuthAccessComponent>
+                            <SatuanBarang />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/kategori"
+                        element={
+                          <AuthAccessComponent>
+                            <KategoriPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/lokasi"
+                        element={
+                          <AuthAccessComponent>
+                            <LokasiPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route path="/kerusakan" element={<KerusakanPage />} />
+                      <Route
+                        path="/penghapusan"
+                        element={
+                          <AuthAccessComponent>
+                            <PenghapusanPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                    </Routes>
+                  </UserAuthComponent>
+                </SideBar>
+              </React.Fragment>
+            }
+          />
+        </Routes>
+      </LoadingProvider>
     </BrowserRouter>
   );
 }

@@ -84,7 +84,7 @@ Pemindahan.belongsTo(Barang, {
 });
 
 // kerusakan
-Barang.hasOne(BrgRusak, {
+Barang.hasMany(BrgRusak, {
   foreignKey: "barangId",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
@@ -120,7 +120,7 @@ Barang.belongsTo(MerkBrg, {
 });
 
 // penghapusan
-Barang.hasOne(Penghapusan, {
+Barang.hasMany(Penghapusan, {
   foreignKey: "barangId",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",

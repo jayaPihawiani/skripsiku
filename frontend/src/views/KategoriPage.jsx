@@ -1,10 +1,12 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
+import SearchBarComponent from "../components/SearchBarComponent";
+import { LoadingContext } from "../context/Loading";
 import { getKategoriBarang } from "../features/detailBarang";
 
 const KategoriPage = () => {
@@ -17,7 +19,7 @@ const KategoriPage = () => {
   const [show, setShow] = useState(false);
   const [inputKategori, setInputKategori] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
-
+  const { setLoading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
     setInputKategori({ name: "", desc: "" });
@@ -54,6 +56,7 @@ const KategoriPage = () => {
       return;
     }
     try {
+      setLoading(true);
       const response = await axios.post(
         `${url}/kategori/create`,
         inputKategori
@@ -67,6 +70,8 @@ const KategoriPage = () => {
     } catch (error) {
       console.error(error.response.data);
       alert(error.response.data.msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,6 +113,10 @@ const KategoriPage = () => {
         }
       />
       <div className="card me-4 mt-2 mb-4 shadow-lg">
+        <SearchBarComponent
+          placeHolder="Cari data inventaris barang..."
+          btnTitle="Cari"
+        />
         <div className="mt-3 me-3 d-flex">
           <select
             className="py-2 px-1 ms-auto"
@@ -119,7 +128,7 @@ const KategoriPage = () => {
           </select>
         </div>
         <div className="card-body">
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-scroll">
             <table className="table table-bordered table-striped">
               <thead className="table-dark">
                 <tr>

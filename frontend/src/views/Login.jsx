@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import intanlogo from "../assets/intanlogo.png";
 import InputComponents from "../components/InputComponents";
 import "../css/login_responsive.css";
 import { authStateReset, loginUser } from "../features/authSlice";
+import { LoadingContext } from "../context/Loading";
 
 const Login = () => {
   const [dataLogin, setDataLogin] = useState({ username: "", password: "" });
@@ -13,7 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const state = useSelector((state) => state.auth);
   const [errMessage, setErrMessage] = useState("");
-
+  const { loading, setLoading } = useContext(LoadingContext);
   // function
   useEffect(() => {
     if (state.isSuccess) {
@@ -34,9 +35,12 @@ const Login = () => {
     }
   }, [state, state.isError, state.message]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    dispatch(loginUser(dataLogin));
+    setLoading(true);
+    await dispatch(loginUser(dataLogin));
+    setLoading(false);
+
     setDataLogin({ username: "", password: "" });
   };
 
@@ -72,7 +76,7 @@ const Login = () => {
             val={dataLogin.password}
           />
           <Button variant="primary" type="submit" className="button-login">
-            {state.isLoading ? "Loading..." : "Login"}
+            {loading ? "Loading..." : "Login"}
           </Button>
         </form>
       </div>

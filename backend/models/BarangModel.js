@@ -16,9 +16,9 @@ const Barang = db.define(
     harga: DataTypes.INTEGER,
     kondisi: DataTypes.STRING(50),
     riwayat_pemeliharaan: DataTypes.STRING(50),
-    penyebab_rsk: DataTypes.STRING(50),
-    stts_perbaikan: DataTypes.STRING(50),
-    tipe: DataTypes.STRING(50),
+    penyebab_rsk: { type: DataTypes.STRING(50), allowNull: true },
+    stts_perbaikan: { type: DataTypes.STRING(50), allowNull: true },
+    tipe: { type: DataTypes.STRING(50), allowNull: true },
     satuan: {
       type: DataTypes.UUID,
       allowNull: true,

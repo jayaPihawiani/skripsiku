@@ -1,6 +1,9 @@
 import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import { useSelector } from "react-redux";
+import { LoadingContext } from "../context/Loading";
+import { useContext } from "react";
 
 const ModalComponent = ({
   btntTitle,
@@ -12,6 +15,8 @@ const ModalComponent = ({
   handleSubmit,
   classStyle,
 }) => {
+  const state = useSelector((state) => state.barang);
+  const { loading } = useContext(LoadingContext);
   return (
     <>
       <Button variant="primary" onClick={handleShow} className={classStyle}>
@@ -28,7 +33,7 @@ const ModalComponent = ({
             Close
           </Button>
           <Button variant="primary" onClick={handleSubmit}>
-            Save
+            {loading ? "Loading" : "Save"}
           </Button>
         </Modal.Footer>
       </Modal>

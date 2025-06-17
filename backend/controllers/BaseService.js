@@ -37,6 +37,7 @@ class BaseService {
     const search = req.query.search || "";
     const offset = limit * page;
     let totalPage;
+
     try {
       const count = await this.model.count({
         where: {
@@ -53,6 +54,7 @@ class BaseService {
         offset,
         order: [["createdAt", "ASC"]],
       });
+
       res.status(200).json({ page, limit, totalPage, count, result });
     } catch (error) {
       res.status(500).json({ msg: "ERROR " + error.message });
