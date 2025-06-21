@@ -5,6 +5,7 @@ import {
   BsBoxArrowRight,
   BsBoxArrowUp,
   BsBoxSeamFill,
+  BsBuildingFill,
   BsCaretDownFill,
   BsClipboardCheckFill,
   BsExclamationTriangleFill,
@@ -180,19 +181,26 @@ const SideBar = ({ children }) => {
             </Link>
             {state.data && state.data.role === "admin" && (
               <>
-                {/* user */}
-                <Link to="/user" className="nav-link">
-                  <span className="icons">
-                    <BsPersonBadgeFill />
-                  </span>
-                  <span className="side-desc">User</span>
-                </Link>
                 {/* lokasi */}
                 <Link to="/lokasi" className="nav-link">
                   <span className="icons">
                     <BsMapFill />
                   </span>
                   <span className="side-desc">Lokasi</span>
+                </Link>
+                {/* divisi */}
+                <Link to="/divisi" className="nav-link">
+                  <span className="icons">
+                    <BsBuildingFill />
+                  </span>
+                  <span className="side-desc">Divisi</span>
+                </Link>
+                {/* user */}
+                <Link to="/user" className="nav-link">
+                  <span className="icons">
+                    <BsPersonBadgeFill />
+                  </span>
+                  <span className="side-desc">User</span>
                 </Link>
               </>
             )}

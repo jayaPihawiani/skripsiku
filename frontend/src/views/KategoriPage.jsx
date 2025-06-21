@@ -18,7 +18,12 @@ const KategoriPage = () => {
   const [kategoriBarang, setKategoriBarang] = useState([]);
   const [show, setShow] = useState(false);
   const [inputKategori, setInputKategori] = useState({ name: "", desc: "" });
-  const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [inputQuery, setInputQuery] = useState({
+    page: 0,
+    limit: 10,
+    search: "",
+  });
   const { setLoading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
@@ -29,7 +34,7 @@ const KategoriPage = () => {
   // function
   useEffect(() => {
     dispatch(getKategoriBarang(inputQuery));
-  }, [dispatch, inputQuery.limit, inputQuery.page]);
+  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
 
   useEffect(() => {
     if (detailBarang.kategori && detailBarang.isSuccess) {
@@ -75,6 +80,12 @@ const KategoriPage = () => {
     }
   };
 
+  // HANDLE SEARCH
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
+  };
+
   // PAGE CHANGE REACT PAGINATION
   const handlePageClick = ({ selected }) => {
     setInputQuery({ ...inputQuery, page: selected });
@@ -82,7 +93,7 @@ const KategoriPage = () => {
 
   return (
     <>
-      <h3>DATA KATEGORI BARANG</h3>
+      <h4>DATA KATEGORI BARANG</h4>
       <ModalComponent
         classStyle="mt-4"
         btntTitle="Tambah"
@@ -113,19 +124,29 @@ const KategoriPage = () => {
         }
       />
       <div className="card me-4 mt-2 mb-4 shadow-lg">
-        <SearchBarComponent
-          placeHolder="Cari data inventaris barang..."
-          btnTitle="Cari"
-        />
-        <div className="mt-3 me-3 d-flex">
-          <select
-            className="py-2 px-1 ms-auto"
-            onChange={(e) => setInputQuery({ page: 0, limit: e.target.value })}
-          >
-            <option value={10}>10</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        <div className="d-flex justify-content-between">
+          <div className="w-100">
+            <SearchBarComponent
+              submit={handleSearch}
+              placeHolder="Cari data kategori barang..."
+              btnTitle="Cari"
+              inputChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
+            />
+          </div>
+          <div className="mt-3 me-3 d-flex">
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
+                setInputQuery({ page: 0, limit: e.target.value })
+              }
+            >
+              <option value={10}>10</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
         <div className="card-body">
           <div className="overflow-x-scroll">
@@ -143,7 +164,9 @@ const KategoriPage = () => {
                   kategoriBarang.map((item, index) => {
                     return (
                       <tr key={item.id}>
-                        <td>{index + 1}</td>
+                        <td>
+                          {index + 1 + inputQuery.page * inputQuery.limit}
+                        </td>
                         <td>{item.name}</td>
                         <td>{item.desc}</td>
                         <td className="text-center">
@@ -165,13 +188,19 @@ const KategoriPage = () => {
                   })}
               </tbody>
             </table>
-            {detailBarang.merk && (
+            {detailBarang.kategori &&
+              detailBarang.kategori.result.length === 0 && (
+                <p>Data tidak ditemukan!</p>
+              )}
+            {detailBarang.kategori && (
               <p className="text-end">
-                Total row: <strong>{detailBarang.merk.count}</strong> page{" "}
+                Total row: <strong>{detailBarang.kategori.count}</strong> page{" "}
                 <strong>
-                  {detailBarang.merk.count ? detailBarang.merk.page + 1 : 0}
+                  {detailBarang.kategori.count
+                    ? detailBarang.kategori.page + 1
+                    : 0}
                 </strong>{" "}
-                of <strong>{detailBarang.merk.totalPage}</strong>
+                of <strong>{detailBarang.kategori.totalPage}</strong>
               </p>
             )}
             <nav key={detailBarang.kategori && detailBarang.kategori.count}>

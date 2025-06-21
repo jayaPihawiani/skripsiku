@@ -71,7 +71,7 @@ Pemindahan.belongsTo(Lokasi, {
   onUpdate: "CASCADE",
 });
 
-Barang.hasOne(Pemindahan, {
+Barang.hasMany(Pemindahan, {
   foreignKey: "barangId",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",

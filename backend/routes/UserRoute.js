@@ -6,6 +6,7 @@ const userRoute = express.Router();
 const user = new UserController();
 
 userRoute.post("/create", verifyUser, isAdmin, user.createUser);
+userRoute.delete("/del/:id", verifyUser, isAdmin, user.deleteUser);
 userRoute.get("/", verifyUser, isAdmin, user.getUser);
 
 export default userRoute;

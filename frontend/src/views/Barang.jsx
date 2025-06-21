@@ -188,7 +188,7 @@ const Barang = () => {
   // MAIN
   return (
     <div className="w-100 pe-3">
-      <h3>DATA STOK BARANG</h3>
+      <h4>DATA STOK BARANG</h4>
       {user.data && user.data.role === "admin" && (
         <div className="mt-4">
           <ModalComponent
@@ -358,23 +358,27 @@ const Barang = () => {
         </div>
       )}
       <div className="card shadow-lg mb-4 mt-4 w-100">
-        <SearchBarComponent
-          submit={handleSearchBarang}
-          placeHolder="Cari data inventaris barang..."
-          btnTitle="Cari"
-          inputChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <div className="mt-3 me-3 d-flex">
-          <select
-            className="py-2 px-1 ms-auto"
-            onChange={(e) =>
-              setInputQuery({ page: 0, limit: e.target.value, search: "" })
-            }
-          >
-            <option value={10}>10</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        <div className="d-flex justify-content-between">
+          <div className="w-100">
+            <SearchBarComponent
+              submit={handleSearchBarang}
+              placeHolder="Cari data inventaris barang..."
+              btnTitle="Cari"
+              inputChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="mt-3 me-3 d-flex">
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
+                setInputQuery({ page: 0, limit: e.target.value, search: "" })
+              }
+            >
+              <option value={10}>10</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
 
         <div className="card-body">
@@ -389,6 +393,7 @@ const Barang = () => {
                   <th>Tanggal Pembelian</th>
                   <th>Harga</th>
                   <th>Merk</th>
+                  <th>Satuan</th>
                   <th>Kategori</th>
                   <th>Kondisi</th>
                   <th>Riwayat Pemeliharaan</th>
@@ -401,16 +406,19 @@ const Barang = () => {
                   newBarang.barang.map((e, index) => {
                     return (
                       <tr key={e.id}>
-                        <td>{index + 1}</td>
+                        <td>
+                          {index + 1 + inputQuery.page * inputQuery.limit}
+                        </td>
                         <td>{e.name}</td>
                         <td>{e.desc}</td>
-                        <td>
-                          {e.qty} {e.satuan_brg ? e.satuan_brg.name : ""}
-                        </td>
+                        <td>{e.qty}</td>
                         <td>{e.tgl_beli}</td>
                         <td>{e.harga}</td>
-                        <td>{e.merk_brg ? e.merk_brg.name : "-"}</td>
-                        <td>{e.kategori_brg ? e.kategori_brg.name : "-"}</td>
+                        <td>{(e.merk_brg && e.merk_brg.name) || "-"}</td>
+                        <td>{(e.satuan_brg && e.satuan_brg.name) || "-"}</td>
+                        <td>
+                          {(e.kategori_brg && e.kategori_brg.name) || "-"}
+                        </td>
                         <td>{e.kondisi}</td>
                         <td>{e.riwayat_pemeliharaan}</td>
                         <td>

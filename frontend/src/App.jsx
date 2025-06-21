@@ -6,16 +6,19 @@ import MerkBarangEdit from "./components/MerkBarangEdit";
 import SatuanBarangEdit from "./components/SatuanBarangEdit";
 import SideBar from "./components/SideBar";
 import UserAuthComponent from "./components/UserAuthComponents";
+import { LoadingProvider } from "./context/Loading";
 import Barang from "./views/Barang";
 import Dashboard from "./views/Dashboard";
 import KategoriPage from "./views/KategoriPage";
+import KerusakanPage from "./views/KerusakanPage";
 import Login from "./views/Login";
 import LokasiPage from "./views/LokasiPage";
 import MerkBarang from "./views/MerkBarang";
-import SatuanBarang from "./views/SatuanBarang";
-import KerusakanPage from "./views/KerusakanPage";
 import PenghapusanPage from "./views/PenghapusanPage";
-import { LoadingProvider } from "./context/Loading";
+import SatuanBarang from "./views/SatuanBarang";
+import NavBar from "./components/NavBar";
+import UserPage from "./views/UserPage";
+import DivisiPage from "./views/DivisiPage";
 
 function App() {
   return (
@@ -28,6 +31,7 @@ function App() {
             path="*"
             element={
               <React.Fragment>
+                <NavBar />
                 <SideBar>
                   <UserAuthComponent>
                     <Routes>
@@ -95,6 +99,22 @@ function App() {
                         element={
                           <AuthAccessComponent>
                             <PenghapusanPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/divisi"
+                        element={
+                          <AuthAccessComponent>
+                            <DivisiPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/user"
+                        element={
+                          <AuthAccessComponent>
+                            <UserPage />
                           </AuthAccessComponent>
                         }
                       />

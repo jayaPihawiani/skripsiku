@@ -28,16 +28,6 @@ const LokasiPage = () => {
   };
 
   // function
-  useEffect(() => {
-    dispatch(getDataLokasi(inputQuery));
-  }, [dispatch, inputQuery.page, inputQuery.limit]);
-
-  useEffect(() => {
-    if (detailLokasi.lokasi && detailLokasi.isSuccess) {
-      setDataLokasi(detailLokasi.lokasi.result);
-    }
-  }, [detailLokasi.lokasi, detailLokasi.isSuccess]);
-
   const deleteDataLokasi = async (id) => {
     try {
       const response = await axios.delete(`${url}/lokasi/del/${id}`);
@@ -56,6 +46,7 @@ const LokasiPage = () => {
       alert("Data ada yang kosong! Harap isi semua data!");
       return;
     }
+
     try {
       setLoading(true);
       const response = await axios.post(`${url}/lokasi/create`, inputLokasi);
@@ -78,9 +69,21 @@ const LokasiPage = () => {
     setInputQuery({ ...inputQuery, page: selected });
   };
 
+  // useEffect
+  useEffect(() => {
+    dispatch(getDataLokasi(inputQuery));
+  }, [dispatch, inputQuery.page, inputQuery.limit]);
+
+  useEffect(() => {
+    if (detailLokasi.lokasi && detailLokasi.isSuccess) {
+      setDataLokasi(detailLokasi.lokasi.result);
+    }
+  }, [detailLokasi.lokasi, detailLokasi.isSuccess]);
+
+  // MAIN
   return (
     <>
-      <h3>DATA SATUAN LOKASI</h3>
+      <h4>DATA LOKASI</h4>
       <ModalComponent
         classStyle="mt-4"
         btntTitle="Tambah"

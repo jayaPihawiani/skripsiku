@@ -6,7 +6,7 @@ const brgRusakRoute = express.Router();
 const brgRusak = new BrgRusakController();
 
 brgRusakRoute.post("/create", verifyUser, isAdmin, brgRusak.createBrgRusak);
-brgRusakRoute.get("/", verifyUser, isAdmin, brgRusak.getBrgRusak);
+brgRusakRoute.get("/", verifyUser, brgRusak.getBrgRusak);
 brgRusakRoute.get("/:id", verifyUser, isAdmin, brgRusak.getBrgRusakById);
 brgRusakRoute.delete("/del/:id", verifyUser, isAdmin, brgRusak.deleteBrgRusak);
 brgRusakRoute.patch(

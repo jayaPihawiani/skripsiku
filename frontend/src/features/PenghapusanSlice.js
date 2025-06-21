@@ -2,53 +2,53 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const url = import.meta.env.VITE_API_URL;
-
 const initState = {
   data: null,
   isLoading: false,
   isError: false,
   isSuccess: false,
-  message: "",
+  errMessage: false,
 };
 
-export const getDataBarang = createAsyncThunk(
-  "barang/getBarang",
+export const getDataPenghapusan = createAsyncThunk(
+  "penghapusan/getDataPenghapusan",
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/barang?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+        `${url}/penghapusan?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
       if (error.response) {
-        const errMessage = error.response.data;
+        const errMessage = error.response.data.msg;
         return thunkApi.rejectWithValue(errMessage);
       }
     }
   }
 );
 
-const barangSlice = createSlice({
-  name: "barang",
+const penghapusanSlice = createSlice({
+  name: "detail_brg",
   initialState: initState,
-  reducers: { reset: (state) => initState },
+  reducers: { penghapusanStateReset: (state) => initState },
   extraReducers: (builder) => {
+    // get merk
     builder
-      .addCase(getDataBarang.pending, (state) => {
+      .addCase(getDataPenghapusan.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(getDataBarang.fulfilled, (state, action) => {
+      .addCase(getDataPenghapusan.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
         state.data = action.payload;
       })
-      .addCase(getDataBarang.rejected, (state, action) => {
+      .addCase(getDataPenghapusan.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.errMessage = action.payload;
       });
   },
 });
 
-export const { reset } = barangSlice.actions;
-export default barangSlice.reducer;
+export const { penghapusanStateReset } = penghapusanSlice.actions;
+export default penghapusanSlice.reducer;

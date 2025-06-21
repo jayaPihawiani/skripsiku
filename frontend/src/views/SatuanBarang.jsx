@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
+import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
 import { getSatuanBarang } from "../features/detailBarang";
 
@@ -17,7 +18,12 @@ const SatuanBarang = () => {
   const [satuanBarang, setSatuanBarang] = useState([]);
   const [show, setShow] = useState(false);
   const [inputSatuan, setInputSatuan] = useState({ name: "", desc: "" });
-  const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
+  const [searchQuery, setSearchQuery] = useState();
+  const [inputQuery, setInputQuery] = useState({
+    page: 0,
+    limit: 10,
+    search: "",
+  });
   const { setLoading } = useContext(LoadingContext);
   const handleShow = () => setShow(true);
 
@@ -29,7 +35,7 @@ const SatuanBarang = () => {
   // function
   useEffect(() => {
     dispatch(getSatuanBarang(inputQuery));
-  }, [dispatch, inputQuery.page, inputQuery.limit]);
+  }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
     if (detailSatuan.satuan && detailSatuan.isSuccess) {
@@ -72,6 +78,12 @@ const SatuanBarang = () => {
     }
   };
 
+  // HANDLE SEARCH
+  const handleSearchBarang = (e) => {
+    e.preventDefault();
+    setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
+  };
+
   // PAGE CHANGE REACT PAGINATION
   const handlePageClick = ({ selected }) => {
     setInputQuery({ ...inputQuery, page: selected });
@@ -79,7 +91,7 @@ const SatuanBarang = () => {
 
   return (
     <>
-      <h3>DATA SATUAN BARANG</h3>
+      <h4>DATA SATUAN BARANG</h4>
       <ModalComponent
         classStyle="mt-4"
         btntTitle="Tambah"
@@ -110,20 +122,31 @@ const SatuanBarang = () => {
         }
       />
       <div className="card me-4 mt-2 mb-4 shadow-lg">
-        <div className="mt-3 me-3 d-flex">
-          <select
-            className="py-2 px-1 ms-auto"
-            onChange={(e) => {
-              setInputQuery({
-                page: 0,
-                limit: e.target.value,
-              });
-            }}
-          >
-            <option value={10}>10</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        <div className="d-flex justify-content-between">
+          <div className="w-100">
+            <SearchBarComponent
+              submit={handleSearchBarang}
+              placeHolder="Cari data satuan barang..."
+              btnTitle="Cari"
+              inputChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="mt-3 me-3 d-flex">
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) => {
+                setInputQuery({
+                  page: 0,
+                  limit: e.target.value,
+                });
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
         <div className="card-body">
           <div className="overflow-x-scroll">
@@ -166,6 +189,9 @@ const SatuanBarang = () => {
                   })}
               </tbody>
             </table>
+            {detailSatuan.satuan && detailSatuan.satuan.result.length === 0 && (
+              <p>Data tidak ditemukan!</p>
+            )}
             {detailSatuan.satuan && (
               <p className="text-end">
                 Total row: <strong>{detailSatuan.satuan.count}</strong> page{" "}

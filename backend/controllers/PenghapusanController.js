@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import supabase from "../config/supabase/supabaseClient.js";
 import Barang from "../models/BarangModel.js";
 import Kategori from "../models/KategoriBarang.js";
@@ -92,10 +93,29 @@ class PenghapusanController {
   };
 
   getPenghapusan = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+    const search = req.query.search || "";
+    const offset = limit * page;
+    let totalPage;
     try {
+      const count = await Penghapusan.count({
+        include: {
+          model: Barang,
+          where: {
+            name: { [Op.like]: `%${search}%` },
+          },
+        },
+      });
+
+      totalPage = Math.ceil(count / limit);
+
       const penghapusan = await Penghapusan.findAll({
         include: {
           model: Barang,
+          where: {
+            name: { [Op.like]: `%${search}%` },
+          },
           attributes: [
             "name",
             "desc",
@@ -106,6 +126,7 @@ class PenghapusanController {
             "penyebab_rsk",
             "stts_perbaikan",
             "tipe",
+            "createdAt",
           ],
           include: [
             { model: SatuanBrg, attributes: ["name", "desc"] },
@@ -113,8 +134,11 @@ class PenghapusanController {
             { model: Kategori, attributes: ["name", "desc"] },
           ],
         },
+        limit,
+        offset,
+        order: [["createdAt", "ASC"]],
       });
-      res.status(200).json(penghapusan);
+      res.status(200).json({ page, limit, totalPage, count, penghapusan });
     } catch (error) {
       res.status(400).json({ msg: "ERROR: " + error.message });
     }

@@ -4,9 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import intanlogo from "../assets/intanlogo.png";
 import InputComponents from "../components/InputComponents";
+import { LoadingContext } from "../context/Loading";
 import "../css/login_responsive.css";
 import { authStateReset, loginUser } from "../features/authSlice";
-import { LoadingContext } from "../context/Loading";
 
 const Login = () => {
   const [dataLogin, setDataLogin] = useState({ username: "", password: "" });

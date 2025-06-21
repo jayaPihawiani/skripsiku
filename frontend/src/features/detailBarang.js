@@ -19,7 +19,7 @@ export const getMerkBarang = createAsyncThunk(
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/merk?page=${inputQuery.page}&limit=${inputQuery.limit}&search=`
+        `${url}/merk?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -36,7 +36,7 @@ export const getSatuanBarang = createAsyncThunk(
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/satuan?page=${inputQuery.page}&limit=${inputQuery.limit}&search=`
+        `${url}/satuan?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -53,7 +53,7 @@ export const getKategoriBarang = createAsyncThunk(
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/kategori?page=${inputQuery.page}&limit=${inputQuery.limit}&search=`
+        `${url}/kategori?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {

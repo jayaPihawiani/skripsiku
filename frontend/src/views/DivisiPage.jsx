@@ -7,64 +7,75 @@ import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
-import { getBrgRusak } from "../features/barangRusak";
+import { getDataDivisi } from "../features/UserSlice";
 
-const KerusakanPage = () => {
+const DivisiPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const rusakState = useSelector((state) => state.brg_rusak);
-  const [dataBrgRusak, setDataBrgRusak] = useState([]);
-  const [dataBarang, setDataBarang] = useState([]);
+  const divisiState = useSelector((state) => state.user);
+  const [dataDivisi, setDataDivisi] = useState([]);
   const [show, setShow] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [inputKerusakan, setInputKerusakan] = useState({
+  const [inputDataDivisi, setInputDataDivisi] = useState({
+    name: "",
     desc: "",
-    qty: 0,
-    barangId: "",
   });
+
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
     search: "",
   });
   const { setLoading } = useContext(LoadingContext);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const handleClose = () => {
     setShow(false);
-    setInputKerusakan({ desc: "", qty: 0, barangId: "" });
+    setInputDataDivisi({
+      name: "",
+      desc: "",
+    });
   };
   const handleShow = () => setShow(true);
 
-  // FUNCTION
-  const getAllBarang = async () => {
-    try {
-      const response = await axios.get(`${url}/barang/all`);
-      if (response.status === 200) {
-        setDataBarang(response.data);
-      }
-    } catch (error) {
-      if (error) {
-        console.error(error);
-      }
-    }
+  //   FUNCTION
+
+  const deleteDivisi = async (id) => {
+    alert("DIHAPUS");
+    // try {
+    //   const response = await axios.delete(`${url}/merk/del/${id}`);
+    //   if (response.status === 200) {
+    //     setInputQuery({
+    //       ...inputQuery,
+    //       page: 0,
+    //     });
+    //     dispatch(getMerkBarang(inputQuery));
+    //     alert("Berhasil menghapus data.");
+    //   }
+    // } catch (error) {
+    //   console.error(error.response.data.msg);
+    // }
   };
 
-  const addDataKerusakan = async () => {
+  // TAMBAH DATA MERK
+  const createDivisi = async () => {
     try {
       setLoading(true);
-      const response = await axios.post(`${url}/rusak/create`, inputKerusakan);
+      const response = await axios.post(
+        `${url}/divisi/create`,
+        inputDataDivisi
+      );
 
       if (response.status === 201) {
-        alert("Berhasil menambah data kerusakan");
-        setInputKerusakan({ desc: "", qty: 0, barangId: "" });
-        dispatch(getBrgRusak(inputQuery));
-        getAllBarang();
+        dispatch(getDataDivisi(inputQuery));
         handleClose();
+        alert(response.data.msg);
       }
     } catch (error) {
       if (error.response) {
         alert(error.response.data.msg);
+        return;
       }
       console.error(error);
     } finally {
@@ -72,114 +83,66 @@ const KerusakanPage = () => {
     }
   };
 
-  const deleteDataKerusakan = async (id) => {
-    try {
-      const response = await axios.delete(`${url}/rusak/del/${id}`);
-      if (response.status === 200) {
-        alert("Berhasil menghapus data kerusakan.");
-        dispatch(getBrgRusak(inputQuery));
-        setInputQuery({ ...inputQuery, page: 0 });
-      }
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      }
-      console.error(error);
-    }
-  };
-
-  // HANDLE SEARCH
   const handleSearch = (e) => {
     e.preventDefault();
     setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
   };
 
-  // HANDLE PAGE CLICK
+  // PAGE CHANGE REACT PAGINATION
   const handlePageClick = ({ selected }) => {
-    setInputQuery({ ...inputQuery, page: selected });
+    setInputQuery({ ...inputQuery, page: selected, search: "" });
   };
 
-  // useEffect
   useEffect(() => {
-    dispatch(getBrgRusak(inputQuery));
-    getAllBarang();
-  }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
+    dispatch(getDataDivisi(inputQuery));
+  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
 
   useEffect(() => {
-    if (rusakState.data && rusakState.isSuccess) {
-      setDataBrgRusak(rusakState.data);
+    if (divisiState.divisi && divisiState.divisi.isSuccess) {
+      setDataDivisi(divisiState.divisi.data);
     }
-  }, [rusakState.data, rusakState.isSuccess]);
+  }, [divisiState.divisi.isSuccess, divisiState.divisi.data]);
 
-  // MAIN
+  //   MAIN
   return (
     <>
-      <h4>DATA KERUSAKAN INVENTARIS BARANG</h4>
+      <h4>DATA DIVISI USER</h4>
       <ModalComponent
-        handleSubmit={addDataKerusakan}
-        classStyle="mt-4"
-        btntTitle="Tambah Data"
+        classStyle={"mt-4"}
+        btntTitle="Tambah"
+        modalTitle="Tambah Data Divisi"
         show={show}
-        handleShow={handleShow}
         handleClose={handleClose}
-        modalTitle="Tambah Data Inventaris Barang Rusak"
+        handleShow={handleShow}
+        handleSubmit={createDivisi}
         inputField={
           <>
-            <p className="m-0">Nama Inventaris Barang</p>
-            <select
-              className="form-select"
-              onChange={(e) =>
-                setInputKerusakan({
-                  ...inputKerusakan,
-                  barangId: e.target.value,
-                })
-              }
-            >
-              <option value="">Pilih</option>
-              {dataBarang &&
-                dataBarang.map((item) => {
-                  return (
-                    <option value={item.id} key={item.id}>
-                      {item.name} - qty: {item.qty}
-                    </option>
-                  );
-                })}
-            </select>
-            <p className="m-0">Keterangan</p>
+            <p className="m-0">Nama Divisi</p>
             <InputComponents
-              type="text"
-              placeHolder="Keterangan"
               classStyle="w-100 p-2"
+              placeHolder="Nama Divisi"
               change={(e) =>
-                setInputKerusakan({
-                  ...inputKerusakan,
-                  desc: e.target.value,
-                })
+                setInputDataDivisi({ ...inputDataDivisi, name: e.target.value })
               }
             />
-            <p className="m-0">Jumlah Kerusakan</p>
+            <p className="m-0 mt-1">Keterangan</p>
             <InputComponents
-              type="number"
-              placeHolder="Jumlah"
               classStyle="w-100 p-2"
+              placeHolder="Keterangan"
               change={(e) =>
-                setInputKerusakan({
-                  ...inputKerusakan,
-                  qty: e.target.value,
-                })
+                setInputDataDivisi({ ...inputDataDivisi, desc: e.target.value })
               }
             />
           </>
         }
       />
-
       <div className="card me-4 mt-2 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
           <div className="w-100">
             <SearchBarComponent
               submit={handleSearch}
+              placeHolder="Cari data merk barang..."
               btnTitle="Cari"
-              placeHolder="Cari data inventaris barang rusak..."
               inputChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
@@ -202,24 +165,20 @@ const KerusakanPage = () => {
               <thead className="table-dark">
                 <tr>
                   <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Inventaris Barang</td>
-                  <td>Jumlah Rusak</td>
-                  <td>Sisa</td>
+                  <td>Nama</td>
                   <td>Keterangan</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
               <tbody>
-                {dataBrgRusak.brg_rusak &&
-                  dataBrgRusak.brg_rusak.map((item, index) => {
+                {dataDivisi.result &&
+                  dataDivisi.result.map((item, index) => {
                     return (
                       <tr key={item.id}>
                         <td>
-                          {index + 1 + inputQuery.page * inputQuery.limit}
+                          {index + 1 + inputQuery.limit * inputQuery.page}
                         </td>
-                        <td>{item.barang.name}</td>
-                        <td>{item.qty}</td>
-                        <td>{item.barang.qty}</td>
+                        <td>{item.name}</td>
                         <td>{item.desc}</td>
                         <td className="text-center">
                           <button
@@ -230,7 +189,7 @@ const KerusakanPage = () => {
                           </button>
                           <button
                             className="btn btn-danger ms-1"
-                            onClick={() => deleteDataKerusakan(item.id)}
+                            onClick={() => deleteDivisi(item.id)}
                           >
                             Hapus
                           </button>
@@ -240,27 +199,23 @@ const KerusakanPage = () => {
                   })}
               </tbody>
             </table>
-            {dataBrgRusak.brg_rusak && dataBrgRusak.brg_rusak.length === 0 && (
+            {dataDivisi.result && dataDivisi.result.length === 0 && (
               <p>Data tidak ditemukan!</p>
             )}
-            {dataBrgRusak.brg_rusak && (
+            {dataDivisi && (
               <p className="text-end">
-                Total row: <strong>{dataBrgRusak.count}</strong> page{" "}
-                <strong>
-                  {dataBrgRusak.count ? dataBrgRusak.page + 1 : 0}
-                </strong>{" "}
-                of <strong>{dataBrgRusak.totalPage}</strong>
+                Total row: <strong>{dataDivisi.count}</strong> page{" "}
+                <strong>{dataDivisi.count ? dataDivisi.page + 1 : 0}</strong> of{" "}
+                <strong>{dataDivisi.totalPage}</strong>
               </p>
             )}
-            <nav key={dataBrgRusak && dataBrgRusak.count}>
-              {dataBrgRusak && dataBrgRusak.totalPage > 0 && (
+            <nav key={(dataDivisi && dataDivisi.count) || 0}>
+              {dataDivisi && dataDivisi.totalPage > 0 && (
                 <ReactPaginate
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={
-                    dataBrgRusak.brg_rusak ? dataBrgRusak.totalPage : 0
-                  }
+                  pageCount={dataDivisi ? dataDivisi.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}
@@ -285,4 +240,4 @@ const KerusakanPage = () => {
   );
 };
 
-export default KerusakanPage;
+export default DivisiPage;

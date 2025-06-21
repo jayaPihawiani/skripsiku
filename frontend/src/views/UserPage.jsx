@@ -7,17 +7,25 @@ import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
-import { getMerkBarang } from "../features/detailBarang";
+import { getDataDivisi, getDataUser } from "../features/UserSlice";
 
-const MerkBarang = () => {
+const UserPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const detailBarang = useSelector((state) => state.detail_barang);
-  const [merkBarang, setMerkBarang] = useState([]);
+  const userState = useSelector((state) => state.user);
+  const [dataUser, setDataUser] = useState([]);
+  const [dataDivisi, setDataDivisi] = useState([]);
   const [show, setShow] = useState(false);
-  const [dataMerk, setDataMerk] = useState({ name: "", desc: "" });
+  const [inputDataUser, setInputDataUser] = useState({
+    nip: "",
+    username: "",
+    password: "",
+    divisi: "",
+    role: "",
+  });
+
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
@@ -28,23 +36,32 @@ const MerkBarang = () => {
 
   const handleClose = () => {
     setShow(false);
-    setDataMerk({ name: "", desc: "" });
+    setInputDataUser({
+      nip: "",
+      username: "",
+      password: "",
+      divisi: "",
+      role: "",
+    });
   };
   const handleShow = () => setShow(true);
 
-  // USE EFFECT
-  useEffect(() => {
-    dispatch(getMerkBarang(inputQuery));
-  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
-
-  useEffect(() => {
-    if (detailBarang.merk && detailBarang.isSuccess) {
-      setMerkBarang(detailBarang.merk.result);
+  //   FUNCTION
+  const getAllDivisi = async () => {
+    try {
+      const response = await axios.get(`${url}/divisi/all`);
+      if (response.status === 200) {
+        setDataDivisi(response.data);
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      }
+      console.error(error);
     }
-  }, [detailBarang.merk, detailBarang.isSuccess]);
+  };
 
-  // USE EFFECT
-  const deleteDataMerk = async (id) => {
+  const deleteUser = async (id) => {
     try {
       const response = await axios.delete(`${url}/merk/del/${id}`);
       if (response.status === 200) {
@@ -62,23 +79,26 @@ const MerkBarang = () => {
   };
 
   // TAMBAH DATA MERK
-  const createDataMerk = async () => {
-    if (!dataMerk.name || !dataMerk.desc) {
-      alert("Data ada yang kosong! Harap isi semua data!");
-      return;
-    }
+  const createUser = async () => {
+    // if (!dataMerk.name || !dataMerk.desc) {
+    //   alert("Data ada yang kosong! Harap isi semua data!");
+    //   return;
+    // }
 
     try {
       setLoading(true);
-      const response = await axios.post(`${url}/merk/create`, dataMerk);
+      const response = await axios.post(`${url}/user/create`, inputDataUser);
       if (response.status === 201) {
-        dispatch(getMerkBarang(inputQuery));
+        dispatch(getDataUser(inputQuery));
         handleClose();
-        alert("Berhasil menambah data merk.");
+        alert(response.data.msg);
       }
     } catch (error) {
-      console.error(error.response.data);
-      alert(error.response.data.msg);
+      if (error.response) {
+        alert(error.response.data.msg);
+        return;
+      }
+      console.error([error.message, error.code]);
     } finally {
       setLoading(false);
     }
@@ -91,34 +111,89 @@ const MerkBarang = () => {
 
   // PAGE CHANGE REACT PAGINATION
   const handlePageClick = ({ selected }) => {
-    setInputQuery({ ...inputQuery, page: selected });
+    setInputQuery({ ...inputQuery, page: selected, search: "" });
   };
 
+  useEffect(() => {
+    dispatch(getDataUser(inputQuery));
+    dispatch(getDataDivisi(inputQuery));
+    getAllDivisi();
+  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
+
+  useEffect(() => {
+    if (userState.user && userState.user.isSuccess) {
+      setDataUser(userState.user.data);
+    }
+  }, [userState.user.isSuccess, userState.user.data]);
+
+  //   MAIN
   return (
     <>
-      <h4>DATA MERK BARANG</h4>
+      <h4>DATA USER</h4>
       <ModalComponent
         classStyle={"mt-4"}
         btntTitle="Tambah"
-        modalTitle="Tambah Data Merk"
+        modalTitle="Tambah Data User"
         show={show}
         handleClose={handleClose}
         handleShow={handleShow}
-        handleSubmit={createDataMerk}
+        handleSubmit={createUser}
         inputField={
           <>
+            <p className="m-0">NIP Pegawai</p>
             <InputComponents
               classStyle="w-100 p-2"
-              placeHolder="Nama Merk"
-              change={(e) => setDataMerk({ ...dataMerk, name: e.target.value })}
-              val={dataMerk.name}
+              placeHolder="NIP"
+              change={(e) =>
+                setInputDataUser({ ...inputDataUser, nip: e.target.value })
+              }
+              val={inputDataUser.nip}
             />
+            <p className="m-0 mt-1">Username</p>
             <InputComponents
-              classStyle="w-100 p-2 mt-2"
-              placeHolder="Keterangan"
-              change={(e) => setDataMerk({ ...dataMerk, desc: e.target.value })}
-              val={dataMerk.desc}
+              classStyle="w-100 p-2"
+              placeHolder="Username"
+              change={(e) =>
+                setInputDataUser({ ...inputDataUser, username: e.target.value })
+              }
+              val={inputDataUser.username}
             />
+            <p className="m-0 mt-1">Password</p>
+            <InputComponents
+              classStyle="w-100 p-2"
+              placeHolder="Password"
+              change={(e) =>
+                setInputDataUser({ ...inputDataUser, password: e.target.value })
+              }
+              val={inputDataUser.password}
+            />
+            <p className="m-0 mt-1">Divisi</p>
+            <select
+              className="form-select"
+              onChange={(e) =>
+                setInputDataUser({ ...inputDataUser, divisi: e.target.value })
+              }
+            >
+              <option value="">Pilih Divisi User</option>
+              {dataDivisi.map((e) => {
+                return (
+                  <option value={e.id} key={e.id}>
+                    {e.name}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="m-0 mt-1">Role</p>
+            <select
+              className="form-select"
+              onChange={(e) =>
+                setInputDataUser({ ...inputDataUser, role: e.target.value })
+              }
+            >
+              <option value="">Pilih Role User</option>
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+            </select>
           </>
         }
       />
@@ -136,7 +211,7 @@ const MerkBarang = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ page: 0, limit: e.target.value })
+                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
               }
             >
               <option value={10}>10</option>
@@ -151,21 +226,25 @@ const MerkBarang = () => {
               <thead className="table-dark">
                 <tr>
                   <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Merk</td>
-                  <td>Keterangan</td>
+                  <td>NIP Pegawai</td>
+                  <td>Username</td>
+                  <td>Divisi</td>
+                  <td>Role</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
               <tbody>
-                {merkBarang &&
-                  merkBarang.map((item, index) => {
+                {dataUser.user &&
+                  dataUser.user.map((item, index) => {
                     return (
                       <tr key={item.id}>
                         <td>
-                          {index + 1 + inputQuery.page * inputQuery.limit}
+                          {index + 1 + inputQuery.limit * inputQuery.page}
                         </td>
-                        <td>{item.name}</td>
-                        <td>{item.desc}</td>
+                        <td>{item.nip}</td>
+                        <td>{item.username}</td>
+                        <td>{item.divisi_user.name}</td>
+                        <td>{item.role}</td>
                         <td className="text-center">
                           <button
                             className="btn btn-primary"
@@ -175,7 +254,7 @@ const MerkBarang = () => {
                           </button>
                           <button
                             className="btn btn-danger ms-1"
-                            onClick={() => deleteDataMerk(item.id)}
+                            onClick={() => deleteUser(item.id)}
                           >
                             Hapus
                           </button>
@@ -185,27 +264,23 @@ const MerkBarang = () => {
                   })}
               </tbody>
             </table>
-            {detailBarang.merk && detailBarang.merk.result.length === 0 && (
+            {dataUser.user && dataUser.user.length === 0 && (
               <p>Data tidak ditemukan!</p>
             )}
-            {detailBarang.merk && (
+            {dataUser && (
               <p className="text-end">
-                Total row: <strong>{detailBarang.merk.count}</strong> page{" "}
-                <strong>
-                  {detailBarang.merk.count ? detailBarang.merk.page + 1 : 0}
-                </strong>{" "}
-                of <strong>{detailBarang.merk.totalPage}</strong>
+                Total row: <strong>{dataUser.count}</strong> page{" "}
+                <strong>{dataUser.count ? dataUser.page + 1 : 0}</strong> of{" "}
+                <strong>{dataUser.totalPage}</strong>
               </p>
             )}
-            <nav key={(detailBarang.merk && detailBarang.merk.count) || 0}>
-              {detailBarang.merk && detailBarang.merk.totalPage > 0 && (
+            <nav key={(dataUser && dataUser.count) || 0}>
+              {dataUser && dataUser.totalPage > 0 && (
                 <ReactPaginate
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={
-                    detailBarang.merk ? detailBarang.merk.totalPage : 0
-                  }
+                  pageCount={dataUser ? dataUser.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}
@@ -230,4 +305,4 @@ const MerkBarang = () => {
   );
 };
 
-export default MerkBarang;
+export default UserPage;

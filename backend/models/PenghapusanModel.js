@@ -9,7 +9,7 @@ const Penghapusan = db.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    desc: DataTypes.STRING(50),
+    desc: DataTypes.STRING,
     qty: DataTypes.INTEGER,
     tgl_hapus: DataTypes.DATE,
     file: DataTypes.STRING,
