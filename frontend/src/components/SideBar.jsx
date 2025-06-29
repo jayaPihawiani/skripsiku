@@ -2,7 +2,6 @@ import React from "react";
 import {
   BsArrowsFullscreen,
   BsBoxArrowInDown,
-  BsBoxArrowRight,
   BsBoxArrowUp,
   BsBoxSeamFill,
   BsBuildingFill,
@@ -18,25 +17,12 @@ import {
   BsTrash3Fill,
   BsTruck,
 } from "react-icons/bs";
-import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import "../css/sidebar.css";
-import { authStateReset, logoutUser } from "../features/authSlice";
 
 const SideBar = ({ children }) => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const state = useSelector((state) => state.auth);
-
-  const handleLogout = async () => {
-    await dispatch(logoutUser());
-    if (state.isLogout) {
-      setTimeout(() => {
-        navigate("/login");
-      }, 1000);
-      dispatch(authStateReset());
-    }
-  };
 
   return (
     <React.Fragment>
@@ -122,7 +108,7 @@ const SideBar = ({ children }) => {
             {/* dropdown menu */}
             {/* menu */}
             <div className="collapse side-bar-style" id="menu-transaksi">
-              <Link to="/stock" className="nav-link">
+              <Link to="/masuk" className="nav-link">
                 <span className="icons">
                   <BsBoxArrowInDown />
                 </span>
@@ -204,13 +190,6 @@ const SideBar = ({ children }) => {
                 </Link>
               </>
             )}
-            {/* logout */}
-            <button to="/user" className="nav-link" onClick={handleLogout}>
-              <span className="icons">
-                <BsBoxArrowRight />
-              </span>
-              <span className="side-desc">Log out</span>
-            </button>
           </React.Fragment>
         </nav>
       </div>

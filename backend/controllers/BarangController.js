@@ -8,6 +8,7 @@ import Lokasi from "../models/LokasiModel.js";
 import Penghapusan from "../models/PenghapusanModel.js";
 import supabase from "../config/supabase/supabaseClient.js";
 import { Op } from "sequelize";
+import BarangMasuk from "../models/BarangMasuk.js";
 
 class BarangController {
   // ADD BARANG
@@ -63,30 +64,30 @@ class BarangController {
     const ext = `.${file.name.split(".").pop()}`;
 
     const fileName = `file_${Date.now()}${ext}`;
-    const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx"];
+    const fileType = [".jpg", ".jpeg", ".png"];
 
     if (!fileType.includes(ext.toLowerCase()))
       return res.status(400).json({ msg: "Format file tidak didukung!" });
 
-    const supabaseUpload = await supabase.storage
-      .from("product")
-      .upload(fileName, file.data, {
-        upsert: true,
-        contentType: file.mimetype,
-      });
-
-    if (supabaseUpload.error) {
-      return res.status(500).json({
-        err: "ERROR: Gagal mengunggah dokumen!",
-        stack: supabaseUpload.error.stack,
-        msg: supabaseUpload.error.message,
-      });
-    }
-
-    const url = supabase.storage.from("product").getPublicUrl(fileName)
-      .data.publicUrl;
-
     try {
+      const supabaseUpload = await supabase.storage
+        .from("product")
+        .upload(fileName, file.data, {
+          upsert: true,
+          contentType: file.mimetype,
+        });
+
+      if (supabaseUpload.error) {
+        return res.status(500).json({
+          err: "ERROR: Gagal mengunggah dokumen!",
+          stack: supabaseUpload.error.stack,
+          msg: supabaseUpload.error.message,
+        });
+      }
+
+      const url = supabase.storage.from("product").getPublicUrl(fileName)
+        .data.publicUrl;
+
       await Barang.create({
         name,
         desc,
@@ -108,7 +109,7 @@ class BarangController {
 
       res.status(201).json({ msg: "Berhasil menambah data barang." });
     } catch (error) {
-      res.status(500).json({ msg: "ERROR: " + error.message });
+      res.status(500).json({ msg: "ERROR: " + error });
     }
   };
 
@@ -149,6 +150,7 @@ class BarangController {
             ],
           },
           { model: BrgRusak, attributes: ["id", "qty", "desc"] },
+          { model: BarangMasuk },
         ],
         attributes: [
           "id",

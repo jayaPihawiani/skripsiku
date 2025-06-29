@@ -1,14 +1,19 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthAccessComponent from "./components/AuthAcessComponent";
+import DivisiEdit from "./components/DivisiEditComponent";
 import KategoriBarangEdit from "./components/KategoriBarangEdit";
+import LokasiEdit from "./components/LokasiEditComponent";
 import MerkBarangEdit from "./components/MerkBarangEdit";
+import NavBar from "./components/NavBar";
 import SatuanBarangEdit from "./components/SatuanBarangEdit";
 import SideBar from "./components/SideBar";
 import UserAuthComponent from "./components/UserAuthComponents";
+import UserEdit from "./components/UserEditComponent";
 import { LoadingProvider } from "./context/Loading";
 import Barang from "./views/Barang";
 import Dashboard from "./views/Dashboard";
+import DivisiPage from "./views/DivisiPage";
 import KategoriPage from "./views/KategoriPage";
 import KerusakanPage from "./views/KerusakanPage";
 import Login from "./views/Login";
@@ -16,9 +21,8 @@ import LokasiPage from "./views/LokasiPage";
 import MerkBarang from "./views/MerkBarang";
 import PenghapusanPage from "./views/PenghapusanPage";
 import SatuanBarang from "./views/SatuanBarang";
-import NavBar from "./components/NavBar";
 import UserPage from "./views/UserPage";
-import DivisiPage from "./views/DivisiPage";
+import BarangMasuk from "./views/BarangMasukPage";
 
 function App() {
   return (
@@ -86,10 +90,26 @@ function App() {
                         }
                       />
                       <Route
+                        path="/divisi/edit/:id"
+                        element={
+                          <AuthAccessComponent>
+                            <DivisiEdit />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
                         path="/lokasi"
                         element={
                           <AuthAccessComponent>
                             <LokasiPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/lokasi/edit/:id"
+                        element={
+                          <AuthAccessComponent>
+                            <LokasiEdit />
                           </AuthAccessComponent>
                         }
                       />
@@ -115,6 +135,22 @@ function App() {
                         element={
                           <AuthAccessComponent>
                             <UserPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/user/edit/:id"
+                        element={
+                          <AuthAccessComponent>
+                            <UserEdit />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/masuk"
+                        element={
+                          <AuthAccessComponent>
+                            <BarangMasuk />
                           </AuthAccessComponent>
                         }
                       />

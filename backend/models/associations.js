@@ -1,3 +1,4 @@
+import BarangMasuk from "./BarangMasuk.js";
 import Barang from "./BarangModel.js";
 import BrgRusak from "./BarangRusakModel.js";
 import Divisi from "./DivisiModel.js";
@@ -131,3 +132,15 @@ Penghapusan.belongsTo(Barang, {
   onUpdate: "CASCADE",
 });
 //
+
+// Barang masuk
+Barang.hasMany(BarangMasuk, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+BarangMasuk.belongsTo(Barang, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});

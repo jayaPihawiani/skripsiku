@@ -5,31 +5,32 @@ import { useNavigate, useParams } from "react-router-dom";
 import InputComponents from "./InputComponents";
 import ModalComponent from "./ModalComponent";
 
-const SatuanBarangEdit = () => {
+const LokasiEdit = () => {
   // variabel
-  const satuanId = useParams().id;
+  const lokasiId = useParams().id;
   const url = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  const [dataSatuan, setDataSatuan] = useState({});
-  const [inputdataSatuan, setInputdataSatuan] = useState({
-    name: dataSatuan.name,
+  const [dataLokasi, setDataLokasi] = useState({});
+  const [inputDataLokasi, setInputDataLokasi] = useState({
+    name: "",
     desc: "",
   });
 
-  // function
   const [show, setShow] = useState(false);
   const handleClose = () => {
     setShow(false);
   };
   const handleShow = () => setShow(true);
+  // function
 
+  // USE EFFECT
   useEffect(() => {
-    const getMerkById = async () => {
+    const getLokasiById = async () => {
       try {
-        const response = await axios.get(`${url}/satuan/${satuanId}`);
+        const response = await axios.get(`${url}/lokasi/${lokasiId}`);
         if (response.status === 200) {
-          setDataSatuan(response.data);
+          setDataLokasi(response.data);
         }
       } catch (error) {
         if (error.response) {
@@ -41,39 +42,35 @@ const SatuanBarangEdit = () => {
       }
     };
 
-    getMerkById();
+    getLokasiById();
   }, []);
 
   useEffect(() => {
-    if (dataSatuan && dataSatuan.name) {
-      setInputdataSatuan({
-        name: dataSatuan.name,
-        desc: dataSatuan.desc,
+    if (dataLokasi && dataLokasi.name) {
+      setInputDataLokasi({
+        name: dataLokasi.name,
+        desc: dataLokasi.desc,
       });
     }
-  }, [dataSatuan]);
+  }, [dataLokasi]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!inputdataSatuan.name || !inputdataSatuan.desc) {
-      alert("Data ada yang kosong! Harap isi semua data!");
-      return;
-    }
     try {
       const response = await axios.patch(
-        `${url}/satuan/update/${satuanId}`,
-        inputdataSatuan
+        `${url}/lokasi/update/${lokasiId}`,
+        inputDataLokasi
       );
       if (response.status === 200) {
-        alert("Berhasil update data satuan.");
-        navigate("/satuan");
+        alert("Berhasil update data lokasi.");
+        navigate("/lokasi");
       }
     } catch (error) {
       if (error.response) {
         alert(error.response.data.msg);
-        console.error(error.response.data.msg);
+        return;
       } else {
-        console.log("Gagal mendapatkan data!");
+        console.log(error);
       }
     }
   };
@@ -84,27 +81,33 @@ const SatuanBarangEdit = () => {
         className="back-icon mb-3"
         size={25}
         onClick={() => {
-          navigate("/satuan");
+          navigate("/lokasi");
         }}
       />
       <div className="card me-4">
         <div className="card-body">
-          <h2>Ubah Data Satuan</h2>
-          <form onSubmit={handleSubmit} className="d-flex flex-column">
+          <h2>Ubah Data Lokasi</h2>
+          <div className="d-flex flex-column">
             <InputComponents
-              placeHolder="Nama"
+              placeHolder=" Nama"
               classStyle="w-100 p-2"
-              val={inputdataSatuan.name ?? ""}
+              val={inputDataLokasi.name ?? ""}
               change={(e) =>
-                setInputdataSatuan({ ...inputdataSatuan, name: e.target.value })
+                setInputDataLokasi({
+                  ...inputDataLokasi,
+                  name: e.target.value,
+                })
               }
             />
             <InputComponents
               placeHolder="Keterangan"
               classStyle="w-100 p-2 mt-2"
-              val={inputdataSatuan.desc ?? ""}
+              val={inputDataLokasi.desc ?? ""}
               change={(e) =>
-                setInputdataSatuan({ ...inputdataSatuan, desc: e.target.value })
+                setInputDataLokasi({
+                  ...inputDataLokasi,
+                  desc: e.target.value,
+                })
               }
             />
             <span className="ms-auto mt-1">
@@ -116,14 +119,14 @@ const SatuanBarangEdit = () => {
                 btnType2="submit"
                 handleSubmit={handleSubmit}
                 modalTitle="KONFIRMASI"
-                inputField={<p>Yakin ingin mengubah data Satuan?</p>}
+                inputField={<p>Yakin ingin mengubah data Lokasi?</p>}
               />
             </span>
-          </form>
+          </div>
         </div>
       </div>
     </>
   );
 };
 
-export default SatuanBarangEdit;
+export default LokasiEdit;

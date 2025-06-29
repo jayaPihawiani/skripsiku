@@ -14,6 +14,7 @@ const PenghapusanPage = () => {
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const penghapusanState = useSelector((state) => state.penghapusan);
   const [dataPenghapusan, setDataPenghapusan] = useState([]);
   const [dataBarang, setDataBarang] = useState([]);
@@ -30,6 +31,7 @@ const PenghapusanPage = () => {
     limit: 10,
     search: "",
   });
+  const [searchQuery, setSearchQuery] = useState("");
   const { setLoading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
@@ -113,6 +115,34 @@ const PenghapusanPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // print laporan
+  const printLaporan = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${url}/print/hapus`, {
+        responseType: "blob",
+      });
+
+      const file = new Blob([response.data], { type: "application/pdf" });
+      const fileUrl = URL.createObjectURL(file);
+      window.open(fileUrl);
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // search
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
   };
 
   // useEffect
@@ -208,12 +238,18 @@ const PenghapusanPage = () => {
         }
       />
 
+      <button className="btn btn-primary mt-4 ms-1" onClick={printLaporan}>
+        {isLoading ? "Loading..." : " Cetak Laporan Penghapusan"}
+      </button>
+
       <div className="card me-4 mt-2 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
           <div className="w-100">
             <SearchBarComponent
               btnTitle="Cari"
               placeHolder="Cari data penghapusan inventaris barang..."
+              inputChange={(e) => setSearchQuery(e.target.value)}
+              submit={handleSearch}
             />
           </div>
           <div className="mt-3 me-3 d-flex">

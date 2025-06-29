@@ -42,20 +42,23 @@ const DivisiPage = () => {
   //   FUNCTION
 
   const deleteDivisi = async (id) => {
-    alert("DIHAPUS");
-    // try {
-    //   const response = await axios.delete(`${url}/merk/del/${id}`);
-    //   if (response.status === 200) {
-    //     setInputQuery({
-    //       ...inputQuery,
-    //       page: 0,
-    //     });
-    //     dispatch(getMerkBarang(inputQuery));
-    //     alert("Berhasil menghapus data.");
-    //   }
-    // } catch (error) {
-    //   console.error(error.response.data.msg);
-    // }
+    try {
+      const response = await axios.delete(`${url}/divisi/del/${id}`);
+      if (response.status === 200) {
+        setInputQuery({
+          ...inputQuery,
+          page: 0,
+        });
+        dispatch(getDataDivisi(inputQuery));
+        alert("Berhasil menghapus data divisi.");
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+        return;
+      }
+      console.error(error);
+    }
   };
 
   // TAMBAH DATA MERK

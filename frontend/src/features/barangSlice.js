@@ -9,6 +9,13 @@ const initState = {
   isError: false,
   isSuccess: false,
   message: "",
+  barang_masuk: {
+    data: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    message: "",
+  },
 };
 
 export const getDataBarang = createAsyncThunk(
@@ -17,6 +24,23 @@ export const getDataBarang = createAsyncThunk(
     try {
       const response = await axios.get(
         `${url}/barang?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+      );
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        const errMessage = error.response.data;
+        return thunkApi.rejectWithValue(errMessage);
+      }
+    }
+  }
+);
+
+export const getDataBarangMasuk = createAsyncThunk(
+  "masuk/getBarangMasuk",
+  async (inputQuery, thunkApi) => {
+    try {
+      const response = await axios.get(
+        `${url}/masuk?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -46,6 +70,20 @@ const barangSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
+      });
+    builder
+      .addCase(getDataBarangMasuk.pending, (state) => {
+        state.barang_masuk.isLoading = true;
+      })
+      .addCase(getDataBarangMasuk.fulfilled, (state, action) => {
+        state.barang_masuk.isLoading = false;
+        state.barang_masuk.isSuccess = true;
+        state.barang_masuk.data = action.payload;
+      })
+      .addCase(getDataBarangMasuk.rejected, (state, action) => {
+        state.barang_masuk.isLoading = false;
+        state.barang_masuk.isError = true;
+        state.barang_masuk.message = action.payload;
       });
   },
 });

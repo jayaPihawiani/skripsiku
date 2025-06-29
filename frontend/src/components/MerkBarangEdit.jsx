@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
-import InputComponents from "./InputComponents";
-import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import InputComponents from "./InputComponents";
+import ModalComponent from "./ModalComponent";
+import { BsArrowLeft } from "react-icons/bs";
+import "../css/style.css";
 
 const MerkBarangEdit = () => {
   // variabel
@@ -14,7 +17,14 @@ const MerkBarangEdit = () => {
     name: "",
     desc: "",
   });
+
   // function
+  const [show, setShow] = useState(false);
+  const handleClose = () => {
+    setShow(false);
+  };
+  const handleShow = () => setShow(true);
+
   useEffect(() => {
     const getMerkById = async () => {
       try {
@@ -66,32 +76,50 @@ const MerkBarangEdit = () => {
   };
 
   return (
-    <div className="card me-4">
-      <div className="card-body">
-        <h2>Ubah Data Merk</h2>
-        <form onSubmit={handleSubmit} className="d-flex flex-column">
-          <InputComponents
-            placeHolder=" Nama"
-            classStyle="w-100 p-2"
-            val={inputDataMerk.name ?? ""}
-            change={(e) =>
-              setInputDataMerk({ ...inputDataMerk, name: e.target.value })
-            }
-          />
-          <InputComponents
-            placeHolder="Keterangan"
-            classStyle="w-100 p-2 mt-2"
-            val={inputDataMerk.desc ?? ""}
-            change={(e) =>
-              setInputDataMerk({ ...inputDataMerk, desc: e.target.value })
-            }
-          />
-          <button className="btn btn-primary ms-auto mt-2" type="submit">
-            Ubah
-          </button>
-        </form>
+    <>
+      <BsArrowLeft
+        className="back-icon"
+        size={25}
+        onClick={() => {
+          navigate("/merk");
+        }}
+      />
+      <div className="card me-4 mt-3">
+        <div className="card-body">
+          <h2>Ubah Data Merk</h2>
+          <form onSubmit={handleSubmit} className="d-flex flex-column">
+            <InputComponents
+              placeHolder=" Nama"
+              classStyle="w-100 p-2"
+              val={inputDataMerk.name ?? ""}
+              change={(e) =>
+                setInputDataMerk({ ...inputDataMerk, name: e.target.value })
+              }
+            />
+            <InputComponents
+              placeHolder="Keterangan"
+              classStyle="w-100 p-2 mt-2"
+              val={inputDataMerk.desc ?? ""}
+              change={(e) =>
+                setInputDataMerk({ ...inputDataMerk, desc: e.target.value })
+              }
+            />
+            <span className="ms-auto mt-1">
+              <ModalComponent
+                show={show}
+                handleClose={handleClose}
+                handleShow={handleShow}
+                btntTitle="Ubah"
+                btnType2="submit"
+                handleSubmit={handleSubmit}
+                modalTitle="KONFIRMASI"
+                inputField={<p>Yakin ingin mengubah data Merk?</p>}
+              />
+            </span>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

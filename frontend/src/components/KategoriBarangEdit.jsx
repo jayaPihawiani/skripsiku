@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import InputComponents from "./InputComponents";
-import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import InputComponents from "./InputComponents";
+import ModalComponent from "./ModalComponent";
+import { BsArrowLeft } from "react-icons/bs";
 
 const KategoriBarangEdit = () => {
   // variabel
@@ -14,7 +16,14 @@ const KategoriBarangEdit = () => {
     name: "",
     desc: "",
   });
+
   // function
+  const [show, setShow] = useState(false);
+  const handleClose = () => {
+    setShow(false);
+  };
+  const handleShow = () => setShow(true);
+
   useEffect(() => {
     const getKategoriById = async () => {
       try {
@@ -66,38 +75,56 @@ const KategoriBarangEdit = () => {
   };
 
   return (
-    <div className="card me-4">
-      <div className="card-body">
-        <h2>Ubah Data Kategori</h2>
-        <form onSubmit={handleSubmit} className="d-flex flex-column">
-          <InputComponents
-            placeHolder=" Nama"
-            classStyle="w-100 p-2"
-            val={inputDataKategori.name ?? ""}
-            change={(e) =>
-              setInputDataKategori({
-                ...inputDataKategori,
-                name: e.target.value,
-              })
-            }
-          />
-          <InputComponents
-            placeHolder="Keterangan"
-            classStyle="w-100 p-2 mt-2"
-            val={inputDataKategori.desc ?? ""}
-            change={(e) =>
-              setInputDataKategori({
-                ...inputDataKategori,
-                desc: e.target.value,
-              })
-            }
-          />
-          <button className="btn btn-primary ms-auto mt-2" type="submit">
-            Ubah
-          </button>
-        </form>
+    <>
+      <BsArrowLeft
+        className="back-icon mb-3"
+        size={25}
+        onClick={() => {
+          navigate("/kategori");
+        }}
+      />
+      <div className="card me-4">
+        <div className="card-body">
+          <h2>Ubah Data Kategori</h2>
+          <form onSubmit={handleSubmit} className="d-flex flex-column">
+            <InputComponents
+              placeHolder=" Nama"
+              classStyle="w-100 p-2"
+              val={inputDataKategori.name ?? ""}
+              change={(e) =>
+                setInputDataKategori({
+                  ...inputDataKategori,
+                  name: e.target.value,
+                })
+              }
+            />
+            <InputComponents
+              placeHolder="Keterangan"
+              classStyle="w-100 p-2 mt-2"
+              val={inputDataKategori.desc ?? ""}
+              change={(e) =>
+                setInputDataKategori({
+                  ...inputDataKategori,
+                  desc: e.target.value,
+                })
+              }
+            />
+            <span className="ms-auto mt-1">
+              <ModalComponent
+                show={show}
+                handleClose={handleClose}
+                handleShow={handleShow}
+                btntTitle="Ubah"
+                btnType2="submit"
+                handleSubmit={handleSubmit}
+                modalTitle="KONFIRMASI"
+                inputField={<p>Yakin ingin mengubah data Kategori?</p>}
+              />
+            </span>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

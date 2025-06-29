@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>laporan</title>
+    <!-- bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+      crossorigin="anonymous"
+    />
+
+    <link rel="stylesheet" href="<%= url %>/css/style.css" />
+  </head>
+  <body>
+    <div class="container-fluid text-center">
+      <div class="d-flex align-items-center justify-content-center">
+        <img
+          src="<%= url %>/image/intanbanjar_logo.png"
+          alt="intan_logo"
+          width="50"
+        />
+        <span class="ms-3"
+          ><h4 style="font-size: 14pt; margin: 0px">
+            PT. AIR MINUM INTAN BANJAR (PERSERODA)
+          </h4>
+          <p style="font-size: 12px; margin: 0px">
+            Jl. P. Hidayatullah No.24 Telp. (0511) 4772061, 4782004 Banjarbaru
+            70711 Kalsel
+          </p>
+          <h4 style="font-size: 12pt; margin: 0px">BANJARBARU</h4>
+        </span>
+      </div>
+      <div
+        style="width: 100%; border: 0.5px solid #000; margin-block: 12px"
+      ></div>
+      <div class="d-flex">
+        <h5 style="font-size: 12px">DATA STOK INVENTARIS BARANG</h5>
+      </div>
+      <table>
+        <tr>
+          <th>No</th>
+          <th>Nama Inventaris</th>
+          <th>Keterangan</th>
+          <th>Jumlah</th>
+          <th>Tanggal Beli</th>
+          <th>Harga</th>
+          <th>Merk</th>
+          <th>Foto</th>
+        </tr>
+        <tbody>
+          <% response.forEach((e, index )=> {%>
+          <tr>
+            <td><%= index+1 %></td>
+            <td><%= e.name%></td>
+            <td><%= e.desc%></td>
+            <td><%= e.qty%></td>
+            <td>
+              <%= new Date(e.tgl_beli).toLocaleDateString("id-ID", { day:
+              "numeric", month: "long", year: "numeric" }) %>
+            </td>
+            <td><%= e.harga%></td>
+            <td><%= e.merk_brg ? e.merk_brg.name : "-"%></td>
+            <td>
+              <% if (e.fotoBase64) { %>
+              <img src="<%= e.fotoBase64 %>" alt="foto" width="80" />
+              <% } else { %> - <% } %>
+            </td>
+          </tr>
+          <%}) %>
+        </tbody>
+      </table>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

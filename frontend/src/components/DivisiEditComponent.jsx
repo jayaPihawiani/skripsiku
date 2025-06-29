@@ -1,19 +1,19 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { BsArrowLeft } from "react-icons/bs";
 import { useNavigate, useParams } from "react-router-dom";
 import InputComponents from "./InputComponents";
 import ModalComponent from "./ModalComponent";
+import { BsArrowLeft } from "react-icons/bs";
 
-const SatuanBarangEdit = () => {
+const DivisiEdit = () => {
   // variabel
-  const satuanId = useParams().id;
+  const divisiId = useParams().id;
   const url = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  const [dataSatuan, setDataSatuan] = useState({});
-  const [inputdataSatuan, setInputdataSatuan] = useState({
-    name: dataSatuan.name,
+  const [dataDivisi, setDataDivisi] = useState({});
+  const [inputdataDivisi, setInputdataDivisi] = useState({
+    name: "",
     desc: "",
   });
 
@@ -24,12 +24,13 @@ const SatuanBarangEdit = () => {
   };
   const handleShow = () => setShow(true);
 
+  // USE EFFECT
   useEffect(() => {
-    const getMerkById = async () => {
+    const getDivisiById = async () => {
       try {
-        const response = await axios.get(`${url}/satuan/${satuanId}`);
+        const response = await axios.get(`${url}/divisi/${divisiId}`);
         if (response.status === 200) {
-          setDataSatuan(response.data);
+          setDataDivisi(response.data);
         }
       } catch (error) {
         if (error.response) {
@@ -41,39 +42,35 @@ const SatuanBarangEdit = () => {
       }
     };
 
-    getMerkById();
+    getDivisiById();
   }, []);
 
   useEffect(() => {
-    if (dataSatuan && dataSatuan.name) {
-      setInputdataSatuan({
-        name: dataSatuan.name,
-        desc: dataSatuan.desc,
+    if (dataDivisi && dataDivisi.name) {
+      setInputdataDivisi({
+        name: dataDivisi.name,
+        desc: dataDivisi.desc,
       });
     }
-  }, [dataSatuan]);
+  }, [dataDivisi]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!inputdataSatuan.name || !inputdataSatuan.desc) {
-      alert("Data ada yang kosong! Harap isi semua data!");
-      return;
-    }
     try {
       const response = await axios.patch(
-        `${url}/satuan/update/${satuanId}`,
-        inputdataSatuan
+        `${url}/divisi/update/${divisiId}`,
+        inputdataDivisi
       );
       if (response.status === 200) {
-        alert("Berhasil update data satuan.");
-        navigate("/satuan");
+        alert("Berhasil update data divisi.");
+        navigate("/divisi");
       }
     } catch (error) {
       if (error.response) {
         alert(error.response.data.msg);
-        console.error(error.response.data.msg);
+        return;
       } else {
-        console.log("Gagal mendapatkan data!");
+        console.log(error);
       }
     }
   };
@@ -84,27 +81,33 @@ const SatuanBarangEdit = () => {
         className="back-icon mb-3"
         size={25}
         onClick={() => {
-          navigate("/satuan");
+          navigate("/divisi");
         }}
       />
       <div className="card me-4">
         <div className="card-body">
-          <h2>Ubah Data Satuan</h2>
-          <form onSubmit={handleSubmit} className="d-flex flex-column">
+          <h2>Ubah Data Divisi</h2>
+          <div className="d-flex flex-column">
             <InputComponents
-              placeHolder="Nama"
+              placeHolder=" Nama"
               classStyle="w-100 p-2"
-              val={inputdataSatuan.name ?? ""}
+              val={inputdataDivisi.name ?? ""}
               change={(e) =>
-                setInputdataSatuan({ ...inputdataSatuan, name: e.target.value })
+                setInputdataDivisi({
+                  ...inputdataDivisi,
+                  name: e.target.value,
+                })
               }
             />
             <InputComponents
               placeHolder="Keterangan"
               classStyle="w-100 p-2 mt-2"
-              val={inputdataSatuan.desc ?? ""}
+              val={inputdataDivisi.desc ?? ""}
               change={(e) =>
-                setInputdataSatuan({ ...inputdataSatuan, desc: e.target.value })
+                setInputdataDivisi({
+                  ...inputdataDivisi,
+                  desc: e.target.value,
+                })
               }
             />
             <span className="ms-auto mt-1">
@@ -116,14 +119,14 @@ const SatuanBarangEdit = () => {
                 btnType2="submit"
                 handleSubmit={handleSubmit}
                 modalTitle="KONFIRMASI"
-                inputField={<p>Yakin ingin mengubah data Satuan?</p>}
+                inputField={<p>Yakin ingin mengubah data Divisi?</p>}
               />
             </span>
-          </form>
+          </div>
         </div>
       </div>
     </>
   );
 };
 
-export default SatuanBarangEdit;
+export default DivisiEdit;

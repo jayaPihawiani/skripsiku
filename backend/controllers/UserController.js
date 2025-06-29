@@ -1,7 +1,7 @@
-import User from "../models/UserModels.js";
-import Divisi from "../models/DivisiModel.js";
 import argon2 from "argon2";
-import { Op } from "sequelize";
+import { Op, UniqueConstraintError } from "sequelize";
+import Divisi from "../models/DivisiModel.js";
+import User from "../models/UserModels.js";
 
 class UserController {
   // CREATE USER
@@ -97,6 +97,53 @@ class UserController {
 
       res.status(200).json({ msg: "Berhasil menghapus akun user!" });
     } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  updateDataUser = async (req, res) => {
+    const { username, divisi, password, confirmPassword } = req.body;
+    let isDivisiNull;
+    try {
+      const user = await User.findByPk(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({ msg: "Data user tidak ditemukan!" });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({
+          msg: "Password terlalu pendek! Password panjang minimal 8 karakter!",
+        });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({ msg: "Konfirmasi password salah!" });
+      }
+
+      if (!isDivisiNull) {
+        isDivisiNull = user.divisi;
+      }
+
+      const hashedPassword = await argon2.hash(password);
+
+      await User.update(
+        {
+          username,
+          password: hashedPassword,
+          divisi: !divisi ? isDivisiNull : divisi,
+        },
+        { where: { id: user.id } }
+      );
+
+      res.status(200).json({ msg: "Berhasil mengubah data akun user." });
+    } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        return res
+          .status(400)
+          .json({ msg: "Akun dengan username ini sudah digunakan!" });
+      }
+
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
   };

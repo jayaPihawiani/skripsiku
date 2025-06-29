@@ -29,7 +29,7 @@ const KerusakanPage = () => {
     limit: 10,
     search: "",
   });
-  const { setLoading } = useContext(LoadingContext);
+  const { setLoading, loading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
     setInputKerusakan({ desc: "", qty: 0, barangId: "" });
@@ -88,6 +88,28 @@ const KerusakanPage = () => {
     }
   };
 
+  // print laporan
+  const printLaporan = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${url}/print/rusak`, {
+        responseType: "blob",
+      });
+
+      const file = new Blob([response.data], { type: "application/pdf" });
+      const fileUrl = URL.createObjectURL(file);
+      window.open(fileUrl);
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // HANDLE SEARCH
   const handleSearch = (e) => {
     e.preventDefault();
@@ -115,63 +137,69 @@ const KerusakanPage = () => {
   return (
     <>
       <h4>DATA KERUSAKAN INVENTARIS BARANG</h4>
-      <ModalComponent
-        handleSubmit={addDataKerusakan}
-        classStyle="mt-4"
-        btntTitle="Tambah Data"
-        show={show}
-        handleShow={handleShow}
-        handleClose={handleClose}
-        modalTitle="Tambah Data Inventaris Barang Rusak"
-        inputField={
-          <>
-            <p className="m-0">Nama Inventaris Barang</p>
-            <select
-              className="form-select"
-              onChange={(e) =>
-                setInputKerusakan({
-                  ...inputKerusakan,
-                  barangId: e.target.value,
-                })
-              }
-            >
-              <option value="">Pilih</option>
-              {dataBarang &&
-                dataBarang.map((item) => {
-                  return (
-                    <option value={item.id} key={item.id}>
-                      {item.name} - qty: {item.qty}
-                    </option>
-                  );
-                })}
-            </select>
-            <p className="m-0">Keterangan</p>
-            <InputComponents
-              type="text"
-              placeHolder="Keterangan"
-              classStyle="w-100 p-2"
-              change={(e) =>
-                setInputKerusakan({
-                  ...inputKerusakan,
-                  desc: e.target.value,
-                })
-              }
-            />
-            <p className="m-0">Jumlah Kerusakan</p>
-            <InputComponents
-              type="number"
-              placeHolder="Jumlah"
-              classStyle="w-100 p-2"
-              change={(e) =>
-                setInputKerusakan({
-                  ...inputKerusakan,
-                  qty: e.target.value,
-                })
-              }
-            />
-          </>
-        }
-      />
+      <div className="">
+        <ModalComponent
+          handleSubmit={addDataKerusakan}
+          classStyle="mt-4"
+          btntTitle="Tambah Data"
+          show={show}
+          handleShow={handleShow}
+          handleClose={handleClose}
+          modalTitle="Tambah Data Inventaris Barang Rusak"
+          inputField={
+            <>
+              <p className="m-0">Nama Inventaris Barang</p>
+              <select
+                className="form-select"
+                onChange={(e) =>
+                  setInputKerusakan({
+                    ...inputKerusakan,
+                    barangId: e.target.value,
+                  })
+                }
+              >
+                <option value="">Pilih</option>
+                {dataBarang &&
+                  dataBarang.map((item) => {
+                    return (
+                      <option value={item.id} key={item.id}>
+                        {item.name} - qty: {item.qty}
+                      </option>
+                    );
+                  })}
+              </select>
+              <p className="mt-2 m-0">Sebab Kerusakan</p>
+              <InputComponents
+                type="text"
+                placeHolder="Sebab Kerusakan  "
+                classStyle="w-100 p-2"
+                change={(e) =>
+                  setInputKerusakan({
+                    ...inputKerusakan,
+                    desc: e.target.value,
+                  })
+                }
+              />
+              <p className="mt-2 m-0">Jumlah Kerusakan</p>
+              <InputComponents
+                type="number"
+                placeHolder="Jumlah"
+                classStyle="w-100 p-2"
+                change={(e) =>
+                  setInputKerusakan({
+                    ...inputKerusakan,
+                    qty: e.target.value,
+                  })
+                }
+              />
+            </>
+          }
+        />
+
+        <button className="btn btn-primary ms-1 mt-4" onClick={printLaporan}>
+          {loading ? "Loading..." : "Cetak Laporan Kerusakan"}
+        </button>
+      </div>
 
       <div className="card me-4 mt-2 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
@@ -205,7 +233,7 @@ const KerusakanPage = () => {
                   <td>Nama Inventaris Barang</td>
                   <td>Jumlah Rusak</td>
                   <td>Sisa</td>
-                  <td>Keterangan</td>
+                  <td>Sebab Kerusakan</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>

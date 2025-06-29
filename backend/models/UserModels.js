@@ -10,7 +10,10 @@ const User = db.define(
       primaryKey: true,
     },
     nip: DataTypes.STRING(50),
-    username: DataTypes.STRING(50),
+    username: {
+      type: DataTypes.STRING(50),
+      unique: true,
+    },
     password: DataTypes.STRING,
     divisi: {
       type: DataTypes.UUID,

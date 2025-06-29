@@ -7,6 +7,7 @@ import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
 import { getDataBarang } from "../features/barangSlice";
+import DownloadPdfBButton from "../components/Laporan/ButtonDownloadPdf";
 
 const Barang = () => {
   // VARIABEL
@@ -19,7 +20,7 @@ const Barang = () => {
   const [merkBarang, setMerkBarang] = useState([]);
   const [fileImage, setFileImage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const { setLoading } = useContext(LoadingContext);
+  const { setLoading, loading } = useContext(LoadingContext);
   const [inputDataBarang, setInputDataBarang] = useState({
     name: "",
     desc: "",
@@ -161,6 +162,28 @@ const Barang = () => {
         alert(error.response.data.msg);
       }
       console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // print laporan
+  const printLaporan = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${url}/print/barang`, {
+        responseType: "blob",
+      });
+
+      const file = new Blob([response.data], { type: "application/pdf" });
+      const fileUrl = URL.createObjectURL(file);
+      window.open(fileUrl);
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
     } finally {
       setLoading(false);
     }
@@ -354,7 +377,10 @@ const Barang = () => {
               </div>
             }
           />
-          <button className="btn btn-primary ms-1">Cetak Laporan</button>
+          <button className="btn btn-primary ms-1" onClick={printLaporan}>
+            {loading ? "Loading..." : "Cetak Laporan"}
+          </button>
+          {/* <DownloadPdfBButton dataBarang={newBarang.barang} /> */}
         </div>
       )}
       <div className="card shadow-lg mb-4 mt-4 w-100">

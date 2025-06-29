@@ -1,0 +1,19 @@
+:root {
+  margin: 0px;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+  font-size: 12pt;
+}
+
+table {
+  width: 100%;
+  font-size: 11pt;
+  border: 1px solid #000;
+}
+
+table th,
+table td {
+  border: 0.5px solid #000;
+}
