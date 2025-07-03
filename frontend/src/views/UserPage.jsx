@@ -118,6 +118,7 @@ const UserPage = () => {
     dispatch(getDataUser(inputQuery));
     dispatch(getDataDivisi(inputQuery));
     getAllDivisi();
+    // dispatch(userInfo());
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
 
   useEffect(() => {
@@ -243,7 +244,7 @@ const UserPage = () => {
                         </td>
                         <td>{item.nip}</td>
                         <td>{item.username}</td>
-                        <td>{item.divisi_user.name}</td>
+                        <td>{item.divisi_user?.name ?? "-"}</td>
                         <td>{item.role}</td>
                         <td className="text-center">
                           <button

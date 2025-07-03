@@ -11,18 +11,21 @@ import SideBar from "./components/SideBar";
 import UserAuthComponent from "./components/UserAuthComponents";
 import UserEdit from "./components/UserEditComponent";
 import { LoadingProvider } from "./context/Loading";
-import Barang from "./views/Barang";
 import Dashboard from "./views/Dashboard";
+import DistribusiPage from "./views/DistribusiPage";
 import DivisiPage from "./views/DivisiPage";
-import KategoriPage from "./views/KategoriPage";
-import KerusakanPage from "./views/KerusakanPage";
 import Login from "./views/Login";
 import LokasiPage from "./views/LokasiPage";
-import MerkBarang from "./views/MerkBarang";
-import PenghapusanPage from "./views/PenghapusanPage";
-import SatuanBarang from "./views/SatuanBarang";
+import Barang from "./views/master_barang/Barang";
+import KategoriPage from "./views/master_barang/KategoriPage";
+import MerkBarang from "./views/master_barang/MerkBarang";
+import SatuanBarang from "./views/master_barang/SatuanBarang";
+import PermintaanPage from "./views/PermintaanPage";
+import BarangMasuk from "./views/transaksi/BarangMasukPage";
+import KerusakanPage from "./views/transaksi/KerusakanPage";
+import Pemindahan from "./views/transaksi/PemindahanPage";
+import PenghapusanPage from "./views/transaksi/PenghapusanPage";
 import UserPage from "./views/UserPage";
-import BarangMasuk from "./views/BarangMasukPage";
 
 function App() {
   return (
@@ -146,14 +149,10 @@ function App() {
                           </AuthAccessComponent>
                         }
                       />
-                      <Route
-                        path="/masuk"
-                        element={
-                          <AuthAccessComponent>
-                            <BarangMasuk />
-                          </AuthAccessComponent>
-                        }
-                      />
+                      <Route path="/masuk" element={<BarangMasuk />} />
+                      <Route path="/pindah" element={<Pemindahan />} />
+                      <Route path="/permintaan" element={<PermintaanPage />} />
+                      <Route path="/distribusi" element={<DistribusiPage />} />
                     </Routes>
                   </UserAuthComponent>
                 </SideBar>

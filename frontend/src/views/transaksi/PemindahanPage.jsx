@@ -2,26 +2,32 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getDataBarangMasuk } from "../features/barangSlice";
+import { useNavigate } from "react-router-dom";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getDataPemindahan } from "../../features/barangSlice";
+import { getDataLokasi } from "../../features/detailBarang";
 
-const BarangMasuk = () => {
+const Pemindahan = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [dataLokasi, setDataLokasi] = useState([]);
   const [dataBarang, setDataBarang] = useState([]);
-  const barangMasuk = useSelector((state) => state.barang.barang_masuk);
+  const barangPindah = useSelector((state) => state.barang.pemindahan);
   const user = useSelector((state) => state.auth);
   const [searchQuery, setSearchQuery] = useState("");
-  const { setLoading, loading } = useContext(LoadingContext);
-  const [inputBrgMasuk, setInputBrgMasuk] = useState({
+  const { setLoading } = useContext(LoadingContext);
+  const [inputDataPindah, setInputDataPindah] = useState({
     barangId: "",
     qty: 0,
     desc: "",
-    tgl_masuk: "",
+    from: "",
+    to: "",
+    tgl_pindah: "",
   });
 
   const [inputQuery, setInputQuery] = useState({
@@ -29,39 +35,45 @@ const BarangMasuk = () => {
     limit: 10,
     search: "",
   });
-  const [brgMasuk, setBrgMasuk] = useState([]);
+  const [brgPindah, setBrgPindah] = useState([]);
   const [show, setShow] = useState(false);
   const handleClose = () => {
     setShow(false);
-    setInputBrgMasuk({
+    setInputDataPindah({
       barangId: "",
       qty: 0,
       desc: "",
-      tgl_masuk: "",
+      from: "",
+      to: "",
+      tgl_pindah: "",
     });
   };
   const handleShow = () => setShow(true);
 
   // FUNTION
-  const getAllBarang = async () => {
+  const getAllBarangLokasi = async () => {
     try {
       const response = await axios.get(`${url}/barang/all`);
+      const lokasi = await axios.get(`${url}/lokasi/all`);
       if (response.status === 200) {
         setDataBarang(response.data);
+        setDataLokasi(lokasi.data);
       }
     } catch (error) {
-      if (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
         console.error(error);
       }
     }
   };
 
-  const deleteDataMasuk = async (id) => {
+  const deleteDataPindah = async (id) => {
     try {
-      const response = await axios.delete(`${url}/masuk/del/${id}`);
+      const response = await axios.delete(`${url}/pindah/del/${id}`);
       if (response.status === 200) {
         alert(response.data.msg);
-        dispatch(getDataBarangMasuk(inputQuery));
+        dispatch(getDataPemindahan(inputQuery));
       }
     } catch (error) {
       if (error.response) {
@@ -77,13 +89,18 @@ const BarangMasuk = () => {
     setInputQuery({ ...inputQuery, page: 0, search: searchQuery });
   };
 
-  const addBarang = async () => {
+  const addBarangPindah = async () => {
     try {
-      const response = await axios.post(`${url}/masuk/create`, inputBrgMasuk);
-
+      setLoading(true);
+      const response = await axios.post(
+        `${url}/pindah/create`,
+        inputDataPindah
+      );
       if (response.status === 201) {
         alert(response.data.msg);
-        dispatch(getDataBarangMasuk(inputQuery));
+        dispatch(getDataPemindahan(inputQuery));
+        getAllBarangLokasi();
+
         handleClose();
       }
     } catch (error) {
@@ -92,6 +109,8 @@ const BarangMasuk = () => {
       } else {
         console.error(error);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,28 +121,28 @@ const BarangMasuk = () => {
 
   // USEEFFECT
   useEffect(() => {
-    dispatch(getDataBarangMasuk(inputQuery));
-    getAllBarang();
-  }, [dispatch, inputQuery]);
+    dispatch(getDataPemindahan(inputQuery));
+    getAllBarangLokasi();
+  }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
-    if (barangMasuk.data) {
-      setBrgMasuk(barangMasuk.data);
+    if (barangPindah.data) {
+      setBrgPindah(barangPindah.data);
     }
-  }, [barangMasuk.data]);
+  }, [barangPindah.data, barangPindah.isSuccess]);
 
   // MAIN
   return (
     <div className="w-100 pe-3">
-      <h4>DATA BARANG MASUK</h4>
-      {user.data && user.data.role === "admin" && (
-        <div className="mt-4">
+      <h4>DATA PEMINDAHAN INVENTARIS</h4>
+      <div className="mt-4  ">
+        {user.data && user.data.role === "admin" && (
           <ModalComponent
             btntTitle="Tambah"
             show={show}
             handleClose={handleClose}
             handleShow={handleShow}
-            handleSubmit={addBarang}
+            handleSubmit={addBarangPindah}
             modalTitle="Tambah Data Barang Masuk"
             inputField={
               <>
@@ -131,14 +150,52 @@ const BarangMasuk = () => {
                 <select
                   className="form-select"
                   onChange={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
+                    setInputDataPindah({
+                      ...inputDataPindah,
                       barangId: e.target.value,
                     })
                   }
                 >
                   <option value="">Barang</option>
                   {dataBarang.map((e) => {
+                    return (
+                      <option value={e.id} key={e.id}>
+                        {e.name} - stok {e.qty}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="m-0 mt-1">Asal Barang</p>
+                <select
+                  className="form-select"
+                  onChange={(e) => {
+                    setInputDataPindah({
+                      ...inputDataPindah,
+                      from: e.target.value,
+                    });
+                  }}
+                >
+                  <option value="">Pilih Asal Barang</option>
+                  {dataLokasi.map((e) => {
+                    return (
+                      <option value={e.id} key={e.id}>
+                        {e.name}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="m-0 mt-1">Tujuan Pindah</p>
+                <select
+                  className="form-select"
+                  onChange={(e) => {
+                    setInputDataPindah({
+                      ...inputDataPindah,
+                      to: e.target.value,
+                    });
+                  }}
+                >
+                  <option value="">Pilih Tujuan Barang</option>
+                  {dataLokasi.map((e) => {
                     return (
                       <option value={e.id} key={e.id}>
                         {e.name}
@@ -152,8 +209,8 @@ const BarangMasuk = () => {
                   classStyle="w-100 p-2"
                   placeHolder="Jumlah"
                   change={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
+                    setInputDataPindah({
+                      ...inputDataPindah,
                       qty: e.target.value,
                     })
                   }
@@ -164,35 +221,39 @@ const BarangMasuk = () => {
                   classStyle="w-100 p-2"
                   placeHolder="Keterangan"
                   change={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
+                    setInputDataPindah({
+                      ...inputDataPindah,
                       desc: e.target.value,
                     })
                   }
                 />
-                <p className="m-0 mt-1">Tanggal Masuk</p>
+                <p className="m-0 mt-1">Tanggal Pemindahan</p>
                 <InputComponents
                   type="date"
                   classStyle="w-100 p-2"
                   placeHolder="Tanggal Masuk"
                   change={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
-                      tgl_masuk: e.target.value,
+                    setInputDataPindah({
+                      ...inputDataPindah,
+                      tgl_pindah: e.target.value,
                     })
                   }
                 />
               </>
             }
           />
-        </div>
-      )}
-      <div className="card shadow-lg mb-4 mt-4 w-100">
+        )}
+        <button className="btn btn-primary ms-1">
+          Cetak Laporan Pemindahan
+        </button>
+      </div>
+
+      <div className="card shadow-lg mb-4 mt-2 w-100">
         <div className="d-flex justify-content-between">
           <div className="w-100">
             <SearchBarComponent
               submit={handleSearchBarang}
-              placeHolder="Cari data barang masuk..."
+              placeHolder="Cari data pemindahan..."
               btnTitle="Cari"
               inputChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -201,7 +262,7 @@ const BarangMasuk = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ page: 0, limit: e.target.value, search: "" })
+                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
               }
             >
               <option value={10}>10</option>
@@ -218,36 +279,35 @@ const BarangMasuk = () => {
                 <tr>
                   <th>No</th>
                   <th>Nama</th>
+                  <th>Asal Barang</th>
+                  <th>Tujuan Pindah</th>
                   <th>Jumlah</th>
-                  <th>Harga</th>
-                  <th>Kondisi</th>
-                  <th>Tanggal Masuk</th>
                   <th>Sisa Stok</th>
                   <th>Keterangan</th>
+                  <th>Tanggal Pemindahan</th>
                   {user.data.role === "admin" && <th>Aksi</th>}
                 </tr>
               </thead>
               <tbody>
-                {brgMasuk.brgMasuk &&
-                  brgMasuk.brgMasuk.map((e, index) => {
+                {brgPindah.pindah &&
+                  brgPindah.pindah.map((e, index) => {
                     return (
                       <tr key={e.id}>
                         <td>
                           {index + 1 + inputQuery.page * inputQuery.limit}
                         </td>
-                        <td>{e.barang.name}</td>
+                        <td>{e.nama_barang.name}</td>
+                        <td>{e.pindah_from?.name ?? "-"}</td>
+                        <td>{e.pindah_to?.name ?? "-"}</td>
                         <td>{e.qty}</td>
-                        <td>{e.barang.harga}</td>
-                        <td>{e.barang.kondisi}</td>
-                        <td>{e.tgl_masuk}</td>
-                        <td>{e.sisa_stok}</td>
+                        <td>{e.nama_barang.qty}</td>
                         <td>{e.desc}</td>
+                        <td>{e.tgl_pindah?.slice(0, 10)}</td>
                         {user.data.role === "admin" && (
                           <td>
-                            <button className="btn btn-success">Ubah</button>
                             <button
                               className="btn btn-danger ms-1"
-                              onClick={() => deleteDataMasuk(e.id)}
+                              onClick={() => deleteDataPindah(e.id)}
                             >
                               Hapus
                             </button>
@@ -259,23 +319,24 @@ const BarangMasuk = () => {
               </tbody>
             </table>
           </div>
-          {brgMasuk.brgMasuk && brgMasuk.brgMasuk.length === 0 && (
+          {brgPindah.pindah && brgPindah.pindah.length === 0 && (
             <p>Data tidak ditemukan!</p>
           )}
-          {brgMasuk && (
+          {brgPindah && (
             <p className="text-end">
-              Total row: <strong>{brgMasuk.count}</strong> page{" "}
-              <strong>{brgMasuk.count ? brgMasuk.page + 1 : 0}</strong> of{" "}
-              <strong>{brgMasuk.totalPage}</strong>
+              Total row: <strong>{brgPindah.count}</strong> page
+              <strong>
+                {brgPindah.count ? brgPindah.page + 1 : 0}
+              </strong> of <strong>{brgPindah.totalPage}</strong>
             </p>
           )}
-          <nav key={brgMasuk && brgMasuk.count}>
-            {brgMasuk && brgMasuk.totalPage > 0 && (
+          <nav key={brgPindah && brgPindah.count}>
+            {brgPindah && brgPindah.totalPage > 0 && (
               <ReactPaginate
                 previousLabel={"<<"}
                 nextLabel={">>"}
                 breakLabel={"..."}
-                pageCount={brgMasuk ? brgMasuk.totalPage : 0}
+                pageCount={brgPindah ? brgPindah.totalPage : 0}
                 marginPagesDisplayed={2}
                 pageRangeDisplayed={5}
                 onPageChange={handlePageClick}
@@ -299,4 +360,4 @@ const BarangMasuk = () => {
   );
 };
 
-export default BarangMasuk;
+export default Pemindahan;

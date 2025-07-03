@@ -3,18 +3,18 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getKategoriBarang } from "../features/detailBarang";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getKategoriBarang } from "../../features/detailBarang";
 
 const KategoriPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const detailBarang = useSelector((state) => state.detail_barang);
+  const detailBarang = useSelector((state) => state.detail_barang.kategori);
   const [kategoriBarang, setKategoriBarang] = useState([]);
   const [show, setShow] = useState(false);
   const [inputKategori, setInputKategori] = useState({ name: "", desc: "" });
@@ -95,7 +95,7 @@ const KategoriPage = () => {
     <>
       <h4>DATA KATEGORI BARANG</h4>
       <ModalComponent
-        classStyle="mt-4"
+        classStyle="mt-3"
         btntTitle="Tambah"
         modalTitle="Tambah Data Kategori"
         show={show}
@@ -139,7 +139,7 @@ const KategoriPage = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ page: 0, limit: e.target.value })
+                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
               }
             >
               <option value={10}>10</option>

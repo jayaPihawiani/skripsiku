@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
+import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
 import { getDataLokasi } from "../features/detailBarang";
 
@@ -13,11 +14,16 @@ const LokasiPage = () => {
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const detailLokasi = useSelector((state) => state.detail_barang);
+  const detailLokasi = useSelector((state) => state.detail_barang.lokasi);
   const [dataLokasi, setDataLokasi] = useState([]);
   const [show, setShow] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [inputLokasi, setInputLokasi] = useState({ name: "", desc: "" });
-  const [inputQuery, setInputQuery] = useState({ page: 0, limit: 10 });
+  const [inputQuery, setInputQuery] = useState({
+    page: 0,
+    limit: 10,
+    search: "",
+  });
   const { setLoading } = useContext(LoadingContext);
 
   const handleShow = () => setShow(true);
@@ -69,10 +75,16 @@ const LokasiPage = () => {
     setInputQuery({ ...inputQuery, page: selected });
   };
 
+  // search
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
+  };
+
   // useEffect
   useEffect(() => {
     dispatch(getDataLokasi(inputQuery));
-  }, [dispatch, inputQuery.page, inputQuery.limit]);
+  }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
     if (detailLokasi.lokasi && detailLokasi.isSuccess) {
@@ -114,20 +126,27 @@ const LokasiPage = () => {
         }
       />
       <div className="card me-4 mt-2 mb-4 shadow-lg">
-        <div className="mt-3 me-3 d-flex">
-          <select
-            className="py-2 px-1 ms-auto"
-            onChange={(e) => {
-              setInputQuery({
-                page: 0,
-                limit: e.target.value,
-              });
-            }}
-          >
-            <option value={10}>10</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+        <div className="d-flex justify-content-between">
+          <div className="w-100">
+            <SearchBarComponent
+              submit={handleSearch}
+              placeHolder="Cari data merk barang..."
+              btnTitle="Cari"
+              inputChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="mt-3 me-3 d-flex">
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
+                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
+              }
+            >
+              <option value={10}>10</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
         <div className="card-body">
           <div className="overflow-x-scroll">
@@ -170,6 +189,9 @@ const LokasiPage = () => {
                   })}
               </tbody>
             </table>
+            {detailLokasi.lokasi && detailLokasi.lokasi.result.length === 0 && (
+              <p>Data tidak ditemukan!</p>
+            )}
             {detailLokasi.lokasi && (
               <p className="text-end">
                 Total row: <strong>{detailLokasi.lokasi.count}</strong> page{" "}

@@ -4,14 +4,34 @@ import axios from "axios";
 
 const url = import.meta.env.VITE_API_URL;
 const initState = {
-  kategori: null,
-  satuan: null,
-  merk: null,
-  lokasi: null,
-  isLoading: false,
-  isError: false,
-  isSuccess: false,
-  errMessage: false,
+  merk: {
+    merk: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    errMessage: false,
+  },
+  lokasi: {
+    lokasi: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    errMessage: false,
+  },
+  satuan: {
+    satuan: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    errMessage: false,
+  },
+  kategori: {
+    kategori: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    errMessage: false,
+  },
 };
 
 export const getMerkBarang = createAsyncThunk(
@@ -70,7 +90,7 @@ export const getDataLokasi = createAsyncThunk(
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/lokasi?page=${inputQuery.page}&limit=${inputQuery.limit}&search=`
+        `${url}/lokasi?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -90,12 +110,12 @@ const detailBrg = createSlice({
     // get merk
     builder
       .addCase(getMerkBarang.pending, (state) => {
-        state.isLoading = true;
+        state.merk.isLoading = true;
       })
       .addCase(getMerkBarang.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.merk = action.payload;
+        state.merk.isLoading = false;
+        state.merk.isSuccess = true;
+        state.merk.merk = action.payload;
       })
       .addCase(getMerkBarang.rejected, (state, action) => {
         state.isLoading = false;
@@ -105,47 +125,47 @@ const detailBrg = createSlice({
     // get satuan
     builder
       .addCase(getSatuanBarang.pending, (state) => {
-        state.isLoading = true;
+        state.satuan.isLoading = true;
       })
       .addCase(getSatuanBarang.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.satuan = action.payload;
+        state.satuan.isLoading = false;
+        state.satuan.isSuccess = true;
+        state.satuan.satuan = action.payload;
       })
       .addCase(getSatuanBarang.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.errMessage = action.payload;
+        state.satuan.isLoading = false;
+        state.satuan.isError = true;
+        state.satuan.errMessage = action.payload;
       });
     // get kategori
     builder
       .addCase(getKategoriBarang.pending, (state) => {
-        state.isLoading = true;
+        state.kategori.isLoading = true;
       })
       .addCase(getKategoriBarang.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.kategori = action.payload;
+        state.kategori.isLoading = false;
+        state.kategori.isSuccess = true;
+        state.kategori.kategori = action.payload;
       })
       .addCase(getKategoriBarang.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.errMessage = action.payload;
+        state.kategori.isLoading = false;
+        state.kategori.isError = true;
+        state.kategori.errMessage = action.payload;
       });
     // get lokasi
     builder
       .addCase(getDataLokasi.pending, (state) => {
-        state.isLoading = true;
+        state.lokasi.isLoading = true;
       })
       .addCase(getDataLokasi.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.lokasi = action.payload;
+        state.lokasi.isLoading = false;
+        state.lokasi.isSuccess = true;
+        state.lokasi.lokasi = action.payload;
       })
       .addCase(getDataLokasi.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.errMessage = action.payload;
+        state.lokasi.isLoading = false;
+        state.lokasi.isError = true;
+        state.lokasi.errMessage = action.payload;
       });
   },
 });

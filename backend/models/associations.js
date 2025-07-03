@@ -10,6 +10,7 @@ import Penghapusan from "./PenghapusanModel.js";
 import Permintaaan from "./Permintaan.js";
 import SatuanBrg from "./SatuanModel.js";
 import User from "./UserModels.js";
+import Distribusi from "./DistribusiBrgModel.js";
 
 // user divisi
 Divisi.hasMany(User, {
@@ -142,5 +143,39 @@ Barang.hasMany(BarangMasuk, {
 BarangMasuk.belongsTo(Barang, {
   foreignKey: "barangId",
   onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// distribusi barang tiap ruangan
+Barang.hasMany(Distribusi, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+Distribusi.belongsTo(Barang, {
+  foreignKey: "barangId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+
+Lokasi.hasMany(Distribusi, {
+  foreignKey: "lokasiId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+Distribusi.belongsTo(Lokasi, {
+  foreignKey: "lokasiId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+
+User.hasMany(Distribusi, {
+  foreignKey: "userId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+Distribusi.belongsTo(User, {
+  foreignKey: "userId",
+  onDelete: "SET NULL",
   onUpdate: "CASCADE",
 });

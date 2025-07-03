@@ -1,7 +1,6 @@
 import { Op } from "sequelize";
 import BarangMasuk from "../models/BarangMasuk.js";
 import Barang from "../models/BarangModel.js";
-import barangRoute from "../routes/BarangRoute.js";
 
 class BarangMasukController {
   createBarangMasuk = async (req, res) => {
@@ -16,12 +15,8 @@ class BarangMasukController {
           .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
       }
 
-      if (qty > barang.qty) {
-        return res.status(400).json({ msg: "Input jumlah tidak valid!" });
-      }
-
       await Barang.update(
-        { qty: barang.qty - qty },
+        { qty: barang.qty + parseInt(qty) },
         { where: { id: barangId } }
       );
 
@@ -30,10 +25,29 @@ class BarangMasukController {
         qty,
         desc,
         tgl_masuk,
-        sisa_stok: barang.qty - qty,
+        sisa_stok: barang.qty + parseInt(qty),
       });
 
       res.status(201).json({ msg: "Berhasil menambah data barang masuk." });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  getBarangMasukById = async (req, res) => {
+    try {
+      const brgMasuk = await BarangMasuk.findByPk(req.params.id, {
+        include: {
+          model: Barang,
+        },
+      });
+      if (!brgMasuk) {
+        return res
+          .status(404)
+          .json({ msg: "Data barang masuk tidak ditemukan!" });
+      }
+
+      res.status(200).json(brgMasuk);
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
@@ -89,7 +103,51 @@ class BarangMasukController {
     }
   };
 
-  updateBarangMasuk = async (req, res) => {};
+  // updateBarangMasuk = async (req, res) => {
+  //   const { desc, qty, tgl_masuk } = req.body;
+  //   try {
+  //     const brgMasuk = await BarangMasuk.findByPk(req.params.id, {
+  //       include: {
+  //         model: Barang,
+  //       },
+  //     });
+
+  //     if (!brgMasuk) {
+  //       return res
+  //         .status(404)
+  //         .json({ msg: "Data barang masuk tidak ditemukan!" });
+  //     }
+
+  //     const qtyBarang = brgMasuk.barang.qty;
+  //     const selisih = qty - brgMasuk.qty;
+
+  //     if (selisih > qtyBarang) {
+  //       return res.status(400).json({ msg: "Input jumlah tidak valid!" });
+  //     }
+
+  //     await BarangMasuk.update(
+  //       { desc, qty, tgl_masuk, sisa_stok: brgMasuk.barang.qty + qty },
+  //       {
+  //         where: {
+  //           id: brgMasuk.id,
+  //         },
+  //       }
+  //     );
+
+  //     await Barang.update(
+  //       { qty: qtyBarang - selisih },
+  //       {
+  //         where: {
+  //           id: brgMasuk.barang.id,
+  //         },
+  //       }
+  //     );
+
+  //     res.status(200).json({ msg: "Berhasil mengubah data barang masuk." });
+  //   } catch (error) {
+  //     res.status(500).json({ msg: "ERROR: " + error.message });
+  //   }
+  // };
 }
 
 export default BarangMasukController;

@@ -1,7 +1,7 @@
 import Pemindahan from "../models/Pemindahan.js";
 import Lokasi from "../models/LokasiModel.js";
 import Barang from "../models/BarangModel.js";
-import { where } from "sequelize";
+import { Op, where } from "sequelize";
 
 class PemindahanController {
   // ADD
@@ -33,20 +33,39 @@ class PemindahanController {
   };
 
   getPemindahan = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+    const search = req.query.search || "";
+    let totalPage;
+    const offset = limit * page;
     try {
+      const count = await Pemindahan.count({
+        include: {
+          model: Barang,
+          as: "nama_barang",
+          where: { name: { [Op.like]: `%${search}%` } },
+        },
+      });
+
+      totalPage = Math.ceil(count / limit);
+
       const pindah = await Pemindahan.findAll({
         include: [
           { model: Lokasi, as: "pindah_from", attributes: ["name", "desc"] },
           { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
           {
             model: Barang,
+
             attributes: ["name", "desc", "qty"],
             as: "nama_barang",
+            where: { name: { [Op.like]: `%${search}%` } },
           },
         ],
         attributes: ["id", "qty", "desc", "tgl_pindah"],
+        limit,
+        offset,
       });
-      res.status(200).json(pindah);
+      res.status(200).json({ limit, page, totalPage, count, pindah });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

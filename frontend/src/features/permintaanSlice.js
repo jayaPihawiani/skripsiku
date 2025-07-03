@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const url = import.meta.env.VITE_API_URL;
+
 const initState = {
   data: null,
   isLoading: false,
@@ -10,12 +11,12 @@ const initState = {
   errMessage: false,
 };
 
-export const getDataPenghapusan = createAsyncThunk(
-  "penghapusan/getDataPenghapusan",
+export const getPermintaan = createAsyncThunk(
+  "permintaan/getPermintaan",
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/penghapusan?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+        `${url}/permintaan?limit=${inputQuery.limit}&page=${inputQuery.page}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -27,22 +28,21 @@ export const getDataPenghapusan = createAsyncThunk(
   }
 );
 
-const penghapusanSlice = createSlice({
-  name: "detail_brg",
+const permintaanSlice = createSlice({
+  name: "permintaan",
   initialState: initState,
-  reducers: { penghapusanStateReset: (state) => initState },
+  reducers: { permintaanStateReset: (state) => initState },
   extraReducers: (builder) => {
-    // get merk
     builder
-      .addCase(getDataPenghapusan.pending, (state) => {
+      .addCase(getPermintaan.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(getDataPenghapusan.fulfilled, (state, action) => {
+      .addCase(getPermintaan.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
         state.data = action.payload;
       })
-      .addCase(getDataPenghapusan.rejected, (state, action) => {
+      .addCase(getPermintaan.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.errMessage = action.payload;
@@ -50,5 +50,5 @@ const penghapusanSlice = createSlice({
   },
 });
 
-export const { penghapusanStateReset } = penghapusanSlice.actions;
-export default penghapusanSlice.reducer;
+export const { permintaanStateReset } = permintaanSlice.actions;
+export default permintaanSlice.reducer;

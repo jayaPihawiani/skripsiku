@@ -14,6 +14,7 @@ import authRoute from "./routes/AuthRoute.js";
 import brgMasukRoute from "./routes/BarangMasukRoute.js";
 import barangRoute from "./routes/BarangRoute.js";
 import brgRusakRoute from "./routes/BrgRusakRoute.js";
+import distribusiRoute from "./routes/DistribusiRoute copy.js";
 import divisiRoute from "./routes/DivisiRoute.js";
 import kategoriRoute from "./routes/KategoriRoute.js";
 import laporanRouter from "./routes/LaporanRoute.js";
@@ -89,6 +90,7 @@ app.use("/pindah", pemindahanRoute);
 app.use("/permintaan", permintaanRoute);
 app.use("/penghapusan", penghapusanRoute);
 app.use("/masuk", brgMasukRoute);
+app.use("/distribusi", distribusiRoute);
 
 // print laporan
 app.use("/print", laporanRouter);

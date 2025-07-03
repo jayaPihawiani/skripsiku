@@ -1,14 +1,14 @@
-import Barang from "../models/BarangModel.js";
-import SatuanBrg from "../models/SatuanModel.js";
-import MerkBrg from "../models/MerkModel.js";
-import Kategori from "../models/KategoriBarang.js";
-import Pemindahan from "../models/Pemindahan.js";
-import BrgRusak from "../models/BarangRusakModel.js";
-import Lokasi from "../models/LokasiModel.js";
-import Penghapusan from "../models/PenghapusanModel.js";
-import supabase from "../config/supabase/supabaseClient.js";
 import { Op } from "sequelize";
+import supabase from "../config/supabase/supabaseClient.js";
 import BarangMasuk from "../models/BarangMasuk.js";
+import Barang from "../models/BarangModel.js";
+import BrgRusak from "../models/BarangRusakModel.js";
+import Kategori from "../models/KategoriBarang.js";
+import Lokasi from "../models/LokasiModel.js";
+import MerkBrg from "../models/MerkModel.js";
+import Pemindahan from "../models/Pemindahan.js";
+import Penghapusan from "../models/PenghapusanModel.js";
+import SatuanBrg from "../models/SatuanModel.js";
 
 class BarangController {
   // ADD BARANG
@@ -30,8 +30,6 @@ class BarangController {
       kategori,
       umur_ekonomis,
     } = req.body;
-
-    const dateFormat = tgl_beli.split("T")[0];
 
     // validasi
     if (
@@ -92,7 +90,7 @@ class BarangController {
         name,
         desc,
         qty,
-        tgl_beli: dateFormat,
+        tgl_beli,
         harga,
         kondisi,
         riwayat_pemeliharaan,

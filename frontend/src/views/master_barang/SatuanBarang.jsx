@@ -3,18 +3,18 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getSatuanBarang } from "../features/detailBarang";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getSatuanBarang } from "../../features/detailBarang";
 
 const SatuanBarang = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const detailSatuan = useSelector((state) => state.detail_barang);
+  const detailSatuan = useSelector((state) => state.detail_barang.satuan);
   const [satuanBarang, setSatuanBarang] = useState([]);
   const [show, setShow] = useState(false);
   const [inputSatuan, setInputSatuan] = useState({ name: "", desc: "" });
@@ -93,7 +93,7 @@ const SatuanBarang = () => {
     <>
       <h4>DATA SATUAN BARANG</h4>
       <ModalComponent
-        classStyle="mt-4"
+        classStyle="mt-3"
         btntTitle="Tambah"
         modalTitle="Tambah Data Satuan"
         show={show}
@@ -137,6 +137,7 @@ const SatuanBarang = () => {
               className="py-2 px-1 ms-auto"
               onChange={(e) => {
                 setInputQuery({
+                  ...inputQuery,
                   page: 0,
                   limit: e.target.value,
                 });

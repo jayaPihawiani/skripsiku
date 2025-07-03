@@ -2,18 +2,18 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getDataBarang } from "../features/barangSlice";
-import DownloadPdfBButton from "../components/Laporan/ButtonDownloadPdf";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getDataBarang } from "../../features/barangSlice";
+import DownloadPdfBButton from "../../components/Laporan/ButtonDownloadPdf";
 
 const Barang = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
-  const barang = useSelector((state) => state.barang);
+  const barang = useSelector((state) => state.barang.barang);
   const user = useSelector((state) => state.auth);
   const [satuanBarang, setSatuanBarang] = useState([]);
   const [kategoriBarang, setKategoriBarang] = useState([]);
@@ -212,178 +212,182 @@ const Barang = () => {
   return (
     <div className="w-100 pe-3">
       <h4>DATA STOK BARANG</h4>
-      {user.data && user.data.role === "admin" && (
-        <div className="mt-4">
-          <ModalComponent
-            btntTitle="Tambah Data Barang"
-            show={show}
-            handleClose={handleClose}
-            handleShow={handleShow}
-            handleSubmit={addBarang}
-            modalTitle="Tambah Data Barang"
-            inputField={
-              <div className="d-flex">
-                <div className="w-50 me-1">
-                  <p className="m-0">Unggah Gambar Aset</p>
-                  <InputComponents
-                    type="file"
-                    classStyle="w-100 p-2"
-                    change={setFileUpload}
-                  />
-                  <p className="m-0">Nama Barang</p>
-                  <InputComponents
-                    type="text"
-                    classStyle="w-100 p-2"
-                    placeHolder="Nama Barang"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="m-0 mt-2">Keterangan</p>
-                  <InputComponents
-                    type="text"
-                    classStyle="w-100 p-2"
-                    placeHolder="Keterangan"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        desc: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="m-0 mt-2">Jumlah</p>
-                  <InputComponents
-                    type="number"
-                    classStyle="w-100 p-2"
-                    placeHolder="Jumlah"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        qty: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="m-0 mt-2">Tanggal Beli</p>
-                  <InputComponents
-                    type="date"
-                    classStyle="w-100 p-2"
-                    placeHolder="Tanggal Beli"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        tgl_beli: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="m-0 mt-2">Harga Pembelian</p>
-                  <InputComponents
-                    type="number"
-                    classStyle="w-100 p-2"
-                    placeHolder="Harga Pembelian"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        harga: e.target.value,
-                      })
-                    }
-                  />
+      <div className="mt-2 d-flex">
+        {" "}
+        {user.data && user.data.role === "admin" && (
+          <div className="mt-3">
+            <ModalComponent
+              btntTitle="Tambah Data Barang"
+              show={show}
+              handleClose={handleClose}
+              handleShow={handleShow}
+              handleSubmit={addBarang}
+              modalTitle="Tambah Data Barang"
+              inputField={
+                <div className="d-flex">
+                  <div className="w-50 me-1">
+                    <p className="m-0">Unggah Gambar Aset</p>
+                    <InputComponents
+                      type="file"
+                      classStyle="w-100 p-2"
+                      change={setFileUpload}
+                    />
+                    <p className="m-0">Nama Barang</p>
+                    <InputComponents
+                      type="text"
+                      classStyle="w-100 p-2"
+                      placeHolder="Nama Barang"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          name: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="m-0 mt-2">Keterangan</p>
+                    <InputComponents
+                      type="text"
+                      classStyle="w-100 p-2"
+                      placeHolder="Keterangan"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          desc: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="m-0 mt-2">Jumlah</p>
+                    <InputComponents
+                      type="number"
+                      classStyle="w-100 p-2"
+                      placeHolder="Jumlah"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          qty: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="m-0 mt-2">Tanggal Beli</p>
+                    <InputComponents
+                      type="date"
+                      classStyle="w-100 p-2"
+                      placeHolder="Tanggal Beli"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          tgl_beli: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="m-0 mt-2">Harga Pembelian</p>
+                    <InputComponents
+                      type="number"
+                      classStyle="w-100 p-2"
+                      placeHolder="Harga Pembelian"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          harga: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="w-50 ms-1">
+                    <p className="m-0 mt-2">Kondisi Barang</p>
+                    <InputComponents
+                      type="text"
+                      classStyle="w-100 p-2"
+                      placeHolder="Kondisi Barang"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          kondisi: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="m-0 mt-2">Riwayat Pemeliharaan</p>
+                    <InputComponents
+                      type="text"
+                      classStyle="w-100 p-2"
+                      placeHolder="Riwayat Pemeliharaan"
+                      change={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          riwayat_pemeliharaan: e.target.value,
+                        })
+                      }
+                    />
+                    <p className="m-0 mt-2">Merk</p>
+                    <select
+                      className="form-select"
+                      onChange={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          merk: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Pilih Merk</option>;
+                      {merkBarang.map((item) => {
+                        return (
+                          <option value={item.id} key={item.id}>
+                            {item.name}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <p className="m-0 mt-2">Kategori</p>
+                    <select
+                      className="form-select"
+                      onChange={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          kategori: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Pilih Kategori</option>;
+                      {kategoriBarang.map((item) => {
+                        return (
+                          <option value={item.id} key={item.id}>
+                            {item.name}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <p className="m-0 mt-2">Satuan</p>
+                    <select
+                      className="form-select"
+                      onChange={(e) =>
+                        setInputDataBarang({
+                          ...inputDataBarang,
+                          satuan: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Pilih Satuan</option>;
+                      {satuanBarang.map((item) => {
+                        return (
+                          <option value={item.id} key={item.id}>
+                            {item.name}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
-                <div className="w-50 ms-1">
-                  <p className="m-0 mt-2">Kondisi Barang</p>
-                  <InputComponents
-                    type="text"
-                    classStyle="w-100 p-2"
-                    placeHolder="Kondisi Barang"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        kondisi: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="m-0 mt-2">Riwayat Pemeliharaan</p>
-                  <InputComponents
-                    type="text"
-                    classStyle="w-100 p-2"
-                    placeHolder="Riwayat Pemeliharaan"
-                    change={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        riwayat_pemeliharaan: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="m-0 mt-2">Merk</p>
-                  <select
-                    className="form-select"
-                    onChange={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        merk: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Pilih Merk</option>;
-                    {merkBarang.map((item) => {
-                      return (
-                        <option value={item.id} key={item.id}>
-                          {item.name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <p className="m-0 mt-2">Kategori</p>
-                  <select
-                    className="form-select"
-                    onChange={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        kategori: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Pilih Kategori</option>;
-                    {kategoriBarang.map((item) => {
-                      return (
-                        <option value={item.id} key={item.id}>
-                          {item.name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <p className="m-0 mt-2">Satuan</p>
-                  <select
-                    className="form-select"
-                    onChange={(e) =>
-                      setInputDataBarang({
-                        ...inputDataBarang,
-                        satuan: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Pilih Satuan</option>;
-                    {satuanBarang.map((item) => {
-                      return (
-                        <option value={item.id} key={item.id}>
-                          {item.name}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              </div>
-            }
-          />
-          <button className="btn btn-primary ms-1" onClick={printLaporan}>
-            {loading ? "Loading..." : "Cetak Laporan"}
-          </button>
-          {/* <DownloadPdfBButton dataBarang={newBarang.barang} /> */}
-        </div>
-      )}
-      <div className="card shadow-lg mb-4 mt-4 w-100">
+              }
+            />
+
+            {/* <DownloadPdfBButton dataBarang={newBarang.barang} /> */}
+          </div>
+        )}
+        <button className="btn btn-primary ms-1 mt-3" onClick={printLaporan}>
+          Cetak Laporan
+        </button>
+      </div>
+      <div className="card shadow-lg mb-4 mt-2 w-100">
         <div className="d-flex justify-content-between">
           <div className="w-100">
             <SearchBarComponent
@@ -397,7 +401,7 @@ const Barang = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ page: 0, limit: e.target.value, search: "" })
+                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
               }
             >
               <option value={10}>10</option>
@@ -438,7 +442,7 @@ const Barang = () => {
                         <td>{e.name}</td>
                         <td>{e.desc}</td>
                         <td>{e.qty}</td>
-                        <td>{e.tgl_beli}</td>
+                        <td>{e.tgl_beli?.slice(0, 10)}</td>
                         <td>{e.harga}</td>
                         <td>{(e.merk_brg && e.merk_brg.name) || "-"}</td>
                         <td>{(e.satuan_brg && e.satuan_brg.name) || "-"}</td>
@@ -456,7 +460,7 @@ const Barang = () => {
                         </td>
                         {user.data.role === "admin" && (
                           <td>
-                            <button className="btn btn-success">Ubah</button>
+                            <button className="btn btn-primary">Ubah</button>
                             <button
                               className="btn btn-danger ms-1"
                               onClick={() => deleteDataBarang(e.id)}

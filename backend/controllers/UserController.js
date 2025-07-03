@@ -147,6 +147,18 @@ class UserController {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
   };
+
+  getAllUser = async (req, res) => {
+    try {
+      const user = await User.findAll({
+        include: { model: Divisi, attributes: ["name", "desc"] },
+        attributes: ["id", "nip", "username", "role"],
+      });
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR" + error });
+    }
+  };
 }
 
 export default UserController;

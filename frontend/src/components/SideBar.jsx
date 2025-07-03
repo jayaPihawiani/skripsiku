@@ -115,11 +115,11 @@ const SideBar = ({ children }) => {
                 <span className="side-desc">Barang Masuk</span>
               </Link>
 
-              <Link to="/penghapusan" className="nav-link">
+              <Link to="/pindah" className="nav-link">
                 <span className="icons">
                   <BsBoxArrowUp />
                 </span>
-                <span className="side-desc">Barang Keluar</span>
+                <span className="side-desc">Pemindahan</span>
               </Link>
 
               <Link to="/kerusakan" className="nav-link">
@@ -140,24 +140,19 @@ const SideBar = ({ children }) => {
             {/* menu */}
             {/* permintaan */}
             {state.data && state.data.role === "admin" && (
-              <>
-                {" "}
-                <Link to="/permintaan" className="nav-link">
-                  <span className="icons">
-                    <BsGraphUpArrow />
-                  </span>
-                  <span className="side-desc">Masa Ekonomis </span>
-                </Link>
-                {/* kategori */}
-                <Link to="/kategory" className="nav-link">
-                  <span className="icons">
-                    <BsTruck />
-                  </span>
-                  <span className="side-desc">Distribusi Barang</span>
-                </Link>
-              </>
+              <Link to="/permintaan" className="nav-link">
+                <span className="icons">
+                  <BsGraphUpArrow />
+                </span>
+                <span className="side-desc">Masa Ekonomis </span>
+              </Link>
             )}
-
+            <Link to="/distribusi" className="nav-link">
+              <span className="icons">
+                <BsTruck />
+              </span>
+              <span className="side-desc">Distribusi Barang</span>
+            </Link>
             {/* lokasi */}
             <Link to="/permintaan" className="nav-link">
               <span className="icons">

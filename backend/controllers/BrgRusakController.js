@@ -118,7 +118,6 @@ class BrgRusakController {
         { where: { id: brg_rusak.barang.id } }
       );
       res.status(200).json({ msg: "Berhasil update data barang rusak." });
-      console.log(brg_rusak.barang.id);
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

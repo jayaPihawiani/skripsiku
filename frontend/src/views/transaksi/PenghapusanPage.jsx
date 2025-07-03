@@ -3,11 +3,11 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getDataPenghapusan } from "../features/PenghapusanSlice";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getDataPenghapusan } from "../../features/barangSlice";
 
 const PenghapusanPage = () => {
   // variabel
@@ -15,7 +15,7 @@ const PenghapusanPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const penghapusanState = useSelector((state) => state.penghapusan);
+  const penghapusanState = useSelector((state) => state.barang.penghapusan);
   const [dataPenghapusan, setDataPenghapusan] = useState([]);
   const [dataBarang, setDataBarang] = useState([]);
   const [file, setFile] = useState("");
@@ -163,7 +163,7 @@ const PenghapusanPage = () => {
       <h4>DATA PENGHAPUSAN INVENTARIS BARANG</h4>
       <ModalComponent
         handleSubmit={addDataPenghapusan}
-        classStyle="mt-4"
+        classStyle="mt-3"
         btntTitle="Tambah Data"
         show={show}
         handleShow={handleShow}
@@ -238,7 +238,7 @@ const PenghapusanPage = () => {
         }
       />
 
-      <button className="btn btn-primary mt-4 ms-1" onClick={printLaporan}>
+      <button className="btn btn-primary mt-3 ms-1" onClick={printLaporan}>
         {isLoading ? "Loading..." : " Cetak Laporan Penghapusan"}
       </button>
 
@@ -290,7 +290,7 @@ const PenghapusanPage = () => {
                         <td>{item.barang.name}</td>
                         <td>{item.qty}</td>
                         <td>{item.barang.qty}</td>
-                        <td>{item.tgl_hapus}</td>
+                        <td>{item.tgl_hapus?.slice(0, 10)}</td>
                         <td>{item.desc}</td>
                         <td className="text-center">
                           <button

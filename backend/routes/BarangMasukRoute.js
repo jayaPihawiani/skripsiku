@@ -7,17 +7,12 @@ const brgMasuk = new BarangMasukController();
 
 brgMasukRoute.post("/create", verifyUser, isAdmin, brgMasuk.createBarangMasuk);
 brgMasukRoute.get("/", verifyUser, brgMasuk.getBarangMasuk);
+brgMasukRoute.get("/:id", verifyUser, brgMasuk.getBarangMasukById);
 brgMasukRoute.delete(
   "/del/:id",
   verifyUser,
   isAdmin,
   brgMasuk.deleteBarangMasuk
-);
-brgMasukRoute.patch(
-  "/update/:id",
-  verifyUser,
-  isAdmin,
-  brgMasuk.updateBarangMasuk
 );
 
 export default brgMasukRoute;

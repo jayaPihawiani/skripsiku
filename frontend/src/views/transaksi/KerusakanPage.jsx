@@ -3,18 +3,19 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getBrgRusak } from "../features/barangRusak";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getBrgRusak } from "../../features/barangSlice";
 
 const KerusakanPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const rusakState = useSelector((state) => state.brg_rusak);
+  const rusakState = useSelector((state) => state.barang.barang_rusak);
+  const userState = useSelector((state) => state.auth);
   const [dataBrgRusak, setDataBrgRusak] = useState([]);
   const [dataBarang, setDataBarang] = useState([]);
   const [show, setShow] = useState(false);
@@ -137,66 +138,68 @@ const KerusakanPage = () => {
   return (
     <>
       <h4>DATA KERUSAKAN INVENTARIS BARANG</h4>
-      <div className="">
-        <ModalComponent
-          handleSubmit={addDataKerusakan}
-          classStyle="mt-4"
-          btntTitle="Tambah Data"
-          show={show}
-          handleShow={handleShow}
-          handleClose={handleClose}
-          modalTitle="Tambah Data Inventaris Barang Rusak"
-          inputField={
-            <>
-              <p className="m-0">Nama Inventaris Barang</p>
-              <select
-                className="form-select"
-                onChange={(e) =>
-                  setInputKerusakan({
-                    ...inputKerusakan,
-                    barangId: e.target.value,
-                  })
-                }
-              >
-                <option value="">Pilih</option>
-                {dataBarang &&
-                  dataBarang.map((item) => {
-                    return (
-                      <option value={item.id} key={item.id}>
-                        {item.name} - qty: {item.qty}
-                      </option>
-                    );
-                  })}
-              </select>
-              <p className="mt-2 m-0">Sebab Kerusakan</p>
-              <InputComponents
-                type="text"
-                placeHolder="Sebab Kerusakan  "
-                classStyle="w-100 p-2"
-                change={(e) =>
-                  setInputKerusakan({
-                    ...inputKerusakan,
-                    desc: e.target.value,
-                  })
-                }
-              />
-              <p className="mt-2 m-0">Jumlah Kerusakan</p>
-              <InputComponents
-                type="number"
-                placeHolder="Jumlah"
-                classStyle="w-100 p-2"
-                change={(e) =>
-                  setInputKerusakan({
-                    ...inputKerusakan,
-                    qty: e.target.value,
-                  })
-                }
-              />
-            </>
-          }
-        />
+      <div className="m-0">
+        {userState.data && userState.data.role === "admin" && (
+          <ModalComponent
+            handleSubmit={addDataKerusakan}
+            classStyle="mt-3"
+            btntTitle="Tambah Data"
+            show={show}
+            handleShow={handleShow}
+            handleClose={handleClose}
+            modalTitle="Tambah Data Inventaris Barang Rusak"
+            inputField={
+              <>
+                <p className="m-0">Nama Inventaris Barang</p>
+                <select
+                  className="form-select"
+                  onChange={(e) =>
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      barangId: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Pilih</option>
+                  {dataBarang &&
+                    dataBarang.map((item) => {
+                      return (
+                        <option value={item.id} key={item.id}>
+                          {item.name} - qty: {item.qty}
+                        </option>
+                      );
+                    })}
+                </select>
+                <p className="mt-2 m-0">Sebab Kerusakan</p>
+                <InputComponents
+                  type="text"
+                  placeHolder="Sebab Kerusakan  "
+                  classStyle="w-100 p-2"
+                  change={(e) =>
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      desc: e.target.value,
+                    })
+                  }
+                />
+                <p className="mt-2 m-0">Jumlah Kerusakan</p>
+                <InputComponents
+                  type="number"
+                  placeHolder="Jumlah"
+                  classStyle="w-100 p-2"
+                  change={(e) =>
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      qty: e.target.value,
+                    })
+                  }
+                />
+              </>
+            }
+          />
+        )}
 
-        <button className="btn btn-primary ms-1 mt-4" onClick={printLaporan}>
+        <button className="btn btn-primary ms-1 mt-3" onClick={printLaporan}>
           {loading ? "Loading..." : "Cetak Laporan Kerusakan"}
         </button>
       </div>

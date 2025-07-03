@@ -48,7 +48,7 @@ class PenghapusanController {
       const file = req.files.file;
       const ext = `.${file.name.split(".").pop()}`;
       fileName = `file_${Date.now()}${ext}`;
-      const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx", ".png"];
+      const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx", ".pdf"];
 
       if (!fileType.includes(ext.toLowerCase())) {
         return res.status(400).json({ msg: "Format file tidak didukung!" });

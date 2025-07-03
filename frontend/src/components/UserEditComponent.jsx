@@ -69,7 +69,6 @@ const UserEdit = () => {
         console.log(error);
       }
     }
-    console.log(inputDataUser);
   };
 
   return (

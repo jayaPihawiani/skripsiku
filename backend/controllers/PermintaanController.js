@@ -1,6 +1,8 @@
 import supabase from "../config/supabase/supabaseClient.js";
 import Permintaan from "../models/Permintaan.js";
 import User from "../models/UserModels.js";
+import Divisi from "../models/DivisiModel.js";
+import { Op } from "sequelize";
 
 class PermintaanController {
   createPermintaan = async (req, res) => {
@@ -19,7 +21,7 @@ class PermintaanController {
 
     const ext = `.${fileUpload.file.name.split(".").pop()}`;
     const fileName = `file_${Date.now()}${ext}`;
-    const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx", ".png"];
+    const fileType = [".xlsx", ".docx", ".pdf"];
 
     if (!fileType.includes(ext.toLowerCase()))
       return res.status(400).json({ msg: "Format file tidak didukung!" });
@@ -59,13 +61,26 @@ class PermintaanController {
   };
 
   getPermintaan = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+    const search = req.query.search || "";
+    const offset = limit * page;
+    let totalPage;
+    let count;
     try {
       let permintaan;
       if (req.role === "user") {
+        count = await Permintaan.count({
+          where: { userId: req.uid, name: { [Op.like]: `%${search}%` } },
+        });
+
+        totalPage = Math.ceil(count / limit);
+
         permintaan = await Permintaan.findAll({
           include: {
             model: User,
             attributes: ["nip", "username", "id", "role"],
+            include: [{ model: Divisi, attributes: ["name", "desc"] }],
           },
           attributes: [
             "id",
@@ -78,13 +93,24 @@ class PermintaanController {
             "createdAt",
             "updatedAt",
           ],
-          where: { userId: req.uid },
+          where: { userId: req.uid, name: { [Op.like]: `%${search}%` } },
+          limit,
+          offset,
+          order: [["createdAt", "ASC"]],
         });
       } else {
+        count = await Permintaan.count({
+          where: { name: { [Op.like]: `%${search}%` } },
+        });
+
+        totalPage = Math.ceil(count / limit);
+
         permintaan = await Permintaan.findAll({
+          where: { name: { [Op.like]: `%${search}%` } },
           include: {
             model: User,
             attributes: ["nip", "username", "id", "role"],
+            include: [{ model: Divisi, attributes: ["name", "desc"] }],
           },
           attributes: [
             "id",
@@ -97,10 +123,13 @@ class PermintaanController {
             "createdAt",
             "updatedAt",
           ],
+          limit,
+          offset,
+          order: [["createdAt", "ASC"]],
         });
       }
 
-      res.status(200).json(permintaan);
+      res.status(200).json({ limit, page, totalPage, count, permintaan });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

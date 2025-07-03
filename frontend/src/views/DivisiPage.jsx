@@ -8,6 +8,7 @@ import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
 import { getDataDivisi } from "../features/UserSlice";
+import { userInfo } from "../features/authSlice";
 
 const DivisiPage = () => {
   // variabel
@@ -21,7 +22,6 @@ const DivisiPage = () => {
     name: "",
     desc: "",
   });
-
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
@@ -98,6 +98,7 @@ const DivisiPage = () => {
 
   useEffect(() => {
     dispatch(getDataDivisi(inputQuery));
+    dispatch(userInfo());
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
 
   useEffect(() => {

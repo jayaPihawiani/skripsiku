@@ -24,6 +24,6 @@ pemindahanRoute.patch(
   pemindahan.updatePemindahan
 );
 pemindahanRoute.get("/:id", verifyUser, isAdmin, pemindahan.getPemindahanById);
-pemindahanRoute.get("/", verifyUser, isAdmin, pemindahan.getPemindahan);
+pemindahanRoute.get("/", verifyUser, pemindahan.getPemindahan);
 
 export default pemindahanRoute;
