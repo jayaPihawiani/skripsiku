@@ -23,7 +23,7 @@ const UserAuthComponent = ({ children }) => {
 
   // body
   if (state.data && state.data.username) {
-    return <section>{children}</section>;
+    return <section style={{ marginTop: "65px" }}>{children}</section>;
   }
 };
 

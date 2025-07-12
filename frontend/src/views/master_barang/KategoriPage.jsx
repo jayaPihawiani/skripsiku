@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
@@ -17,7 +18,12 @@ const KategoriPage = () => {
   const detailBarang = useSelector((state) => state.detail_barang.kategori);
   const [kategoriBarang, setKategoriBarang] = useState([]);
   const [show, setShow] = useState(false);
-  const [inputKategori, setInputKategori] = useState({ name: "", desc: "" });
+  const [alertShow, setAlertShow] = useState(false);
+  const [inputKategori, setInputKategori] = useState({
+    name: "",
+    desc: "",
+    masa_ekonomis: 0,
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [inputQuery, setInputQuery] = useState({
     page: 0,
@@ -27,7 +33,7 @@ const KategoriPage = () => {
   const { setLoading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
-    setInputKategori({ name: "", desc: "" });
+    setInputKategori({ name: "", desc: "", masa_ekonomis: 0 });
   };
   const handleShow = () => setShow(true);
 
@@ -70,7 +76,10 @@ const KategoriPage = () => {
         setInputQuery({ ...inputQuery, page: 0 });
         dispatch(getKategoriBarang(inputQuery));
         handleClose();
-        alert("Berhasil menambah data merk.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
       }
     } catch (error) {
       console.error(error.response.data);
@@ -93,6 +102,11 @@ const KategoriPage = () => {
 
   return (
     <>
+      <AlertNotify
+        alertMsg="Berhasil menambah data kategori"
+        showAlert={alertShow}
+        variantAlert="success"
+      />
       <h4>DATA KATEGORI BARANG</h4>
       <ModalComponent
         classStyle="mt-3"
@@ -119,6 +133,18 @@ const KategoriPage = () => {
                 setInputKategori({ ...inputKategori, desc: e.target.value })
               }
               val={inputKategori.desc}
+            />
+            <InputComponents
+              type="number"
+              classStyle="w-100 p-2 mt-2"
+              placeHolder="Masa Ekonomis (Tahun)"
+              change={(e) =>
+                setInputKategori({
+                  ...inputKategori,
+                  masa_ekonomis: e.target.value,
+                })
+              }
+              val={inputKategori.masa_ekonomis}
             />
           </>
         }
@@ -156,6 +182,7 @@ const KategoriPage = () => {
                   <td style={{ width: "5%" }}>No. </td>
                   <td>Nama Kategori</td>
                   <td>Keterangan</td>
+                  <td>Masa Ekonomis Inventaris</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
@@ -169,6 +196,7 @@ const KategoriPage = () => {
                         </td>
                         <td>{item.name}</td>
                         <td>{item.desc}</td>
+                        <td>{item.masa_ekonomis} Tahun</td>
                         <td className="text-center">
                           <button
                             className="btn btn-primary"

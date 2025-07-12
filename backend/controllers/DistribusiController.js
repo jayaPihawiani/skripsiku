@@ -68,7 +68,7 @@ class DistribusiController {
               attributes: ["id", "nip", "username", "role"],
               where: { id: req.uid },
             },
-            { model: Lokasi, attributes: ["name", "desc"] },
+            { model: Lokasi, attributes: ["name", "desc"], as: "lokasi_ruang" },
             { model: Barang, where: { name: { [Op.like]: `%${search}%` } } },
           ],
           attributes: ["id", "qty", "createdAt", "updatedAt"],
@@ -92,7 +92,7 @@ class DistribusiController {
               include: [{ model: Divisi, attributes: ["name", "desc"] }],
               attributes: ["id", "nip", "username", "role"],
             },
-            { model: Lokasi, attributes: ["name", "desc"] },
+            { model: Lokasi, attributes: ["name", "desc"], as: "lokasi_ruang" },
             { model: Barang, where: { name: { [Op.like]: `%${search}%` } } },
           ],
           attributes: ["id", "qty", "createdAt", "updatedAt"],
@@ -103,6 +103,45 @@ class DistribusiController {
       }
 
       res.status(200).json({ limit, page, totalPage, count, distribusi });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error });
+    }
+  };
+
+  getAllDistribusi = async (req, res) => {
+    try {
+      let distribusi;
+
+      if (req.role === "user") {
+        distribusi = await Distribusi.findAll({
+          include: [
+            {
+              model: User,
+              include: [{ model: Divisi, attributes: ["name", "desc"] }],
+              attributes: ["id", "nip", "username", "role"],
+              where: { id: req.uid },
+            },
+            { model: Lokasi, attributes: ["name", "desc"], as: "lokasi_ruang" },
+            { model: Barang },
+          ],
+          attributes: ["id", "qty", "createdAt", "updatedAt"],
+        });
+      } else {
+        distribusi = await Distribusi.findAll({
+          include: [
+            {
+              model: User,
+              include: [{ model: Divisi, attributes: ["name", "desc"] }],
+              attributes: ["id", "nip", "username", "role"],
+            },
+            { model: Lokasi, attributes: ["name", "desc"], as: "lokasi_ruang" },
+            { model: Barang },
+          ],
+          attributes: ["id", "qty", "createdAt", "updatedAt"],
+        });
+      }
+
+      res.status(200).json(distribusi);
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error });
     }

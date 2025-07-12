@@ -27,7 +27,7 @@ const NavBar = () => {
 
   return (
     <div
-      className="d-flex align-items-center p-2"
+      className="d-flex align-items-center p-2 position-fixed w-100 z-3"
       style={{ backgroundColor: "#313131" }}
     >
       <div className="ms-auto me-3">

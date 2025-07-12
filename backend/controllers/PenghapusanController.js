@@ -48,7 +48,7 @@ class PenghapusanController {
       const file = req.files.file;
       const ext = `.${file.name.split(".").pop()}`;
       fileName = `file_${Date.now()}${ext}`;
-      const fileType = [".jpg", ".jpeg", ".png", ".xlsx", ".docx", ".pdf"];
+      const fileType = [".xlsx", ".docx", ".pdf"];
 
       if (!fileType.includes(ext.toLowerCase())) {
         return res.status(400).json({ msg: "Format file tidak didukung!" });
@@ -173,6 +173,36 @@ class PenghapusanController {
           .status(200)
           .json({ msg: "Data penghapusan tidak ditemukan!" });
       }
+      res.status(200).json(penghapusan);
+    } catch (error) {
+      res.status(400).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  getAllPenghapusan = async (req, res) => {
+    try {
+      const penghapusan = await Penghapusan.findAll({
+        include: {
+          model: Barang,
+          attributes: [
+            "name",
+            "desc",
+            "qty",
+            "tgl_beli",
+            "kondisi",
+            "riwayat_pemeliharaan",
+            "penyebab_rsk",
+            "stts_perbaikan",
+            "tipe",
+          ],
+          include: [
+            { model: SatuanBrg, attributes: ["name", "desc"] },
+            { model: MerkBrg, attributes: ["name", "desc"] },
+            { model: Kategori, attributes: ["name", "desc"] },
+          ],
+        },
+      });
+
       res.status(200).json(penghapusan);
     } catch (error) {
       res.status(400).json({ msg: "ERROR: " + error.message });

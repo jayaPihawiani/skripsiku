@@ -11,11 +11,13 @@ const UserEdit = () => {
   const url = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [dataDivisi, setDataDivisi] = useState([]);
+  const [lokasi, setLokasi] = useState([]);
   const [inputDataUser, setInputDataUser] = useState({
     username: "",
     password: "",
     confirmPassword: "",
     divisi: "",
+    lokasiId: "",
   });
 
   // function
@@ -48,7 +50,23 @@ const UserEdit = () => {
       }
     };
 
+    const getAllLokasi = async () => {
+      try {
+        const response = await axios.get(`${url}/lokasi/all`);
+        if (response.status === 200) {
+          setLokasi(response.data);
+        }
+      } catch (error) {
+        if (error.response) {
+          alert(error.response.data.msg);
+        } else {
+          console.error(error);
+        }
+      }
+    };
+
     getDivisiById();
+    getAllLokasi();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -69,6 +87,7 @@ const UserEdit = () => {
         console.log(error);
       }
     }
+    console.log(inputDataUser);
   };
 
   return (
@@ -92,6 +111,24 @@ const UserEdit = () => {
             >
               <option value="">Pilih Divisi</option>
               {dataDivisi.map((e) => {
+                return (
+                  <option value={e.id} key={e.id}>
+                    {e.name}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              className="form-select mt-2"
+              onChange={(e) =>
+                setInputDataUser({
+                  ...inputDataUser,
+                  lokasiId: e.target.value,
+                })
+              }
+            >
+              <option value="">Pilih Lokasi</option>
+              {lokasi.map((e) => {
                 return (
                   <option value={e.id} key={e.id}>
                     {e.name}

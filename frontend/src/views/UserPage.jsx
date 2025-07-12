@@ -3,26 +3,35 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../components/Alert";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
-import { getDataDivisi, getDataUser } from "../features/UserSlice";
+import {
+  getAllDivisi,
+  getDataDivisi,
+  getDataUser,
+} from "../features/UserSlice";
+import { getAllLokasi } from "../features/detailBarang";
 
 const UserPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const userState = useSelector((state) => state.user);
-  const [dataUser, setDataUser] = useState([]);
-  const [dataDivisi, setDataDivisi] = useState([]);
+  const dataUser = useSelector((state) => state.user.user?.data) || [];
+  const dataDivisi = useSelector((state) => state.user.all_divisi?.data) || [];
+  const lokasi =
+    useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [inputDataUser, setInputDataUser] = useState({
     nip: "",
     username: "",
     password: "",
     divisi: "",
+    lokasiId: "",
     role: "",
   });
 
@@ -47,20 +56,6 @@ const UserPage = () => {
   const handleShow = () => setShow(true);
 
   //   FUNCTION
-  const getAllDivisi = async () => {
-    try {
-      const response = await axios.get(`${url}/divisi/all`);
-      if (response.status === 200) {
-        setDataDivisi(response.data);
-      }
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      }
-      console.error(error);
-    }
-  };
-
   const deleteUser = async (id) => {
     try {
       const response = await axios.delete(`${url}/merk/del/${id}`);
@@ -78,20 +73,18 @@ const UserPage = () => {
     }
   };
 
-  // TAMBAH DATA MERK
+  // TAMBAH DATA user
   const createUser = async () => {
-    // if (!dataMerk.name || !dataMerk.desc) {
-    //   alert("Data ada yang kosong! Harap isi semua data!");
-    //   return;
-    // }
-
     try {
       setLoading(true);
       const response = await axios.post(`${url}/user/create`, inputDataUser);
       if (response.status === 201) {
         dispatch(getDataUser(inputQuery));
         handleClose();
-        alert(response.data.msg);
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
       }
     } catch (error) {
       if (error.response) {
@@ -117,19 +110,19 @@ const UserPage = () => {
   useEffect(() => {
     dispatch(getDataUser(inputQuery));
     dispatch(getDataDivisi(inputQuery));
-    getAllDivisi();
+    dispatch(getAllDivisi());
+    dispatch(getAllLokasi());
     // dispatch(userInfo());
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
-
-  useEffect(() => {
-    if (userState.user && userState.user.isSuccess) {
-      setDataUser(userState.user.data);
-    }
-  }, [userState.user.isSuccess, userState.user.data]);
 
   //   MAIN
   return (
     <>
+      <AlertNotify
+        alertMsg={"Berhasil menambah data user"}
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>DATA USER</h4>
       <ModalComponent
         classStyle={"mt-4"}
@@ -150,7 +143,7 @@ const UserPage = () => {
               }
               val={inputDataUser.nip}
             />
-            <p className="m-0 mt-1">Username</p>
+            <p className="m-0 mt-2">Username</p>
             <InputComponents
               classStyle="w-100 p-2"
               placeHolder="Username"
@@ -159,7 +152,7 @@ const UserPage = () => {
               }
               val={inputDataUser.username}
             />
-            <p className="m-0 mt-1">Password</p>
+            <p className="m-0 mt-2">Password</p>
             <InputComponents
               classStyle="w-100 p-2"
               placeHolder="Password"
@@ -168,7 +161,7 @@ const UserPage = () => {
               }
               val={inputDataUser.password}
             />
-            <p className="m-0 mt-1">Divisi</p>
+            <p className="m-0 mt-2">Divisi</p>
             <select
               className="form-select"
               onChange={(e) =>
@@ -184,7 +177,23 @@ const UserPage = () => {
                 );
               })}
             </select>
-            <p className="m-0 mt-1">Role</p>
+            <p className="m-0 mt-2">Lokasi User</p>
+            <select
+              className="form-select"
+              onChange={(e) =>
+                setInputDataUser({ ...inputDataUser, lokasiId: e.target.value })
+              }
+            >
+              <option value="">Pilih Lokasi User</option>
+              {lokasi.map((e) => {
+                return (
+                  <option value={e.id} key={e.id}>
+                    {e.name}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="m-0 mt-2">Role</p>
             <select
               className="form-select"
               onChange={(e) =>
@@ -230,6 +239,7 @@ const UserPage = () => {
                   <td>NIP Pegawai</td>
                   <td>Username</td>
                   <td>Divisi</td>
+                  <td>Lokasi User</td>
                   <td>Role</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
@@ -245,6 +255,7 @@ const UserPage = () => {
                         <td>{item.nip}</td>
                         <td>{item.username}</td>
                         <td>{item.divisi_user?.name ?? "-"}</td>
+                        <td>Ruang {item.loc_user?.name ?? "-"}</td>
                         <td>{item.role}</td>
                         <td className="text-center">
                           <button

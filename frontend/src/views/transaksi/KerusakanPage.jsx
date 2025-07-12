@@ -7,7 +7,8 @@ import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
-import { getBrgRusak } from "../../features/barangSlice";
+import { getAllBarang, getBrgRusak } from "../../features/barangSlice";
+import AlertNotify from "../../components/Alert";
 
 const KerusakanPage = () => {
   // variabel
@@ -15,9 +16,11 @@ const KerusakanPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const rusakState = useSelector((state) => state.barang.barang_rusak);
+  const dataBarang =
+    useSelector((state) => state.barang.all_barang?.data) || [];
   const userState = useSelector((state) => state.auth);
   const [dataBrgRusak, setDataBrgRusak] = useState([]);
-  const [dataBarang, setDataBarang] = useState([]);
+  const [alertShow, SetAlertShow] = useState(false);
   const [show, setShow] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [inputKerusakan, setInputKerusakan] = useState({
@@ -38,29 +41,19 @@ const KerusakanPage = () => {
   const handleShow = () => setShow(true);
 
   // FUNCTION
-  const getAllBarang = async () => {
-    try {
-      const response = await axios.get(`${url}/barang/all`);
-      if (response.status === 200) {
-        setDataBarang(response.data);
-      }
-    } catch (error) {
-      if (error) {
-        console.error(error);
-      }
-    }
-  };
-
   const addDataKerusakan = async () => {
     try {
       setLoading(true);
       const response = await axios.post(`${url}/rusak/create`, inputKerusakan);
 
       if (response.status === 201) {
-        alert("Berhasil menambah data kerusakan");
+        SetAlertShow(true);
+        setTimeout(() => {
+          SetAlertShow(false);
+        }, 2000);
         setInputKerusakan({ desc: "", qty: 0, barangId: "" });
         dispatch(getBrgRusak(inputQuery));
-        getAllBarang();
+        dispatch(getAllBarang());
         handleClose();
       }
     } catch (error) {
@@ -125,7 +118,7 @@ const KerusakanPage = () => {
   // useEffect
   useEffect(() => {
     dispatch(getBrgRusak(inputQuery));
-    getAllBarang();
+    dispatch(getAllBarang());
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
@@ -137,6 +130,11 @@ const KerusakanPage = () => {
   // MAIN
   return (
     <>
+      <AlertNotify
+        alertMsg={"Berhsil menambah data kerusakan"}
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>DATA KERUSAKAN INVENTARIS BARANG</h4>
       <div className="m-0">
         {userState.data && userState.data.role === "admin" && (
@@ -237,7 +235,9 @@ const KerusakanPage = () => {
                   <td>Jumlah Rusak</td>
                   <td>Sisa</td>
                   <td>Sebab Kerusakan</td>
-                  <td style={{ width: "15%" }}>Aksi</td>
+                  {userState.data && userState.data.role === "admin" && (
+                    <td style={{ width: "15%" }}>Aksi</td>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -252,20 +252,22 @@ const KerusakanPage = () => {
                         <td>{item.qty}</td>
                         <td>{item.barang.qty}</td>
                         <td>{item.desc}</td>
-                        <td className="text-center">
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => navigate(`edit/${item.id}`)}
-                          >
-                            Ubah
-                          </button>
-                          <button
-                            className="btn btn-danger ms-1"
-                            onClick={() => deleteDataKerusakan(item.id)}
-                          >
-                            Hapus
-                          </button>
-                        </td>
+                        {userState.data && userState.data.role === "admin" && (
+                          <td className="text-center">
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => navigate(`edit/${item.id}`)}
+                            >
+                              Ubah
+                            </button>
+                            <button
+                              className="btn btn-danger ms-1"
+                              onClick={() => deleteDataKerusakan(item.id)}
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

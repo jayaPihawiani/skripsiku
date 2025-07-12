@@ -12,6 +12,7 @@ import UserAuthComponent from "./components/UserAuthComponents";
 import UserEdit from "./components/UserEditComponent";
 import { LoadingProvider } from "./context/Loading";
 import Dashboard from "./views/Dashboard";
+import DetailPermintaanPage from "./views/DetailPermintaanPage";
 import DistribusiPage from "./views/DistribusiPage";
 import DivisiPage from "./views/DivisiPage";
 import Login from "./views/Login";
@@ -25,6 +26,7 @@ import BarangMasuk from "./views/transaksi/BarangMasukPage";
 import KerusakanPage from "./views/transaksi/KerusakanPage";
 import Pemindahan from "./views/transaksi/PemindahanPage";
 import PenghapusanPage from "./views/transaksi/PenghapusanPage";
+import UmurEkonomis from "./views/UmurEkonomis";
 import UserPage from "./views/UserPage";
 
 function App() {
@@ -152,7 +154,19 @@ function App() {
                       <Route path="/masuk" element={<BarangMasuk />} />
                       <Route path="/pindah" element={<Pemindahan />} />
                       <Route path="/permintaan" element={<PermintaanPage />} />
+                      <Route
+                        path="/permintaan/:detail"
+                        element={<DetailPermintaanPage />}
+                      />
                       <Route path="/distribusi" element={<DistribusiPage />} />
+                      <Route
+                        path="/ekonomis"
+                        element={
+                          <AuthAccessComponent>
+                            <UmurEkonomis />
+                          </AuthAccessComponent>
+                        }
+                      />
                     </Routes>
                   </UserAuthComponent>
                 </SideBar>

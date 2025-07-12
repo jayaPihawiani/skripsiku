@@ -2,23 +2,26 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
 import { getDataPemindahan } from "../../features/barangSlice";
-import { getDataLokasi } from "../../features/detailBarang";
+import { getAllBarang } from "../../features/barangSlice";
+import { getAllLokasi } from "../../features/detailBarang";
 
 const Pemindahan = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [dataLokasi, setDataLokasi] = useState([]);
-  const [dataBarang, setDataBarang] = useState([]);
+  const dataLokasi =
+    useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
+  const dataBarang =
+    useSelector((state) => state.barang.all_barang?.data) || [];
   const barangPindah = useSelector((state) => state.barang.pemindahan);
   const user = useSelector((state) => state.auth);
+  const [alertShow, setAlertShow] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { setLoading } = useContext(LoadingContext);
   const [inputDataPindah, setInputDataPindah] = useState({
@@ -51,23 +54,6 @@ const Pemindahan = () => {
   const handleShow = () => setShow(true);
 
   // FUNTION
-  const getAllBarangLokasi = async () => {
-    try {
-      const response = await axios.get(`${url}/barang/all`);
-      const lokasi = await axios.get(`${url}/lokasi/all`);
-      if (response.status === 200) {
-        setDataBarang(response.data);
-        setDataLokasi(lokasi.data);
-      }
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      } else {
-        console.error(error);
-      }
-    }
-  };
-
   const deleteDataPindah = async (id) => {
     try {
       const response = await axios.delete(`${url}/pindah/del/${id}`);
@@ -97,9 +83,12 @@ const Pemindahan = () => {
         inputDataPindah
       );
       if (response.status === 201) {
-        alert(response.data.msg);
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
         dispatch(getDataPemindahan(inputQuery));
-        getAllBarangLokasi();
+        dispatch(getAllBarang());
 
         handleClose();
       }
@@ -122,7 +111,8 @@ const Pemindahan = () => {
   // USEEFFECT
   useEffect(() => {
     dispatch(getDataPemindahan(inputQuery));
-    getAllBarangLokasi();
+    dispatch(getAllBarang());
+    dispatch(getAllLokasi());
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
@@ -134,118 +124,125 @@ const Pemindahan = () => {
   // MAIN
   return (
     <div className="w-100 pe-3">
+      <AlertNotify
+        alertMsg="Berhasil menambah data pemindahan"
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>DATA PEMINDAHAN INVENTARIS</h4>
       <div className="mt-4  ">
         {user.data && user.data.role === "admin" && (
-          <ModalComponent
-            btntTitle="Tambah"
-            show={show}
-            handleClose={handleClose}
-            handleShow={handleShow}
-            handleSubmit={addBarangPindah}
-            modalTitle="Tambah Data Barang Masuk"
-            inputField={
-              <>
-                <p className="m-0">Nama Barang</p>
-                <select
-                  className="form-select"
-                  onChange={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      barangId: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Barang</option>
-                  {dataBarang.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.name} - stok {e.qty}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-1">Asal Barang</p>
-                <select
-                  className="form-select"
-                  onChange={(e) => {
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      from: e.target.value,
-                    });
-                  }}
-                >
-                  <option value="">Pilih Asal Barang</option>
-                  {dataLokasi.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-1">Tujuan Pindah</p>
-                <select
-                  className="form-select"
-                  onChange={(e) => {
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      to: e.target.value,
-                    });
-                  }}
-                >
-                  <option value="">Pilih Tujuan Barang</option>
-                  {dataLokasi.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-1">Jumlah</p>
-                <InputComponents
-                  type="number"
-                  classStyle="w-100 p-2"
-                  placeHolder="Jumlah"
-                  change={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      qty: e.target.value,
-                    })
-                  }
-                />
-                <p className="m-0 mt-1">Keterangan</p>
-                <InputComponents
-                  type="text"
-                  classStyle="w-100 p-2"
-                  placeHolder="Keterangan"
-                  change={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      desc: e.target.value,
-                    })
-                  }
-                />
-                <p className="m-0 mt-1">Tanggal Pemindahan</p>
-                <InputComponents
-                  type="date"
-                  classStyle="w-100 p-2"
-                  placeHolder="Tanggal Masuk"
-                  change={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      tgl_pindah: e.target.value,
-                    })
-                  }
-                />
-              </>
-            }
-          />
+          <div>
+            <ModalComponent
+              btntTitle="Tambah"
+              show={show}
+              handleClose={handleClose}
+              handleShow={handleShow}
+              handleSubmit={addBarangPindah}
+              modalTitle="Tambah Data Pemindahan Inventaris"
+              inputField={
+                <>
+                  <p className="m-0">Nama Barang</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        barangId: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Barang</option>
+                    {dataBarang.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.name} - stok {e.qty}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-3">Asal Barang</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) => {
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        from: e.target.value,
+                      });
+                    }}
+                  >
+                    <option value="">Pilih Asal Barang</option>
+                    {dataLokasi.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-3">Tujuan Pindah</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) => {
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        to: e.target.value,
+                      });
+                    }}
+                  >
+                    <option value="">Pilih Tujuan Barang</option>
+                    {dataLokasi.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-3">Jumlah</p>
+                  <InputComponents
+                    type="number"
+                    classStyle="w-100 p-2"
+                    placeHolder="Jumlah"
+                    change={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        qty: e.target.value,
+                      })
+                    }
+                  />
+                  <p className="m-0 mt-3">Keterangan</p>
+                  <InputComponents
+                    type="text"
+                    classStyle="w-100 p-2"
+                    placeHolder="Keterangan"
+                    change={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        desc: e.target.value,
+                      })
+                    }
+                  />
+                  <p className="m-0 mt-3">Tanggal Pemindahan</p>
+                  <InputComponents
+                    type="date"
+                    classStyle="w-100 p-2"
+                    placeHolder="Tanggal Masuk"
+                    change={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        tgl_pindah: e.target.value,
+                      })
+                    }
+                  />
+                </>
+              }
+            />
+            <button className="btn btn-primary ms-1">
+              Cetak Laporan Pemindahan
+            </button>
+          </div>
         )}
-        <button className="btn btn-primary ms-1">
-          Cetak Laporan Pemindahan
-        </button>
       </div>
 
       <div className="card shadow-lg mb-4 mt-2 w-100">

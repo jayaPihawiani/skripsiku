@@ -5,6 +5,9 @@ import { isAdmin, verifyUser } from "../middleware/authMiddleware.js";
 const pemindahanRoute = express.Router();
 const pemindahan = new PemindahanController();
 
+pemindahanRoute.get("/", verifyUser, pemindahan.getPemindahan);
+pemindahanRoute.get("/all", verifyUser, pemindahan.getAllPemindahan);
+pemindahanRoute.get("/:id", verifyUser, isAdmin, pemindahan.getPemindahanById);
 pemindahanRoute.post(
   "/create",
   verifyUser,
@@ -23,7 +26,5 @@ pemindahanRoute.patch(
   isAdmin,
   pemindahan.updatePemindahan
 );
-pemindahanRoute.get("/:id", verifyUser, isAdmin, pemindahan.getPemindahanById);
-pemindahanRoute.get("/", verifyUser, pemindahan.getPemindahan);
 
 export default pemindahanRoute;

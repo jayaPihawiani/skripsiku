@@ -5,13 +5,14 @@ import { isAdmin, verifyUser } from "../middleware/authMiddleware.js";
 const distribusiRoute = express.Router();
 const distribusi = new DistribusiController();
 
+distribusiRoute.get("/", verifyUser, distribusi.getDistribusi);
+distribusiRoute.get("/all", verifyUser, distribusi.getAllDistribusi);
 distribusiRoute.post(
   "/create",
   verifyUser,
   isAdmin,
   distribusi.createDistribusi
 );
-distribusiRoute.get("/", verifyUser, distribusi.getDistribusi);
 distribusiRoute.delete(
   "/del/:id",
   verifyUser,

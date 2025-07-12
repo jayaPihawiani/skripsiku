@@ -24,6 +24,19 @@ User.belongsTo(Divisi, {
   onUpdate: "CASCADE",
 });
 
+// user lokasi
+Lokasi.hasMany(User, {
+  foreignKey: "lokasiId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+User.belongsTo(Lokasi, {
+  foreignKey: "lokasiId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+  as: "loc_user",
+});
+
 // user permintaan
 User.hasMany(Permintaaan, {
   foreignKey: "userId",
@@ -167,6 +180,7 @@ Distribusi.belongsTo(Lokasi, {
   foreignKey: "lokasiId",
   onDelete: "SET NULL",
   onUpdate: "CASCADE",
+  as: "lokasi_ruang",
 });
 
 User.hasMany(Distribusi, {

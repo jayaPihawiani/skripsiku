@@ -2,12 +2,12 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
-import { getDataBarang } from "../../features/barangSlice";
-import DownloadPdfBButton from "../../components/Laporan/ButtonDownloadPdf";
+import { getAllBarang, getDataBarang } from "../../features/barangSlice";
 
 const Barang = () => {
   // VARIABEL
@@ -15,6 +15,7 @@ const Barang = () => {
   const dispatch = useDispatch();
   const barang = useSelector((state) => state.barang.barang);
   const user = useSelector((state) => state.auth);
+  const [alertShow, setAlertShow] = useState(false);
   const [satuanBarang, setSatuanBarang] = useState([]);
   const [kategoriBarang, setKategoriBarang] = useState([]);
   const [merkBarang, setMerkBarang] = useState([]);
@@ -155,7 +156,10 @@ const Barang = () => {
         setFileImage("");
         setLoading(false);
         handleClose();
-        alert("Berhasil Menambah Data Barang.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
       }
     } catch (error) {
       if (error.response) {
@@ -166,6 +170,21 @@ const Barang = () => {
       setLoading(false);
     }
   };
+
+  // format masa ekonomis
+  function formatTahunBulan(masaEkonomis) {
+    const tahun = Math.floor(masaEkonomis);
+    const desimal = masaEkonomis - tahun;
+
+    // Konversi desimal ke bulan
+    const bulan = Math.round(desimal * 12);
+
+    if (desimal === 0) {
+      return `${tahun} tahun`;
+    }
+
+    return `${tahun} tahun ${bulan} bulan`;
+  }
 
   // print laporan
   const printLaporan = async () => {
@@ -196,10 +215,15 @@ const Barang = () => {
 
   // USEEFFECT
   useEffect(() => {
-    dispatch(getDataBarang(inputQuery));
-    if (user.data.role === "admin") {
-      getDetailBarang();
-    }
+    const dispatchBarang = async () => {
+      await dispatch(getAllBarang());
+      dispatch(getDataBarang(inputQuery));
+      if (user.data.role === "admin") {
+        getDetailBarang();
+      }
+    };
+
+    dispatchBarang();
   }, [dispatch, inputQuery]);
 
   useEffect(() => {
@@ -211,7 +235,12 @@ const Barang = () => {
   // MAIN
   return (
     <div className="w-100 pe-3">
-      <h4>DATA STOK BARANG</h4>
+      <AlertNotify
+        alertMsg="Berhasil menambah data Barang."
+        showAlert={alertShow}
+        variantAlert="success"
+      />
+      <h4>DATA STOK INVENTARIS BARANG</h4>
       <div className="mt-2 d-flex">
         {" "}
         {user.data && user.data.role === "admin" && (
@@ -427,6 +456,7 @@ const Barang = () => {
                   <th>Kategori</th>
                   <th>Kondisi</th>
                   <th>Riwayat Pemeliharaan</th>
+                  <th>Masa Ekonomis Barang</th>
                   <th>Foto</th>
                   {user.data.role === "admin" && <th>Aksi</th>}
                 </tr>
@@ -443,7 +473,13 @@ const Barang = () => {
                         <td>{e.desc}</td>
                         <td>{e.qty}</td>
                         <td>{e.tgl_beli?.slice(0, 10)}</td>
-                        <td>{e.harga}</td>
+                        <td>
+                          {" "}
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                          }).format(e.harga)}
+                        </td>
                         <td>{(e.merk_brg && e.merk_brg.name) || "-"}</td>
                         <td>{(e.satuan_brg && e.satuan_brg.name) || "-"}</td>
                         <td>
@@ -451,6 +487,7 @@ const Barang = () => {
                         </td>
                         <td>{e.kondisi}</td>
                         <td>{e.riwayat_pemeliharaan}</td>
+                        <td>{formatTahunBulan(e.umur_ekonomis)}</td>
                         <td>
                           <img
                             src={e.url}

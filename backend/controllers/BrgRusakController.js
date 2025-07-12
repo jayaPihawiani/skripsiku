@@ -92,6 +92,19 @@ class BrgRusakController {
     }
   };
 
+  getAllBrgRusak = async (req, res) => {
+    try {
+      const brg_rusak = await BrgRusak.findAll({
+        include: { model: Barang, attributes: ["name", "desc", "qty"] },
+        attributes: ["id", "desc", "qty", "createdAt", "updatedAt"],
+      });
+
+      res.status(200).json(brg_rusak);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
   updateBrgRusak = async (req, res) => {
     const { desc, qty } = req.body;
     try {

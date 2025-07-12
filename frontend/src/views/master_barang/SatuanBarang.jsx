@@ -8,6 +8,7 @@ import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
 import { getSatuanBarang } from "../../features/detailBarang";
+import AlertNotify from "../../components/Alert";
 
 const SatuanBarang = () => {
   // variabel
@@ -17,6 +18,7 @@ const SatuanBarang = () => {
   const detailSatuan = useSelector((state) => state.detail_barang.satuan);
   const [satuanBarang, setSatuanBarang] = useState([]);
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [inputSatuan, setInputSatuan] = useState({ name: "", desc: "" });
   const [searchQuery, setSearchQuery] = useState();
   const [inputQuery, setInputQuery] = useState({
@@ -68,7 +70,10 @@ const SatuanBarang = () => {
         setInputSatuan({ name: "", desc: "" });
         dispatch(getSatuanBarang(inputQuery));
         handleClose();
-        alert("Berhasil menambah data satuan.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
       }
     } catch (error) {
       console.error(error.response.data);
@@ -91,6 +96,11 @@ const SatuanBarang = () => {
 
   return (
     <>
+      <AlertNotify
+        alertMsg="Berhasil menambah data satuan."
+        showAlert={alertShow}
+        variantAlert="success"
+      />
       <h4>DATA SATUAN BARANG</h4>
       <ModalComponent
         classStyle="mt-3"

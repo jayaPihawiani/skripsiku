@@ -5,9 +5,10 @@ import { isAdmin, verifyUser } from "../middleware/authMiddleware.js";
 const brgMasukRoute = express.Router();
 const brgMasuk = new BarangMasukController();
 
-brgMasukRoute.post("/create", verifyUser, isAdmin, brgMasuk.createBarangMasuk);
 brgMasukRoute.get("/", verifyUser, brgMasuk.getBarangMasuk);
+brgMasukRoute.get("/all", verifyUser, brgMasuk.getAllBrgMasuk);
 brgMasukRoute.get("/:id", verifyUser, brgMasuk.getBarangMasukById);
+brgMasukRoute.post("/create", verifyUser, isAdmin, brgMasuk.createBarangMasuk);
 brgMasukRoute.delete(
   "/del/:id",
   verifyUser,

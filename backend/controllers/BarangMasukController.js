@@ -53,6 +53,20 @@ class BarangMasukController {
     }
   };
 
+  getAllBrgMasuk = async (req, res) => {
+    try {
+      const brgMasuk = await BarangMasuk.findAll({
+        include: {
+          model: Barang,
+        },
+      });
+
+      res.status(200).json(brgMasuk);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
   getBarangMasuk = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 0;

@@ -140,7 +140,7 @@ const SideBar = ({ children }) => {
             {/* menu */}
             {/* permintaan */}
             {state.data && state.data.role === "admin" && (
-              <Link to="/permintaan" className="nav-link">
+              <Link to="/ekonomis" className="nav-link">
                 <span className="icons">
                   <BsGraphUpArrow />
                 </span>
@@ -187,6 +187,9 @@ const SideBar = ({ children }) => {
             )}
           </React.Fragment>
         </nav>
+        <p className="text-light text-center mt-3" style={{ fontSize: "12px" }}>
+          &copy; 2025 STMIK Banjarbaru
+        </p>
       </div>
       <section className="body-page">{children}</section>
     </React.Fragment>

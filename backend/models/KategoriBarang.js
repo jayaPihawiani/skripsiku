@@ -11,6 +11,7 @@ const Kategori = db.define(
     },
     name: DataTypes.STRING(50),
     desc: DataTypes.STRING,
+    masa_ekonomis: DataTypes.DOUBLE,
   },
   { freezeTableName: true }
 );

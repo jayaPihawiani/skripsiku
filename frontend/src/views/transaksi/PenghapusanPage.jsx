@@ -3,11 +3,12 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
-import { getDataPenghapusan } from "../../features/barangSlice";
+import { getAllBarang, getDataPenghapusan } from "../../features/barangSlice";
 
 const PenghapusanPage = () => {
   // variabel
@@ -15,11 +16,13 @@ const PenghapusanPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const dataBarang =
+    useSelector((state) => state.barang.all_barang?.data) || [];
   const penghapusanState = useSelector((state) => state.barang.penghapusan);
   const [dataPenghapusan, setDataPenghapusan] = useState([]);
-  const [dataBarang, setDataBarang] = useState([]);
   const [file, setFile] = useState("");
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [inputPenghapusan, setInputPenghapusan] = useState({
     desc: "",
     qty: 0,
@@ -41,19 +44,6 @@ const PenghapusanPage = () => {
   const handleShow = () => setShow(true);
 
   // FUNCTION
-  const getAllBarang = async () => {
-    try {
-      const response = await axios.get(`${url}/barang/all`);
-      if (response.status === 200) {
-        setDataBarang(response.data);
-      }
-    } catch (error) {
-      if (error) {
-        console.error(error);
-      }
-    }
-  };
-
   const deleteDataPenghapusan = async (id) => {
     try {
       const response = await axios.delete(`${url}/penghapusan/del/${id}`);
@@ -101,9 +91,12 @@ const PenghapusanPage = () => {
         },
       });
       if (response.status === 201) {
-        alert("Berhasil menambah data penghapusan.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
         dispatch(getDataPenghapusan(inputQuery));
-        getAllBarang();
+        dispatch(getAllBarang());
         setInputQuery({ ...inputQuery, page: 0 });
         handleClose();
       }
@@ -148,7 +141,7 @@ const PenghapusanPage = () => {
   // useEffect
   useEffect(() => {
     dispatch(getDataPenghapusan(inputQuery));
-    getAllBarang();
+    dispatch(getAllBarang());
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
@@ -160,6 +153,11 @@ const PenghapusanPage = () => {
   // MAIN
   return (
     <>
+      <AlertNotify
+        alertMsg={"Berhasil menambah data penghapusan"}
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>DATA PENGHAPUSAN INVENTARIS BARANG</h4>
       <ModalComponent
         handleSubmit={addDataPenghapusan}
@@ -168,7 +166,7 @@ const PenghapusanPage = () => {
         show={show}
         handleShow={handleShow}
         handleClose={handleClose}
-        modalTitle="Tambah Data Inventaris Barang Rusak"
+        modalTitle="Tambah Data Penghapusan Inventaris"
         inputField={
           <>
             <p className="m-0">Nama Inventaris Barang</p>

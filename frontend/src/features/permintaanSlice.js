@@ -4,12 +4,36 @@ import axios from "axios";
 const url = import.meta.env.VITE_API_URL;
 
 const initState = {
-  data: null,
-  isLoading: false,
-  isError: false,
-  isSuccess: false,
-  errMessage: false,
+  permintaan: {
+    data: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    errMessage: false,
+  },
+  all_permintaan: {
+    data: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    errMessage: false,
+  },
 };
+
+export const getAllPermintaan = createAsyncThunk(
+  "allPermintaan/getallPermintaan",
+  async (_, thunkApi) => {
+    try {
+      const response = await axios.get(`${url}/permintaan/all`);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        const errMessage = error.response.data.msg;
+        return thunkApi.rejectWithValue(errMessage);
+      }
+    }
+  }
+);
 
 export const getPermintaan = createAsyncThunk(
   "permintaan/getPermintaan",
@@ -35,17 +59,31 @@ const permintaanSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(getPermintaan.pending, (state) => {
-        state.isLoading = true;
+        state.permintaan.isLoading = true;
       })
       .addCase(getPermintaan.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.isSuccess = true;
-        state.data = action.payload;
+        state.permintaan.isLoading = false;
+        state.permintaan.isSuccess = true;
+        state.permintaan.data = action.payload;
       })
       .addCase(getPermintaan.rejected, (state, action) => {
-        state.isLoading = false;
-        state.isError = true;
-        state.errMessage = action.payload;
+        state.permintaan.isLoading = false;
+        state.permintaan.isError = true;
+        state.permintaan.errMessage = action.payload;
+      });
+    builder
+      .addCase(getAllPermintaan.pending, (state) => {
+        state.all_permintaan.isLoading = true;
+      })
+      .addCase(getAllPermintaan.fulfilled, (state, action) => {
+        state.all_permintaan.isLoading = false;
+        state.all_permintaan.isSuccess = true;
+        state.all_permintaan.data = action.payload;
+      })
+      .addCase(getAllPermintaan.rejected, (state, action) => {
+        state.all_permintaan.isLoading = false;
+        state.all_permintaan.isError = true;
+        state.all_permintaan.errMessage = action.payload;
       });
   },
 });

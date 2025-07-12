@@ -7,17 +7,25 @@ import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
-import { getDataBarangMasuk } from "../../features/barangSlice";
+import {
+  getAllBarang,
+  getAllBrgMasuk,
+  getDataBarangMasuk,
+} from "../../features/barangSlice";
+import AlertNotify from "../../components/Alert";
 
 const BarangMasuk = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [dataBarang, setDataBarang] = useState([]);
+  // const [dataBarang, setDataBarang] = useState([]);
+  const dataBarang =
+    useSelector((state) => state.barang.all_barang?.data) || [];
   const barangMasuk = useSelector((state) => state.barang.barang_masuk);
   const user = useSelector((state) => state.auth);
   const [searchQuery, setSearchQuery] = useState("");
+  const [alertShow, setAlertShow] = useState(false);
   const { setLoading } = useContext(LoadingContext);
   const [inputBrgMasuk, setInputBrgMasuk] = useState({
     barangId: "",
@@ -45,19 +53,6 @@ const BarangMasuk = () => {
   const handleShow = () => setShow(true);
 
   // FUNTION
-  const getAllBarang = async () => {
-    try {
-      const response = await axios.get(`${url}/barang/all`);
-      if (response.status === 200) {
-        setDataBarang(response.data);
-      }
-    } catch (error) {
-      if (error) {
-        console.error(error);
-      }
-    }
-  };
-
   const deleteDataMasuk = async (id) => {
     try {
       const response = await axios.delete(`${url}/masuk/del/${id}`);
@@ -84,9 +79,12 @@ const BarangMasuk = () => {
       setLoading(true);
       const response = await axios.post(`${url}/masuk/create`, inputBrgMasuk);
       if (response.status === 201) {
-        alert(response.data.msg);
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
         dispatch(getDataBarangMasuk(inputQuery));
-        getAllBarang();
+        dispatch(getAllBarang());
         handleClose();
       }
     } catch (error) {
@@ -108,7 +106,7 @@ const BarangMasuk = () => {
   // USEEFFECT
   useEffect(() => {
     dispatch(getDataBarangMasuk(inputQuery));
-    getAllBarang();
+    dispatch(getAllBarang());
   }, [dispatch, inputQuery]);
 
   useEffect(() => {
@@ -120,78 +118,88 @@ const BarangMasuk = () => {
   // MAIN
   return (
     <div className="w-100 pe-3">
+      <AlertNotify
+        alertMsg="Berhasil menambah inventaris barang masuk"
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>DATA BARANG MASUK</h4>
       <div className="mt-4">
         {user.data && user.data.role === "admin" && (
-          <ModalComponent
-            btntTitle="Tambah"
-            show={show}
-            handleClose={handleClose}
-            handleShow={handleShow}
-            handleSubmit={addBarangMasuk}
-            modalTitle="Tambah Data Barang Masuk"
-            inputField={
-              <>
-                <p className="m-0">Nama Barang</p>
-                <select
-                  className="form-select"
-                  onChange={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
-                      barangId: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Barang</option>
-                  {dataBarang.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.name} - stok: {e.qty}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-1">Jumlah</p>
-                <InputComponents
-                  type="number"
-                  classStyle="w-100 p-2"
-                  placeHolder="Jumlah"
-                  change={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
-                      qty: e.target.value,
-                    })
-                  }
-                />
-                <p className="m-0 mt-1">Keterangan</p>
-                <InputComponents
-                  type="text"
-                  classStyle="w-100 p-2"
-                  placeHolder="Keterangan"
-                  change={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
-                      desc: e.target.value,
-                    })
-                  }
-                />
-                <p className="m-0 mt-1">Tanggal Masuk</p>
-                <InputComponents
-                  type="date"
-                  classStyle="w-100 p-2"
-                  placeHolder="Tanggal Masuk"
-                  change={(e) =>
-                    setInputBrgMasuk({
-                      ...inputBrgMasuk,
-                      tgl_masuk: e.target.value,
-                    })
-                  }
-                />
-              </>
-            }
-          />
+          <div>
+            {" "}
+            <ModalComponent
+              btntTitle="Tambah"
+              show={show}
+              handleClose={handleClose}
+              handleShow={handleShow}
+              handleSubmit={addBarangMasuk}
+              modalTitle="Tambah Data Barang Masuk"
+              inputField={
+                <>
+                  <p className="m-0">Nama Barang</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) =>
+                      setInputBrgMasuk({
+                        ...inputBrgMasuk,
+                        barangId: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Barang</option>
+                    {dataBarang.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.name} - stok: {e.qty}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-1">Jumlah</p>
+                  <InputComponents
+                    type="number"
+                    classStyle="w-100 p-2"
+                    placeHolder="Jumlah"
+                    change={(e) =>
+                      setInputBrgMasuk({
+                        ...inputBrgMasuk,
+                        qty: e.target.value,
+                      })
+                    }
+                  />
+                  <p className="m-0 mt-1">Keterangan</p>
+                  <InputComponents
+                    type="text"
+                    classStyle="w-100 p-2"
+                    placeHolder="Keterangan"
+                    change={(e) =>
+                      setInputBrgMasuk({
+                        ...inputBrgMasuk,
+                        desc: e.target.value,
+                      })
+                    }
+                  />
+                  <p className="m-0 mt-1">Tanggal Masuk</p>
+                  <InputComponents
+                    type="date"
+                    classStyle="w-100 p-2"
+                    placeHolder="Tanggal Masuk"
+                    change={(e) =>
+                      setInputBrgMasuk({
+                        ...inputBrgMasuk,
+                        tgl_masuk: e.target.value,
+                      })
+                    }
+                  />
+                </>
+              }
+            />
+            <button className="btn btn-primary ms-1">
+              Cetak Laporan Masuk
+            </button>
+          </div>
         )}
-        <button className="btn btn-primary ms-1">Cetak Laporan Masuk</button>
       </div>
 
       <div className="card shadow-lg mb-2 mt-2 w-100">

@@ -8,6 +8,7 @@ import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
 import { getMerkBarang } from "../../features/detailBarang";
+import AlertNotify from "../../components/Alert";
 
 const MerkBarang = () => {
   // variabel
@@ -17,6 +18,7 @@ const MerkBarang = () => {
   const detailBarang = useSelector((state) => state.detail_barang.merk);
   const [merkBarang, setMerkBarang] = useState([]);
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [dataMerk, setDataMerk] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
@@ -74,7 +76,11 @@ const MerkBarang = () => {
       if (response.status === 201) {
         dispatch(getMerkBarang(inputQuery));
         handleClose();
-        alert("Berhasil menambah data merk.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
+        // alert("Berhasil menambah data merk.");
       }
     } catch (error) {
       console.error(error.response.data);
@@ -96,6 +102,11 @@ const MerkBarang = () => {
 
   return (
     <>
+      <AlertNotify
+        showAlert={alertShow}
+        alertMsg="Berhasil menambah data merk"
+        variantAlert="success"
+      />
       <h4>DATA MERK BARANG</h4>
       <ModalComponent
         classStyle={"mt-3"}

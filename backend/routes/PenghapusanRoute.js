@@ -5,6 +5,9 @@ import { isAdmin, verifyUser } from "../middleware/authMiddleware.js";
 const penghapusanRoute = express.Router();
 const penghapusan = new PenghapusanController();
 
+penghapusanRoute.get("/", verifyUser, penghapusan.getPenghapusan);
+penghapusanRoute.get("/all", verifyUser, penghapusan.getAllPenghapusan);
+penghapusanRoute.get("/:id", verifyUser, penghapusan.getPenghapusanById);
 penghapusanRoute.post(
   "/create",
   verifyUser,
@@ -23,7 +26,5 @@ penghapusanRoute.delete(
 //   isAdmin,
 //   penghapusan.
 // );
-penghapusanRoute.get("/:id", verifyUser, penghapusan.getPenghapusanById);
-penghapusanRoute.get("/", verifyUser, penghapusan.getPenghapusan);
 
 export default penghapusanRoute;

@@ -15,6 +15,7 @@ const KategoriBarangEdit = () => {
   const [inputDataKategori, setInputDataKategori] = useState({
     name: "",
     desc: "",
+    masa_ekonomis: 0,
   });
 
   // function
@@ -49,6 +50,7 @@ const KategoriBarangEdit = () => {
       setInputDataKategori({
         name: dataKategori.name,
         desc: dataKategori.desc,
+        masa_ekonomis: dataKategori.masa_ekonomis,
       });
     }
   }, [dataKategori]);
@@ -72,6 +74,7 @@ const KategoriBarangEdit = () => {
         console.log("Gagal mendapatkan data!");
       }
     }
+    console.log(inputDataKategori);
   };
 
   return (
@@ -106,6 +109,18 @@ const KategoriBarangEdit = () => {
                 setInputDataKategori({
                   ...inputDataKategori,
                   desc: e.target.value,
+                })
+              }
+            />
+            <InputComponents
+              type="number"
+              placeHolder="Masa Ekonomis"
+              classStyle="w-100 p-2 mt-2"
+              val={inputDataKategori.masa_ekonomis ?? ""}
+              change={(e) =>
+                setInputDataKategori({
+                  ...inputDataKategori,
+                  masa_ekonomis: e.target.value,
                 })
               }
             />

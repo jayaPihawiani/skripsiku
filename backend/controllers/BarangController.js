@@ -3,14 +3,34 @@ import supabase from "../config/supabase/supabaseClient.js";
 import BarangMasuk from "../models/BarangMasuk.js";
 import Barang from "../models/BarangModel.js";
 import BrgRusak from "../models/BarangRusakModel.js";
+import Distribusi from "../models/DistribusiBrgModel.js";
 import Kategori from "../models/KategoriBarang.js";
 import Lokasi from "../models/LokasiModel.js";
 import MerkBrg from "../models/MerkModel.js";
 import Pemindahan from "../models/Pemindahan.js";
 import Penghapusan from "../models/PenghapusanModel.js";
 import SatuanBrg from "../models/SatuanModel.js";
+import User from "../models/UserModels.js";
 
 class BarangController {
+  bulanPerTahun = 12;
+  // fungsi hitung masa ekonomis
+  hitungSisaUmurBulan = (tglBeliStr, umurEkonomisBulan) => {
+    const tglBeli = new Date(tglBeliStr);
+    const hariIni = new Date();
+
+    // Hitung total bulan yang telah berlalu
+    const tahunSelisih = hariIni.getFullYear() - tglBeli.getFullYear();
+    const bulanSelisih = hariIni.getMonth() - tglBeli.getMonth();
+
+    const totalBulanBerlalu = tahunSelisih * 12 + bulanSelisih;
+
+    // Hitung sisa umur dalam bulan
+    const sisaBulan = Math.max(umurEkonomisBulan - totalBulanBerlalu, 0);
+
+    return sisaBulan; // dalam bulan
+  };
+
   // ADD BARANG
   createBarang = async (req, res) => {
     // variabel
@@ -28,7 +48,6 @@ class BarangController {
       satuan,
       merk,
       kategori,
-      umur_ekonomis,
     } = req.body;
 
     // validasi
@@ -68,6 +87,18 @@ class BarangController {
       return res.status(400).json({ msg: "Format file tidak didukung!" });
 
     try {
+      const dataKategori = await Kategori.findByPk(kategori);
+
+      const masaEkonomisKategori =
+        dataKategori.masa_ekonomis * this.bulanPerTahun;
+
+      const masaEkonomisBarang = parseFloat(
+        (
+          this.hitungSisaUmurBulan(tgl_beli, masaEkonomisKategori) /
+          this.bulanPerTahun
+        ).toFixed(1)
+      );
+
       const supabaseUpload = await supabase.storage
         .from("product")
         .upload(fileName, file.data, {
@@ -100,7 +131,7 @@ class BarangController {
         satuan,
         merk,
         kategori,
-        umur_ekonomis,
+        umur_ekonomis: masaEkonomisBarang,
         image: fileName,
         url,
       });
@@ -130,7 +161,7 @@ class BarangController {
         include: [
           { model: SatuanBrg, attributes: ["name", "desc"] },
           { model: MerkBrg, attributes: ["name", "desc"] },
-          { model: Kategori, attributes: ["name", "desc"] },
+          { model: Kategori, attributes: ["name", "desc", "masa_ekonomis"] },
           {
             model: Penghapusan,
             attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
@@ -146,6 +177,18 @@ class BarangController {
               },
               { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
             ],
+          },
+          {
+            model: Distribusi,
+            include: [
+              {
+                model: Lokasi,
+                as: "lokasi_ruang",
+                attributes: ["name", "desc"],
+              },
+              { model: User, attributes: ["id", "nip", "username"] },
+            ],
+            attributes: ["id", "qty"],
           },
           { model: BrgRusak, attributes: ["id", "qty", "desc"] },
           { model: BarangMasuk },
@@ -172,6 +215,7 @@ class BarangController {
         offset,
         order: [["createdAt", "ASC"]],
       });
+
       res.status(200).json({ page, limit, totalPage, count, barang });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
@@ -201,6 +245,7 @@ class BarangController {
               { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
             ],
           },
+          { model: Distribusi },
           { model: BrgRusak, attributes: ["qty", "desc"] },
         ],
         attributes: [
@@ -233,9 +278,36 @@ class BarangController {
   getAllBarang = async (req, res) => {
     try {
       const barang = await Barang.findAll({
-        attributes: ["id", "name", "desc", "qty"],
+        attributes: ["id", "name", "desc", "tgl_beli", "umur_ekonomis", "qty"],
+        include: { model: Kategori },
       });
-      res.status(200).json(barang);
+
+      for (const item of barang) {
+        const tglBeliBrg = item.tgl_beli;
+        const masaEkonomisKategori =
+          item.kategori_brg.masa_ekonomis * this.bulanPerTahun;
+        console.log(masaEkonomisKategori);
+
+        const masaEkonomisBrg = parseFloat(
+          (
+            this.hitungSisaUmurBulan(tglBeliBrg, masaEkonomisKategori) /
+            this.bulanPerTahun
+          ).toFixed(1)
+        );
+
+        await Barang.update(
+          { umur_ekonomis: masaEkonomisBrg },
+          { where: { id: item.id } }
+        );
+      }
+
+      // Ambil ulang data setelah update selesai
+      const barangSetelahUpdate = await Barang.findAll({
+        attributes: ["id", "name", "desc", "tgl_beli", "umur_ekonomis", "qty"],
+        include: { model: Kategori },
+      });
+
+      res.status(200).json(barangSetelahUpdate);
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

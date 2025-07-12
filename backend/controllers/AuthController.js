@@ -1,6 +1,7 @@
 import argon2 from "argon2";
 import User from "../models/UserModels.js";
 import Divisi from "../models/DivisiModel.js";
+import Lokasi from "../models/LokasiModel.js";
 
 class AuthController {
   // LOGIN
@@ -61,7 +62,10 @@ class AuthController {
     try {
       const user = await User.findByPk(req.session.uid, {
         attributes: ["username", "nip", "divisi", "role"],
-        include: { model: Divisi, attributes: ["name", "desc"] },
+        include: [
+          { model: Divisi, attributes: ["name", "desc"] },
+          { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+        ],
       });
       res.status(200).json(user);
     } catch (error) {

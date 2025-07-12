@@ -3,6 +3,7 @@ import Permintaan from "../models/Permintaan.js";
 import User from "../models/UserModels.js";
 import Divisi from "../models/DivisiModel.js";
 import { Op } from "sequelize";
+import Lokasi from "../models/LokasiModel.js";
 
 class PermintaanController {
   createPermintaan = async (req, res) => {
@@ -80,7 +81,10 @@ class PermintaanController {
           include: {
             model: User,
             attributes: ["nip", "username", "id", "role"],
-            include: [{ model: Divisi, attributes: ["name", "desc"] }],
+            include: [
+              { model: Divisi, attributes: ["name", "desc"] },
+              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+            ],
           },
           attributes: [
             "id",
@@ -110,7 +114,10 @@ class PermintaanController {
           include: {
             model: User,
             attributes: ["nip", "username", "id", "role"],
-            include: [{ model: Divisi, attributes: ["name", "desc"] }],
+            include: [
+              { model: Divisi, attributes: ["name", "desc"] },
+              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+            ],
           },
           attributes: [
             "id",
@@ -184,6 +191,62 @@ class PermintaanController {
           .status(404)
           .json({ msg: "Data permintaan tidak ditemukan!" });
       }
+      res.status(200).json(permintaan);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  getAllPermintaan = async (req, res) => {
+    try {
+      let permintaan;
+      if (req.role === "user") {
+        permintaan = await Permintaan.findAll({
+          include: {
+            model: User,
+            attributes: ["nip", "username", "id", "role"],
+            include: [
+              { model: Divisi, attributes: ["name", "desc"] },
+              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+            ],
+          },
+          attributes: [
+            "id",
+            "name",
+            "desc",
+            "qty",
+            "file",
+            "url",
+            "userId",
+            "createdAt",
+            "updatedAt",
+          ],
+          where: { userId: req.uid },
+        });
+      } else {
+        permintaan = await Permintaan.findAll({
+          include: {
+            model: User,
+            attributes: ["nip", "username", "id", "role"],
+            include: [
+              { model: Divisi, attributes: ["name", "desc"] },
+              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+            ],
+          },
+          attributes: [
+            "id",
+            "name",
+            "desc",
+            "qty",
+            "file",
+            "url",
+            "userId",
+            "createdAt",
+            "updatedAt",
+          ],
+        });
+      }
+
       res.status(200).json(permintaan);
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });

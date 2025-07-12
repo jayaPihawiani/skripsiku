@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../components/Alert";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
@@ -17,6 +18,7 @@ const LokasiPage = () => {
   const detailLokasi = useSelector((state) => state.detail_barang.lokasi);
   const [dataLokasi, setDataLokasi] = useState([]);
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [inputLokasi, setInputLokasi] = useState({ name: "", desc: "" });
   const [inputQuery, setInputQuery] = useState({
@@ -60,7 +62,10 @@ const LokasiPage = () => {
         setInputLokasi({ name: "", desc: "" });
         dispatch(getDataLokasi(inputQuery));
         handleClose();
-        alert("Berhasil menambah data lokasi.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
       }
     } catch (error) {
       console.error(error.response.data);
@@ -95,6 +100,11 @@ const LokasiPage = () => {
   // MAIN
   return (
     <>
+      <AlertNotify
+        alertMsg={"Berhasil menambah data lokasi."}
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>DATA LOKASI</h4>
       <ModalComponent
         classStyle="mt-4"

@@ -3,11 +3,14 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../components/Alert";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
-import { getDataDistribusi } from "../features/barangSlice";
+import { getAllBarang, getDataDistribusi } from "../features/barangSlice";
+import { getAllLokasi } from "../features/detailBarang";
+import { getAllUser } from "../features/UserSlice";
 
 const DistribusiPage = () => {
   // variabel
@@ -16,11 +19,14 @@ const DistribusiPage = () => {
   const navigate = useNavigate();
   const distribusiState = useSelector((state) => state.barang.distribusi);
   const userState = useSelector((state) => state.auth);
-  const [dataDistribusi, setDataDistribusi] = useState([]);
-  const [dataBarang, setDataBarang] = useState([]);
-  const [dataLokasi, setDataLokasi] = useState([]);
-  const [dataUser, setDataUser] = useState([]);
+  const [dataDistribusi, setDataDistribusi] = useState([{}]);
+  const dataBarang =
+    useSelector((state) => state.barang.all_barang?.data) || [];
+  const dataLokasi =
+    useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
+  const dataUser = useSelector((state) => state.user.all_user?.data) || [];
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [inputDistribusi, setInputDistribusi] = useState({
     barangId: "",
@@ -40,24 +46,6 @@ const DistribusiPage = () => {
   };
   const handleShow = () => setShow(true);
 
-  // FUNCTION
-  const getAllBarang = async () => {
-    try {
-      const barang = await axios.get(`${url}/barang/all`);
-      const lokasi = await axios.get(`${url}/lokasi/all`);
-      const user = await axios.get(`${url}/user/all`);
-      if (barang.status === 200) {
-        setDataBarang(barang.data);
-        setDataLokasi(lokasi.data);
-        setDataUser(user.data);
-      }
-    } catch (error) {
-      if (error) {
-        console.error(error);
-      }
-    }
-  };
-
   const addDistribusi = async () => {
     try {
       setLoading(true);
@@ -67,9 +55,12 @@ const DistribusiPage = () => {
       );
 
       if (response.status === 201) {
-        alert("Berhasil menambah data distribusi.");
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
         dispatch(getDataDistribusi(inputQuery));
-        getAllBarang();
+        dispatch(getAllBarang());
         handleClose();
       }
     } catch (error) {
@@ -99,28 +90,6 @@ const DistribusiPage = () => {
     }
   };
 
-  // print laporan
-  const printLaporan = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${url}/print/rusak`, {
-        responseType: "blob",
-      });
-
-      const file = new Blob([response.data], { type: "application/pdf" });
-      const fileUrl = URL.createObjectURL(file);
-      window.open(fileUrl);
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      } else {
-        console.error(error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // HANDLE SEARCH
   const handleSearch = (e) => {
     e.preventDefault();
@@ -135,7 +104,9 @@ const DistribusiPage = () => {
   // useEffect
   useEffect(() => {
     dispatch(getDataDistribusi(inputQuery));
-    getAllBarang();
+    dispatch(getAllBarang());
+    dispatch(getAllLokasi());
+    dispatch(getAllUser());
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
@@ -147,11 +118,16 @@ const DistribusiPage = () => {
   // MAIN
   return (
     <>
+      <AlertNotify
+        alertMsg={"Berhasil menambah data distribusi"}
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
       <h4>
         {" "}
         {userState.data && userState.data.role === "admin"
           ? "DATA DISTRIBUSI INVENTARIS"
-          : `DATA INVENTARIS RUANG ${userState.data.divisi_user.name}`}
+          : `DATA INVENTARIS RUANG ${userState.data.loc_user?.name ?? "-"}`}
       </h4>
       <div className="m-0">
         {userState.data && userState.data.role === "admin" && (
@@ -241,10 +217,6 @@ const DistribusiPage = () => {
             }
           />
         )}
-
-        <button className="btn btn-primary ms-1 mt-3" onClick={printLaporan}>
-          {loading ? "Loading..." : "Cetak Laporan Kerusakan"}
-        </button>
       </div>
 
       <div className="card me-4 mt-2 mb-4 shadow-lg">
@@ -295,7 +267,7 @@ const DistribusiPage = () => {
                         <td>{item.barang.name}</td>
                         <td>{item.qty}</td>
                         <td>
-                          {item.lokasi_unit?.name ?? "-"} /{" "}
+                          {item.lokasi_ruang?.name ?? "-"} /{" "}
                           {item.user?.username ?? "-"} -{" "}
                           {item.user?.divisi_user?.name ?? "-"}
                         </td>
@@ -308,12 +280,15 @@ const DistribusiPage = () => {
                           >
                             Ubah Riwayat
                           </button>
-                          <button
-                            className="btn btn-danger ms-1"
-                            onClick={() => deleteDistribusi(item.id)}
-                          >
-                            Hapus
-                          </button>
+                          {userState.data &&
+                            userState.data.role === "admin" && (
+                              <button
+                                className="btn btn-danger ms-1"
+                                onClick={() => deleteDistribusi(item.id)}
+                              >
+                                Hapus
+                              </button>
+                            )}
                         </td>
                       </tr>
                     );

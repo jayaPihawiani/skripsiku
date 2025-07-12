@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../components/Alert";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
@@ -18,6 +19,7 @@ const DivisiPage = () => {
   const divisiState = useSelector((state) => state.user);
   const [dataDivisi, setDataDivisi] = useState([]);
   const [show, setShow] = useState(false);
+  const [alertShow, setAlertShow] = useState(false);
   const [inputDataDivisi, setInputDataDivisi] = useState({
     name: "",
     desc: "",
@@ -73,7 +75,10 @@ const DivisiPage = () => {
       if (response.status === 201) {
         dispatch(getDataDivisi(inputQuery));
         handleClose();
-        alert(response.data.msg);
+        setAlertShow(true);
+        setTimeout(() => {
+          setAlertShow(false);
+        }, 2000);
       }
     } catch (error) {
       if (error.response) {
@@ -110,7 +115,12 @@ const DivisiPage = () => {
   //   MAIN
   return (
     <>
-      <h4>DATA DIVISI USER</h4>
+      <AlertNotify
+        alertMsg={"Berhasil menambah data divisi"}
+        showAlert={alertShow}
+        variantAlert={"success"}
+      />
+      <h4>DATA DIVISI PEGAWAI</h4>
       <ModalComponent
         classStyle={"mt-4"}
         btntTitle="Tambah"

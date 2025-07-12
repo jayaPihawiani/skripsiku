@@ -8,13 +8,15 @@ import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
 import { userInfo } from "../features/authSlice";
 import { getPermintaan } from "../features/permintaanSlice";
+import { useNavigate } from "react-router-dom";
 
 const PermintaanPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [file, setFile] = useState("");
-  const permintaanState = useSelector((state) => state.permintaan);
+  const permintaanState = useSelector((state) => state.permintaan.permintaan);
   const userState = useSelector((state) => state.auth);
   const [permintaan, setPermintaan] = useState([]);
   const [show, setShow] = useState(false);
@@ -124,55 +126,72 @@ const PermintaanPage = () => {
 
   return (
     <>
-      <h4>DATA PERMINTAAN PEGAWAI</h4>
-      <ModalComponent
-        classStyle={"mt-4"}
-        btntTitle="Tambah"
-        modalTitle="Tambah Data Permintaan  "
-        show={show}
-        handleClose={handleClose}
-        handleShow={handleShow}
-        handleSubmit={createPermintaan}
-        inputField={
-          <>
-            <p className="m-0">Nama Barang</p>
-            <InputComponents
-              classStyle="w-100 p-2"
-              placeHolder="Nama Barang"
-              change={(e) =>
-                setInputPermintaan({ ...inputPermintaan, name: e.target.value })
-              }
-              val={inputPermintaan.name}
-            />
-            <p className="m-0 mt-2">Jumlah</p>
-            <InputComponents
-              type="number"
-              classStyle="w-100 p-2"
-              placeHolder="Qty"
-              change={(e) =>
-                setInputPermintaan({ ...inputPermintaan, qty: e.target.value })
-              }
-              val={inputPermintaan.qty}
-            />
-            <p className="m-0 mt-2">Keterangan</p>
-            <InputComponents
-              classStyle="w-100 p-2"
-              placeHolder="Keterangan"
-              change={(e) =>
-                setInputPermintaan({ ...inputPermintaan, desc: e.target.value })
-              }
-              val={inputPermintaan.desc}
-            />
-            <p className="m-0 mt-2">Unggah Dokumen Disposisi Surat</p>
-            <InputComponents
-              type="file"
-              classStyle="w-100 p-2"
-              change={setFileUpload}
-              //   val={inputPermintaan.desc}
-            />
-          </>
+      <h4
+        className={
+          userState.data && userState.data.role === "admin" ? "mb-4" : ""
         }
-      />
+      >
+        DATA PERMINTAAN INVENTARIS RUANGAN
+      </h4>
+      {userState.data && userState.data.role === "user" && (
+        <ModalComponent
+          classStyle={"mt-4"}
+          btntTitle="Tambah"
+          modalTitle="Tambah Data Permintaan"
+          show={show}
+          handleClose={handleClose}
+          handleShow={handleShow}
+          handleSubmit={createPermintaan}
+          inputField={
+            <>
+              <p className="m-0">Nama Barang</p>
+              <InputComponents
+                classStyle="w-100 p-2"
+                placeHolder="Nama Barang"
+                change={(e) =>
+                  setInputPermintaan({
+                    ...inputPermintaan,
+                    name: e.target.value,
+                  })
+                }
+                val={inputPermintaan.name}
+              />
+              <p className="m-0 mt-2">Jumlah</p>
+              <InputComponents
+                type="number"
+                classStyle="w-100 p-2"
+                placeHolder="Qty"
+                change={(e) =>
+                  setInputPermintaan({
+                    ...inputPermintaan,
+                    qty: e.target.value,
+                  })
+                }
+                val={inputPermintaan.qty}
+              />
+              <p className="m-0 mt-2">Keterangan</p>
+              <InputComponents
+                classStyle="w-100 p-2"
+                placeHolder="Keterangan"
+                change={(e) =>
+                  setInputPermintaan({
+                    ...inputPermintaan,
+                    desc: e.target.value,
+                  })
+                }
+                val={inputPermintaan.desc}
+              />
+              <p className="m-0 mt-2">Unggah Dokumen Disposisi Surat</p>
+              <InputComponents
+                type="file"
+                classStyle="w-100 p-2"
+                change={setFileUpload}
+                //   val={inputPermintaan.desc}
+              />
+            </>
+          }
+        />
+      )}
       <div className="card me-4 mt-2 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
           <div className="w-100">
@@ -210,9 +229,7 @@ const PermintaanPage = () => {
                   )}
                   <td>Tanggal Buat</td>
                   <td style={{ width: "15%" }}>Disposisi Surat Permintaan</td>
-                  {userState.data && userState.data.role === "admin" && (
-                    <td style={{ width: "15%" }}>Aksi</td>
-                  )}
+                  <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
               <tbody>
@@ -228,7 +245,7 @@ const PermintaanPage = () => {
                         <td>{item.qty}</td>
                         {userState.data && userState.data.role === "admin" && (
                           <td>
-                            Ruang {item.user?.divisi_user.name ?? "-"} -{" "}
+                            Ruang {item.user.loc_user?.name ?? "-"} -{" "}
                             {item.user?.username ?? "-"}
                           </td>
                         )}
@@ -237,19 +254,20 @@ const PermintaanPage = () => {
                         <td className="text-center">
                           <button className="btn btn-primary">Unduh</button>
                         </td>
-                        {userState.data && userState.data.role === "admin" && (
-                          <td className="text-center">
-                            <button className="btn btn-primary">
-                              Lihat Detail
-                            </button>
-                            <button
-                              className="btn btn-danger ms-1"
-                              onClick={() => deletePermintaan(item.id)}
-                            >
-                              Hapus
-                            </button>
-                          </td>
-                        )}
+                        <td className="text-center">
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => navigate("detail")}
+                          >
+                            Lihat Detail
+                          </button>
+                          <button
+                            className="btn btn-danger ms-1"
+                            onClick={() => deletePermintaan(item.id)}
+                          >
+                            Hapus
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}

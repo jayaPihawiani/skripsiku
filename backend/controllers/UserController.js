@@ -2,13 +2,14 @@ import argon2 from "argon2";
 import { Op, UniqueConstraintError } from "sequelize";
 import Divisi from "../models/DivisiModel.js";
 import User from "../models/UserModels.js";
+import Lokasi from "../models/LokasiModel.js";
 
 class UserController {
   // CREATE USER
   createUser = async (req, res) => {
-    const { nip, username, password, divisi, role } = req.body;
+    const { nip, username, password, divisi, role, lokasiId } = req.body;
 
-    if (!nip || !username || !password || !role) {
+    if (!nip || !username || !password || !role || !lokasiId) {
       return res
         .status(400)
         .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
@@ -36,6 +37,7 @@ class UserController {
         password: hashedPassword,
         divisi,
         role,
+        lokasiId,
       });
 
       res.status(201).json({ msg: "Akun user berhasil dibuat." });
@@ -64,10 +66,17 @@ class UserController {
       totalPage = Math.ceil(count / limit);
 
       const user = await User.findAll({
-        include: {
-          model: Divisi,
-          attributes: ["name", "desc"],
-        },
+        include: [
+          {
+            model: Divisi,
+            attributes: ["name", "desc"],
+          },
+          {
+            model: Lokasi,
+            attributes: ["name", "desc"],
+            as: "loc_user",
+          },
+        ],
         attributes: ["id", "nip", "username", "role", "createdAt", "updatedAt"],
         where: {
           [Op.or]: [
@@ -102,7 +111,7 @@ class UserController {
   };
 
   updateDataUser = async (req, res) => {
-    const { username, divisi, password, confirmPassword } = req.body;
+    const { username, divisi, password, confirmPassword, lokasiId } = req.body;
     let isDivisiNull;
     try {
       const user = await User.findByPk(req.params.id);
@@ -132,6 +141,7 @@ class UserController {
           username,
           password: hashedPassword,
           divisi: !divisi ? isDivisiNull : divisi,
+          lokasiId,
         },
         { where: { id: user.id } }
       );

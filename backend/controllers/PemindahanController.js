@@ -98,6 +98,27 @@ class PemindahanController {
     }
   };
 
+  getAllPemindahan = async (req, res) => {
+    try {
+      const pindah = await Pemindahan.findAll({
+        include: [
+          { model: Lokasi, as: "pindah_from", attributes: ["name", "desc"] },
+          { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
+          {
+            model: Barang,
+            attributes: ["name", "desc", "qty"],
+            as: "nama_barang",
+          },
+        ],
+        attributes: ["id", "qty", "desc", "tgl_pindah"],
+      });
+
+      res.status(200).json(pindah);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
   updatePemindahan = async (req, res) => {
     const { barangId, qty, desc, from, to, tgl_pindah } = req.body;
     try {
