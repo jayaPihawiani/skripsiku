@@ -7,7 +7,8 @@ const user = new UserController();
 
 userRoute.get("/", verifyUser, isAdmin, user.getUser);
 userRoute.get("/all", verifyUser, isAdmin, user.getAllUser);
-userRoute.post("/create", verifyUser, isAdmin, user.createUser);
+userRoute.get("/:id", verifyUser, isAdmin, user.getUserById);
+userRoute.post("/create", user.createUser);
 userRoute.delete("/del/:id", verifyUser, isAdmin, user.deleteUser);
 userRoute.patch("/update/:id", verifyUser, isAdmin, user.updateDataUser);
 

@@ -10,7 +10,11 @@ const BrgRusak = db.define(
       primaryKey: true,
     },
     desc: DataTypes.STRING,
-    qty: DataTypes.INTEGER,
+    riwayat_pemeliharaan: DataTypes.DOUBLE,
+    sebab_kerusakan: DataTypes.STRING,
+    status_perbaikan: DataTypes.STRING,
+    sisa_stok: DataTypes.INTEGER,
+    barangUnitId: DataTypes.UUID,
   },
   { freezeTableName: true }
 );

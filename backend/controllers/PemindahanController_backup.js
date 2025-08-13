@@ -5,61 +5,50 @@ import Lokasi from "../models/LokasiModel.js";
 import Pemindahan from "../models/Pemindahan.js";
 import User from "../models/UserModels.js";
 import BarangController from "./BarangController.js";
-import BarangUnitModel from "../models/BarangUnitModel.js";
 
 class PemindahanController extends BarangController {
   // ADD
   createPemindahan = async (req, res) => {
-    const { barangUnitId, desc, from, to, tgl_pindah, userId } = req.body;
+    const { barangId, qty, desc, from, to, tgl_pindah, userId } = req.body;
 
-    if (!barangUnitId || !desc || !from || !to || !tgl_pindah || !userId) {
+    if (!barangId || !qty || !desc || !from || !to || !tgl_pindah || !userId) {
       return res
         .status(400)
         .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
     }
 
     try {
-      // 1. Ambil data unit barang berdasarkan ID unit
-      const unit = await BarangUnitModel.findByPk(barangUnitId);
-      if (!unit) {
-        return res.status(404).json({ msg: "Barang unit tidak ditemukan" });
-      }
-
-      // 2. Ambil data barang induknya
-      const barang = await Barang.findByPk(unit.barangId, {
+      const barang = await Barang.findByPk(barangId, {
         include: { model: Kategori },
       });
-      if (!barang) {
-        return res.status(404).json({ msg: "Barang tidak ditemukan" });
+
+      if (qty > barang.qty) {
+        return res.status(400).json({ msg: "Input jumlah tidak valid!" });
       }
 
-      // 3. Pastikan unit yang dipindahkan sesuai lokasi 'from'
-      if (unit.lokasi_barang !== from) {
-        return res.status(400).json({ msg: "Lokasi asal tidak sesuai" });
-      }
+      await Barang.update(
+        { qty: barang.qty - parseInt(qty) },
+        { where: { id: barang.id } }
+      );
 
-      // 4. Update lokasi unit menjadi lokasi 'to'
-      await unit.update({ lokasi_barang: to });
-
-      // 5. Simpan riwayat pemindahan
       await Pemindahan.create({
-        barangUnitId,
+        barangId,
+        qty,
         desc,
         from,
         to,
         tgl_pindah,
-        sisa_stok: await BarangUnitModel.count({
-          where: { barangId: unit.barangId, lokasi_barang: from },
-        }),
+        sisa_stok: barang.qty - parseInt(qty),
         umur_ekonomis: barang.umur_ekonomis,
         biaya_penyusutan: barang.biaya_penyusutan,
         penyusutan_berjalan: barang.penyusutan_berjalan,
         nilai_buku: barang.nilai_buku,
         userId,
         kondisi: barang.kondisi,
+        riwayat_pemeliharaan: barang.riwayat_pemeliharaan,
       });
 
-      res.status(201).json({ msg: "Berhasil memindahkan unit barang." });
+      res.status(201).json({ msg: "Berhasil menambah data pemindahan." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
@@ -75,17 +64,15 @@ class PemindahanController extends BarangController {
     const offset = limit * page;
 
     try {
+      const barang = await Barang.findAll();
+
       if (req.role === "admin") {
         count = await Pemindahan.count({
           include: [
             {
-              model: BarangUnitModel,
-              include: [
-                {
-                  model: Barang,
-                  where: { name: { [Op.like]: `%${search}%` } },
-                },
-              ],
+              model: Barang,
+              as: "nama_barang",
+              where: { name: { [Op.like]: `%${search}%` } },
             },
           ],
         });
@@ -97,20 +84,24 @@ class PemindahanController extends BarangController {
             { model: Lokasi, as: "pindah_from", attributes: ["name", "desc"] },
             { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
             {
-              model: BarangUnitModel,
-              include: [
-                {
-                  model: Barang,
+              model: Barang,
 
-                  attributes: ["name", "desc", "qty", "kondisi", "kondisi"],
-                  where: { name: { [Op.like]: `%${search}%` } },
-                },
+              attributes: [
+                "name",
+                "desc",
+                "qty",
+                "kondisi",
+                "riwayat_pemeliharaan",
+                "kondisi",
               ],
+              as: "nama_barang",
+              where: { name: { [Op.like]: `%${search}%` } },
             },
             { model: User, attributes: ["id", "nip", "username", "role"] },
           ],
           attributes: [
             "id",
+            "qty",
             "desc",
             "tgl_pindah",
             "sisa_stok",
@@ -119,9 +110,8 @@ class PemindahanController extends BarangController {
             "penyusutan_berjalan",
             "nilai_buku",
             "kondisi",
+            "riwayat_pemeliharaan",
             "userId",
-            "barangUnitId",
-            "createdAt",
           ],
           limit,
           offset,
@@ -131,13 +121,9 @@ class PemindahanController extends BarangController {
         count = await Pemindahan.count({
           include: [
             {
-              model: BarangUnitModel,
-              include: [
-                {
-                  model: Barang,
-                  where: { name: { [Op.like]: `%${search}%` } },
-                },
-              ],
+              model: Barang,
+              as: "nama_barang",
+              where: { name: { [Op.like]: `%${search}%` } },
             },
           ],
           where: { userId: req.uid },
@@ -150,15 +136,17 @@ class PemindahanController extends BarangController {
             { model: Lokasi, as: "pindah_from", attributes: ["name", "desc"] },
             { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
             {
-              model: BarangUnitModel,
-              include: [
-                {
-                  model: Barang,
+              model: Barang,
 
-                  attributes: ["name", "desc", "qty", "kondisi"],
-                  where: { name: { [Op.like]: `%${search}%` } },
-                },
+              attributes: [
+                "name",
+                "desc",
+                "qty",
+                "kondisi",
+                "riwayat_pemeliharaan",
               ],
+              as: "nama_barang",
+              where: { name: { [Op.like]: `%${search}%` } },
             },
             {
               model: User,
@@ -167,11 +155,13 @@ class PemindahanController extends BarangController {
           ],
           attributes: [
             "id",
+            "qty",
             "desc",
             "tgl_pindah",
             "sisa_stok",
             "umur_ekonomis",
             "kondisi",
+            "riwayat_pemeliharaan",
             "userId",
           ],
           where: { userId: req.uid },
@@ -265,13 +255,69 @@ class PemindahanController extends BarangController {
       }
 
       res.status(200).json({ msg: "Berhasil update penyusutan semua barang." });
+      // const brgPindah = await Pemindahan.findAll({
+      //   include: {
+      //     model: Barang,
+      //     as: "nama_barang",
+      //     include: [{ model: Kategori }],
+      //   },
+      // });
+
+      // for (const item of brgPindah) {
+      //   const tglBeli = new Date(item.nama_barang.tgl_beli);
+      //   const now = new Date();
+
+      //   // Hitung selisih bulan
+      //   const selisihBulan =
+      //     (now.getFullYear() - tglBeli.getFullYear()) * 12 +
+      //     (now.getMonth() - tglBeli.getMonth());
+
+      //   const masaEkonomisKategori =
+      //     item.nama_barang.kategori_brg.masa_ekonomis * this.bulanPerTahun;
+      //   const penyusutanPerBulan = item.biaya_penyusutan;
+
+      //   // Total penyusutan yang sudah terjadi ( max harga beli)
+      //   const totalPenyusutan = Math.min(
+      //     selisihBulan * penyusutanPerBulan,
+      //     item.nama_barang.harga
+      //   );
+
+      //   // Nilai buku tidak boleh negatif
+      //   const nilaiBuku = Math.max(0, item.nama_barang.harga - totalPenyusutan);
+
+      //   // Update data barang
+      //   await Pemindahan.update(
+      //     {
+      //       penyusutan_berjalan: totalPenyusutan,
+      //       nilai_buku: nilaiBuku,
+      //       umur_ekonomis: parseFloat(
+      //         (
+      //           this.hitungSisaUmurBulan(tglBeli, masaEkonomisKategori) /
+      //           this.bulanPerTahun
+      //         ).toFixed(1)
+      //       ),
+      //     },
+      //     { where: { id: item.id } }
+      //   );
+      // }
+
+      // res.status(200).json({ msg: "Berhasil update penyusutan semua barang." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
   };
 
   updatePemindahan = async (req, res) => {
-    const { barangId, qty, desc, from, to, tgl_pindah, kondisi } = req.body;
+    const {
+      barangId,
+      qty,
+      desc,
+      from,
+      to,
+      tgl_pindah,
+      kondisi,
+      riwayat_pemeliharaan,
+    } = req.body;
     try {
       const pindah = await Pemindahan.findByPk(req.params.id, {
         include: {
@@ -298,6 +344,7 @@ class PemindahanController extends BarangController {
           to,
           tgl_pindah,
           kondisi,
+          riwayat_pemeliharaan,
         },
         { where: { id: pindah.id } }
       );

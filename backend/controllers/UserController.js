@@ -1,15 +1,14 @@
 import argon2 from "argon2";
 import { Op, UniqueConstraintError } from "sequelize";
-import Divisi from "../models/DivisiModel.js";
-import User from "../models/UserModels.js";
 import Lokasi from "../models/LokasiModel.js";
+import User from "../models/UserModels.js";
 
 class UserController {
   // CREATE USER
   createUser = async (req, res) => {
-    const { nip, username, password, divisi, role, lokasiId } = req.body;
+    const { nip, username, password, role, lokasiId } = req.body;
 
-    if (!nip || !username || !password || !role || !lokasiId) {
+    if (!nip || !username || !password || !role) {
       return res
         .status(400)
         .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
@@ -35,7 +34,6 @@ class UserController {
         nip,
         username,
         password: hashedPassword,
-        divisi,
         role,
         lokasiId,
       });
@@ -68,10 +66,6 @@ class UserController {
       const user = await User.findAll({
         include: [
           {
-            model: Divisi,
-            attributes: ["name", "desc"],
-          },
-          {
             model: Lokasi,
             attributes: ["name", "desc"],
             as: "loc_user",
@@ -94,7 +88,25 @@ class UserController {
     }
   };
 
-  // Delete user
+  // get user
+  getUserById = async (req, res) => {
+    try {
+      const user = await User.findByPk(req.params.id, {
+        attributes: ["id", "nip", "username", "role"],
+        include: [
+          { model: Lokasi, as: "loc_user", attributes: ["id", "name", "desc"] },
+        ],
+      });
+      if (!user) {
+        return res.status(404).json({ msg: "Data akun user tidak ditemukan!" });
+      }
+
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
   deleteUser = async (req, res) => {
     try {
       const user = await User.findByPk(req.params.id);
@@ -111,8 +123,7 @@ class UserController {
   };
 
   updateDataUser = async (req, res) => {
-    const { username, divisi, password, confirmPassword, lokasiId } = req.body;
-    let isDivisiNull;
+    const { username, password, confirmPassword, lokasiId } = req.body;
     try {
       const user = await User.findByPk(req.params.id);
 
@@ -120,31 +131,36 @@ class UserController {
         return res.status(404).json({ msg: "Data user tidak ditemukan!" });
       }
 
-      if (password.length < 8) {
-        return res.status(400).json({
-          msg: "Password terlalu pendek! Password panjang minimal 8 karakter!",
-        });
+      if (!password && !confirmPassword) {
+        await User.update(
+          {
+            username,
+            lokasiId,
+          },
+          { where: { id: user.id } }
+        );
+      } else {
+        if (password.length < 8) {
+          return res.status(400).json({
+            msg: "Password terlalu pendek! Password panjang minimal 8 karakter!",
+          });
+        }
+
+        if (password !== confirmPassword) {
+          return res.status(400).json({ msg: "Konfirmasi password salah!" });
+        }
+
+        const hashedPassword = await argon2.hash(password);
+
+        await User.update(
+          {
+            username,
+            password: hashedPassword,
+            lokasiId,
+          },
+          { where: { id: user.id } }
+        );
       }
-
-      if (password !== confirmPassword) {
-        return res.status(400).json({ msg: "Konfirmasi password salah!" });
-      }
-
-      if (!isDivisiNull) {
-        isDivisiNull = user.divisi;
-      }
-
-      const hashedPassword = await argon2.hash(password);
-
-      await User.update(
-        {
-          username,
-          password: hashedPassword,
-          divisi: !divisi ? isDivisiNull : divisi,
-          lokasiId,
-        },
-        { where: { id: user.id } }
-      );
 
       res.status(200).json({ msg: "Berhasil mengubah data akun user." });
     } catch (error) {
@@ -159,9 +175,17 @@ class UserController {
   };
 
   getAllUser = async (req, res) => {
+    const location = req.query.locId || "";
     try {
       const user = await User.findAll({
-        include: { model: Divisi, attributes: ["name", "desc"] },
+        include: [
+          {
+            model: Lokasi,
+            attributes: ["id", "name", "desc"],
+            as: "loc_user",
+            where: { id: { [Op.like]: `%${location}%` } },
+          },
+        ],
         attributes: ["id", "nip", "username", "role"],
       });
       res.status(200).json(user);

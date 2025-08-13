@@ -1,26 +1,24 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AuthAccessComponent from "./components/AuthAcessComponent";
-import DivisiEdit from "./components/DivisiEditComponent";
-import KategoriBarangEdit from "./components/KategoriBarangEdit";
-import LokasiEdit from "./components/LokasiEditComponent";
-import MerkBarangEdit from "./components/MerkBarangEdit";
 import NavBar from "./components/NavBar";
-import SatuanBarangEdit from "./components/SatuanBarangEdit";
 import SideBar from "./components/SideBar";
 import UserAuthComponent from "./components/UserAuthComponents";
 import UserEdit from "./components/UserEditComponent";
 import { LoadingProvider } from "./context/Loading";
 import Dashboard from "./views/Dashboard";
-import DetailPermintaanPage from "./views/DetailPermintaanPage";
+import DetailBarang from "./views/DetailBarang";
+import DetailEkonomis from "./views/DetailEkonomis";
 import DistribusiPage from "./views/DistribusiPage";
-import DivisiPage from "./views/DivisiPage";
+import KategoriKerusakanPage from "./views/KategoriKerusakanPage";
 import Login from "./views/Login";
 import LokasiPage from "./views/LokasiPage";
 import Barang from "./views/master_barang/Barang";
 import KategoriPage from "./views/master_barang/KategoriPage";
 import MerkBarang from "./views/master_barang/MerkBarang";
 import SatuanBarang from "./views/master_barang/SatuanBarang";
+import PengajuanPage from "./views/PengajuanPage";
+import PerbaikanPage from "./views/PerbaikanPage";
 import PermintaanPage from "./views/PermintaanPage";
 import BarangMasuk from "./views/transaksi/BarangMasukPage";
 import KerusakanPage from "./views/transaksi/KerusakanPage";
@@ -46,35 +44,12 @@ function App() {
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/barang" element={<Barang />} />
+                      <Route path="/unit_barang" element={<DetailBarang />} />
                       <Route
                         path="/merk"
                         element={
                           <AuthAccessComponent>
                             <MerkBarang />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/merk/edit/:id"
-                        element={
-                          <AuthAccessComponent>
-                            <MerkBarangEdit />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/kategori/edit/:id"
-                        element={
-                          <AuthAccessComponent>
-                            <KategoriBarangEdit />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/satuan/edit/:id"
-                        element={
-                          <AuthAccessComponent>
-                            <SatuanBarangEdit />
                           </AuthAccessComponent>
                         }
                       />
@@ -95,26 +70,10 @@ function App() {
                         }
                       />
                       <Route
-                        path="/divisi/edit/:id"
-                        element={
-                          <AuthAccessComponent>
-                            <DivisiEdit />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
                         path="/lokasi"
                         element={
                           <AuthAccessComponent>
                             <LokasiPage />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/lokasi/edit/:id"
-                        element={
-                          <AuthAccessComponent>
-                            <LokasiEdit />
                           </AuthAccessComponent>
                         }
                       />
@@ -124,14 +83,6 @@ function App() {
                         element={
                           <AuthAccessComponent>
                             <PenghapusanPage />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/divisi"
-                        element={
-                          <AuthAccessComponent>
-                            <DivisiPage />
                           </AuthAccessComponent>
                         }
                       />
@@ -152,18 +103,46 @@ function App() {
                         }
                       />
                       <Route path="/masuk" element={<BarangMasuk />} />
-                      <Route path="/pindah" element={<Pemindahan />} />
-                      <Route path="/permintaan" element={<PermintaanPage />} />
                       <Route
-                        path="/permintaan/:detail"
-                        element={<DetailPermintaanPage />}
+                        path="/pindah"
+                        element={
+                          <AuthAccessComponent>
+                            <Pemindahan />
+                          </AuthAccessComponent>
+                        }
                       />
+                      <Route path="/pengajuan" element={<PengajuanPage />} />
+                      <Route path="/permintaan" element={<PermintaanPage />} />
                       <Route path="/distribusi" element={<DistribusiPage />} />
                       <Route
                         path="/ekonomis"
                         element={
                           <AuthAccessComponent>
                             <UmurEkonomis />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/perbaikan"
+                        element={
+                          <AuthAccessComponent>
+                            <PerbaikanPage />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="ekonomis/detail_masa_ekonomis"
+                        element={
+                          <AuthAccessComponent>
+                            <DetailEkonomis />
+                          </AuthAccessComponent>
+                        }
+                      />
+                      <Route
+                        path="/k/kerusakan"
+                        element={
+                          <AuthAccessComponent>
+                            <KategoriKerusakanPage />
                           </AuthAccessComponent>
                         }
                       />

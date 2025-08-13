@@ -2,10 +2,11 @@ import { Op } from "sequelize";
 import supabase from "../config/supabase/supabaseClient.js";
 import BarangMasuk from "../models/BarangMasuk.js";
 import Barang from "../models/BarangModel.js";
-import BarangUnitModel from "../models/BarangUnitModel.js";
+import BrgRusak from "../models/BarangRusakModel.js";
 import Kategori from "../models/KategoriBarang.js";
 import Lokasi from "../models/LokasiModel.js";
 import MerkBrg from "../models/MerkModel.js";
+import Pemindahan from "../models/Pemindahan.js";
 import Penghapusan from "../models/PenghapusanModel.js";
 import SatuanBrg from "../models/SatuanModel.js";
 
@@ -37,6 +38,7 @@ class BarangController {
       tgl_beli,
       harga,
       kondisi,
+      riwayat_pemeliharaan,
       satuan,
       merk,
       kategori,
@@ -50,6 +52,7 @@ class BarangController {
       !tgl_beli ||
       !harga ||
       !kondisi ||
+      !riwayat_pemeliharaan ||
       !satuan ||
       !merk ||
       !kategori
@@ -113,120 +116,27 @@ class BarangController {
       const url = supabase.storage.from("product").getPublicUrl(fileName)
         .data.publicUrl;
 
-      const newBarang = await Barang.create({
+      await Barang.create({
         name,
         desc,
         qty,
         tgl_beli,
         harga,
         kondisi,
+        riwayat_pemeliharaan,
         satuan,
         merk,
         kategori,
         umur_ekonomis: masaEkonomisBarang,
         biaya_penyusutan: biayaPenyusutan,
-        penyusutan_berjalan: 0,
-        nilai_buku: harga * qty,
+        penyusutan_berjalan: 0, // default
+        nilai_buku: harga, // default = harga beli
         image: fileName,
         url,
         lokasi_barang,
       });
 
-      // 👇 Hanya untuk barang yang baru dibuat
-      for (let i = 0; i < newBarang.qty; i++) {
-        await BarangUnitModel.create({
-          barangId: newBarang.id,
-          kode_unit: `${newBarang.name}-${i + 1}`,
-          desc: newBarang.desc,
-          tgl_beli: newBarang.tgl_beli,
-          harga: newBarang.harga,
-          kategori: newBarang.kategori,
-          kondisi: newBarang.kondisi,
-          umur_ekonomis: newBarang.umur_ekonomis,
-          biaya_penyusutan: newBarang.biaya_penyusutan,
-          penyusutan_berjalan: newBarang.penyusutan_berjalan,
-          nilai_buku: newBarang.nilai_buku / newBarang.qty,
-          lokasi_barang: newBarang.lokasi_barang,
-          lokasi_asal: newBarang.lokasi_barang,
-        });
-      }
-
       res.status(201).json({ msg: "Berhasil menambah data barang." });
-    } catch (error) {
-      res.status(500).json({ msg: "ERROR: " + error });
-    }
-  };
-
-  getDetailBarang = async (req, res) => {
-    const limit = parseInt(req.query.limit) || 10;
-    const page = parseInt(req.query.page) || 0;
-    const search = req.query.search || "";
-    const offset = limit * page;
-    let totalPage;
-    try {
-      const count = await BarangUnitModel.count({
-        include: {
-          model: Barang,
-          where: {
-            name: { [Op.like]: `%${search}%` },
-          },
-        },
-      });
-
-      totalPage = Math.ceil(count / limit);
-
-      const result = await BarangUnitModel.findAll({
-        include: [
-          { model: Lokasi, as: "loc_asal" },
-          { model: Lokasi, as: "loc_barang" },
-          {
-            model: Kategori,
-            attributes: ["name", "desc", "masa_ekonomis"],
-          },
-          {
-            model: Barang,
-            where: {
-              name: { [Op.like]: `%${search}%` },
-            },
-            include: [
-              { model: SatuanBrg, attributes: ["name", "desc"] },
-              { model: MerkBrg, attributes: ["name", "desc"] },
-            ],
-            attributes: [
-              "id",
-              "name",
-              "desc",
-              "qty",
-              "tgl_beli",
-              "harga",
-              "kondisi",
-              "image",
-              "url",
-            ],
-          },
-        ],
-
-        limit,
-        offset,
-        order: [["createdAt", "DESC"]],
-      });
-
-      res.status(200).json({ page, limit, totalPage, count, result });
-    } catch (error) {
-      res.status(500).json({ msg: "ERROR: " + error });
-    }
-  };
-
-  getDetailBarangByLokasi = async (req, res) => {
-    const search = req.query.search || "";
-    try {
-      const barangUnit = await BarangUnitModel.findAll({
-        where: { lokasi_barang: { [Op.like]: `%${search}%` } },
-        include: { model: Barang },
-        order: [["createdAt", "ASC"]],
-      });
-
-      res.status(200).json(barangUnit);
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error });
     }
@@ -257,6 +167,19 @@ class BarangController {
             model: Penghapusan,
             attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
           },
+          {
+            model: Pemindahan,
+            attributes: ["qty", "desc", "tgl_pindah"],
+            include: [
+              {
+                model: Lokasi,
+                as: "pindah_from",
+                attributes: ["name", "desc"],
+              },
+              { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
+            ],
+          },
+          { model: BrgRusak, attributes: ["id", "qty", "desc"] },
           { model: BarangMasuk },
         ],
         attributes: [
@@ -267,12 +190,14 @@ class BarangController {
           "tgl_beli",
           "harga",
           "kondisi",
+          "riwayat_pemeliharaan",
           "biaya_penyusutan",
           "penyusutan_berjalan",
           "nilai_buku",
           "umur_ekonomis",
           "image",
           "url",
+          "update_masa_ekonomis",
           "createdAt",
         ],
         limit,
@@ -299,6 +224,19 @@ class BarangController {
             model: Penghapusan,
             attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
           },
+          {
+            model: Pemindahan,
+            attributes: ["qty", "desc", "tgl_pindah"],
+            include: [
+              {
+                model: Lokasi,
+                as: "pindah_from",
+                attributes: ["name", "desc"],
+              },
+              { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
+            ],
+          },
+          { model: BrgRusak, attributes: ["qty", "desc"] },
         ],
         attributes: [
           "id",
@@ -308,9 +246,11 @@ class BarangController {
           "tgl_beli",
           "harga",
           "kondisi",
+          "riwayat_pemeliharaan",
           "umur_ekonomis",
           "image",
           "url",
+          "update_masa_ekonomis",
         ],
       });
       if (!barang) {
@@ -334,6 +274,19 @@ class BarangController {
             model: Penghapusan,
             attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
           },
+          {
+            model: Pemindahan,
+            attributes: ["qty", "desc", "tgl_pindah"],
+            include: [
+              {
+                model: Lokasi,
+                as: "pindah_from",
+                attributes: ["name", "desc"],
+              },
+              { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
+            ],
+          },
+          { model: BrgRusak, attributes: ["id", "qty", "desc"] },
           { model: BarangMasuk },
         ],
         attributes: [
@@ -344,6 +297,7 @@ class BarangController {
           "tgl_beli",
           "harga",
           "kondisi",
+          "riwayat_pemeliharaan",
           "biaya_penyusutan",
           "penyusutan_berjalan",
           "nilai_buku",
@@ -368,6 +322,7 @@ class BarangController {
       tgl_beli,
       harga,
       kondisi,
+      riwayat_pemeliharaan,
       satuan,
       merk,
       kategori,
@@ -388,6 +343,7 @@ class BarangController {
           tgl_beli,
           harga,
           kondisi,
+          riwayat_pemeliharaan,
           satuan,
           merk,
           kategori,
@@ -402,134 +358,112 @@ class BarangController {
     }
   };
 
-  // updatePenyusutan = async (req, res) => {
-  //   try {
-  //     // Ambil semua unit barang, include kategori untuk ambil masa ekonomis
-  //     const unitList = await BarangUnitModel.findAll({
-  //       include: [
-  //         {
-  //           model: Kategori,
-  //           as: "kategori_brg",
-  //           attributes: ["masa_ekonomis"],
-  //         },
-  //       ],
-  //     });
-
-  //     const bulanPerTahun = 12;
-
-  //     for (const unit of unitList) {
-  //       const tglBeli = new Date(unit.tgl_beli);
-  //       const now = new Date();
-
-  //       // Hitung selisih bulan dari pembelian sampai sekarang
-  //       const selisihBulan =
-  //         (now.getFullYear() - tglBeli.getFullYear()) * 12 +
-  //         (now.getMonth() - tglBeli.getMonth());
-
-  //       // Ambil masa ekonomis (tahun → bulan)
-  //       const masaEkonomisBulan =
-  //         unit.kategori_brg.masa_ekonomis * bulanPerTahun;
-
-  //       // Penyusutan per bulan
-  //       const penyusutanPerBulan = unit.harga / masaEkonomisBulan;
-
-  //       // Total penyusutan (tidak boleh lebih dari harga)
-  //       const totalPenyusutan = Math.min(
-  //         selisihBulan * penyusutanPerBulan,
-  //         unit.harga
-  //       );
-
-  //       // Nilai buku minimal 0
-  //       const nilaiBuku = Math.max(0, unit.harga - totalPenyusutan);
-
-  //       // Hitung umur ekonomis tersisa (dalam tahun, 1 desimal)
-  //       const umurEkonomisTersisa = parseFloat(
-  //         (
-  //           Math.max(masaEkonomisBulan - selisihBulan, 0) / bulanPerTahun
-  //         ).toFixed(1)
-  //       );
-
-  //       // Update data unit
-  //       await BarangUnitModel.update(
-  //         {
-  //           penyusutan_berjalan: totalPenyusutan,
-  //           nilai_buku: nilaiBuku,
-  //           umur_ekonomis: umurEkonomisTersisa,
-  //         },
-  //         { where: { id: unit.id } }
-  //       );
-  //     }
-
-  //     res.status(200).json({
-  //       msg: "Berhasil update penyusutan semua unit barang.",
-  //     });
-  //   } catch (error) {
-  //     res.status(500).json({ msg: "ERROR: " + error.message });
-  //   }
-  // };
-
   updatePenyusutan = async (req, res) => {
     try {
-      const unitList = await BarangUnitModel.findAll({
-        include: [
-          {
-            model: Kategori,
-            as: "kategori_brg",
-            attributes: ["masa_ekonomis"],
-          },
-        ],
+      const barangList = await Barang.findAll({
+        include: { model: Kategori, as: "kategori_brg" },
       });
 
-      const bulanPerTahun = 12;
-      const now = new Date();
+      for (const item of barangList) {
+        const tglBeli = new Date(item.tgl_beli);
+        const now = new Date();
 
-      for (const unit of unitList) {
-        // Jika status perbaikan / status rusak permanen → langsung nol
-        if (
-          unit.status_perbaikan === "SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN" ||
-          unit.status_perbaikan === "TIDAK BISA DIPERBAIKI"
-        ) {
-          await unit.update({
-            penyusutan_berjalan: unit.harga,
-            nilai_buku: 0,
-            umur_ekonomis: 0,
-          });
-          continue; // skip hitung normal
-        }
-
-        // Hitung selisih bulan sejak pembelian
-        const tglBeli = new Date(unit.tgl_beli);
+        // Hitung selisih bulan
         const selisihBulan =
           (now.getFullYear() - tglBeli.getFullYear()) * 12 +
           (now.getMonth() - tglBeli.getMonth());
 
-        const masaEkonomisBulan =
-          unit.kategori_brg.masa_ekonomis * bulanPerTahun;
+        const masaEkonomisKategori =
+          item.kategori_brg.masa_ekonomis * this.bulanPerTahun;
+        const penyusutanPerBulan = item.biaya_penyusutan;
 
-        const penyusutanPerBulan = unit.harga / masaEkonomisBulan;
-
+        // Total penyusutan yang sudah terjadi ( max harga beli)
         const totalPenyusutan = Math.min(
           selisihBulan * penyusutanPerBulan,
-          unit.harga
+          item.harga
         );
 
-        const nilaiBuku = Math.max(0, unit.harga - totalPenyusutan);
+        // Nilai buku tidak boleh negatif
+        const nilaiBuku = Math.max(0, item.harga - totalPenyusutan);
 
-        const umurEkonomisTersisa = parseFloat(
-          (
-            Math.max(masaEkonomisBulan - selisihBulan, 0) / bulanPerTahun
-          ).toFixed(1)
+        // Update data barang
+        await Barang.update(
+          {
+            penyusutan_berjalan: totalPenyusutan,
+            nilai_buku: nilaiBuku,
+            umur_ekonomis: parseFloat(
+              (
+                this.hitungSisaUmurBulan(tglBeli, masaEkonomisKategori) /
+                this.bulanPerTahun
+              ).toFixed(1)
+            ),
+          },
+          { where: { id: item.id } }
         );
-
-        await unit.update({
-          penyusutan_berjalan: totalPenyusutan,
-          nilai_buku: nilaiBuku,
-          umur_ekonomis: umurEkonomisTersisa,
-        });
       }
 
+      res.status(200).json({ msg: "Berhasil update penyusutan semua barang." });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  updatePenyusutanByAdmin = async (req, res) => {
+    const { masa_ekonomis_baru, nilai_buku_manual } = req.body;
+
+    if (!masa_ekonomis_baru || isNaN(masa_ekonomis_baru)) {
+      return res.status(400).json({ msg: "Masa ekonomis baru tidak valid!" });
+    }
+
+    try {
+      const barang = await Barang.findByPk(req.params.id);
+
+      if (!barang) {
+        return res.status(404).json({ msg: "Barang tidak ditemukan!" });
+      }
+
+      const tglBeli = new Date(barang.tgl_beli);
+      const sekarang = new Date();
+
+      const selisihBulan =
+        (sekarang.getFullYear() - tglBeli.getFullYear()) * 12 +
+        (sekarang.getMonth() - tglBeli.getMonth());
+
+      const totalBulanEkonomis = masa_ekonomis_baru * this.bulanPerTahun;
+      const biayaPenyusutanBaru = parseFloat(
+        (barang.harga / totalBulanEkonomis).toFixed(2)
+      );
+
+      const totalPenyusutan = Math.min(
+        selisihBulan * biayaPenyusutanBaru,
+        barang.harga
+      );
+
+      // Logika nilai buku: pakai manual jika valid, jika tidak hitung otomatis
+      let nilaiBuku = Math.max(0, barang.harga - totalPenyusutan);
+
+      if (
+        nilai_buku_manual !== undefined &&
+        !isNaN(nilai_buku_manual) &&
+        Number(nilai_buku_manual) >= 0 &&
+        Number(nilai_buku_manual) <= barang.harga
+      ) {
+        nilaiBuku = Number(nilai_buku_manual);
+      }
+
+      await Barang.update(
+        {
+          umur_ekonomis: masa_ekonomis_baru,
+          biaya_penyusutan: biayaPenyusutanBaru,
+          penyusutan_berjalan: totalPenyusutan,
+          nilai_buku: nilaiBuku,
+          update_masa_ekonomis: true,
+        },
+        { where: { id: barang.id } }
+      );
+
       res.status(200).json({
-        msg: "Berhasil update penyusutan semua unit barang (dengan mempertahankan kerusakan).",
+        msg: "Masa ekonomis dan nilai buku berhasil diperbarui.",
       });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });

@@ -12,6 +12,7 @@ const Penghapusan = db.define(
     desc: DataTypes.STRING,
     qty: DataTypes.INTEGER,
     tgl_hapus: DataTypes.DATE,
+    sisa_stok: DataTypes.INTEGER,
     file: DataTypes.STRING,
     url: DataTypes.STRING,
   },

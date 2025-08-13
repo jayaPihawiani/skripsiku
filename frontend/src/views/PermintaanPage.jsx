@@ -1,96 +1,61 @@
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { userInfo } from "../features/authSlice";
+import { getAllBarang } from "../features/barangSlice";
 import { getPermintaan } from "../features/permintaanSlice";
-import { useNavigate } from "react-router-dom";
+import SpinnerLoading from "../components/SpinnerLoading";
 
 const PermintaanPage = () => {
-  // variabel
+  // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [file, setFile] = useState("");
-  const permintaanState = useSelector((state) => state.permintaan.permintaan);
-  const userState = useSelector((state) => state.auth);
-  const [permintaan, setPermintaan] = useState([]);
-  const [show, setShow] = useState(false);
-  const [inputPermintaan, setInputPermintaan] = useState({
-    name: "",
-    desc: "",
-    qty: 0,
-  });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
     search: "",
   });
-  const { setLoading } = useContext(LoadingContext);
+  const [inputPermintaan, setInputPermintaan] = useState({
+    barangId: "",
+    qty: "",
+  });
   const [searchQuery, setSearchQuery] = useState("");
+  const [show, setShow] = useState(false);
+  const permintaanState = useSelector((state) => state.permintaan?.permintaan);
+  const permintaanData = permintaanState?.data || {};
+  const allBarang = useSelector((state) => state.barang.all_barang?.data) || [];
+  const user = useSelector((state) => state.auth?.data) || {};
 
+  // VARIABEL
+
+  // FUNCTION
   const handleClose = () => {
     setShow(false);
-    setInputPermintaan({ name: "", desc: "", qty: 0 });
-    setFile("");
+    setInputPermintaan({ barangId: "", qty: "" });
   };
+
   const handleShow = () => setShow(true);
 
-  // USE EFFECT
-  useEffect(() => {
-    dispatch(getPermintaan(inputQuery));
-    dispatch(userInfo());
-  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
-
-  useEffect(() => {
-    if (permintaanState.data && permintaanState.isSuccess) {
-      setPermintaan(permintaanState.data);
-    }
-  }, [permintaanState.data, permintaanState.isSuccess]);
-  // USE EFFECT
-
-  const deletePermintaan = async (id) => {
-    try {
-      const response = await axios.delete(`${url}/permintaan/del/${id}`);
-      if (response.status === 200) {
-        setInputQuery({
-          ...inputQuery,
-          page: 0,
-        });
-
-        dispatch(getPermintaan(inputQuery));
-        alert("Berhasil menghapus data.");
-      }
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      } else {
-        console.error(error);
-      }
-    }
+  const handlePageClick = ({ selected }) => {
+    setInputQuery({ ...inputQuery, page: selected });
   };
 
-  // TAMBAH DATA permintaan
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
+  };
+
   const createPermintaan = async () => {
     try {
-      setLoading(true);
-      const formData = new FormData();
-      formData.append("name", inputPermintaan.name);
-      formData.append("desc", inputPermintaan.desc);
-      formData.append("qty", inputPermintaan.qty);
-      formData.append("file", file);
-      const response = await axios.post(`${url}/permintaan/create`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        `${url}/permintaan/create`,
+        inputPermintaan
+      );
       if (response.status === 201) {
-        dispatch(getPermintaan(inputQuery));
-        alert("Berhasil menambah data merk.");
+        dispatch(getPermintaan({ ...inputQuery }));
         handleClose();
       }
     } catch (error) {
@@ -99,105 +64,99 @@ const PermintaanPage = () => {
       } else {
         console.error(error);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
-  };
-
-  // PAGE CHANGE REACT PAGINATION
-  const handlePageClick = ({ selected }) => {
-    setInputQuery({ ...inputQuery, page: selected });
-  };
-
-  // TAMBAH DATA BARANG BARU
-  const setFileUpload = (e) => {
+  const updateStatusPemindahan = async (id) => {
     try {
-      const file = e.target.files[0];
-      setFile(file);
+      const response = await axios.patch(`${url}/permintaan/update/${id}`);
+      if (response.status === 200) {
+        dispatch(getPermintaan(inputQuery));
+        alert(response.data.msg);
+      }
     } catch (error) {
-      console.error(error);
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
     }
   };
 
+  const deletePermintaan = async (id) => {
+    try {
+      const response = await axios.delete(`${url}/permintaan/del/${id}`);
+      if (response.status === 200) {
+        dispatch(getPermintaan(inputQuery));
+        setInputQuery({
+          ...inputQuery,
+          page: 0,
+        });
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    dispatch(getPermintaan(inputQuery));
+    dispatch(getAllBarang());
+  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
+  // FUNCTION
   return (
-    <>
-      <h4
-        className={
-          userState.data && userState.data.role === "admin" ? "mb-4" : ""
+    <div>
+      <h4>PERMINTAAN USER</h4>
+      <ModalComponent
+        classStyle="btn btn-primary me-3 mt-3 mb-2"
+        btntTitle="Tambah"
+        show={show}
+        handleClose={handleClose}
+        handleShow={handleShow}
+        handleSubmit={createPermintaan}
+        modalTitle="Tambah Permintaan"
+        inputField={
+          <>
+            <p className="m-0 mb-2">Nama Barang</p>
+            <select
+              className="form-select"
+              onChange={(e) =>
+                setInputPermintaan({
+                  ...inputPermintaan,
+                  barangId: e.target.value,
+                })
+              }
+            >
+              <option value="">--Pilih--</option>
+              {allBarang.map((item) => {
+                return (
+                  <option value={item.id} key={item.id}>
+                    {item.name}
+                  </option>
+                );
+              })}
+            </select>
+            <p className="m-0 my-2">Jumlah</p>
+            <InputComponents
+              change={(e) =>
+                setInputPermintaan({ ...inputPermintaan, qty: e.target.value })
+              }
+              classStyle="w-100 p-2"
+              placeHolder="Qty"
+              type="number"
+            />
+          </>
         }
-      >
-        DATA PERMINTAAN INVENTARIS RUANGAN
-      </h4>
-      {userState.data && userState.data.role === "user" && (
-        <ModalComponent
-          classStyle={"mt-4"}
-          btntTitle="Tambah"
-          modalTitle="Tambah Data Permintaan"
-          show={show}
-          handleClose={handleClose}
-          handleShow={handleShow}
-          handleSubmit={createPermintaan}
-          inputField={
-            <>
-              <p className="m-0">Nama Barang</p>
-              <InputComponents
-                classStyle="w-100 p-2"
-                placeHolder="Nama Barang"
-                change={(e) =>
-                  setInputPermintaan({
-                    ...inputPermintaan,
-                    name: e.target.value,
-                  })
-                }
-                val={inputPermintaan.name}
-              />
-              <p className="m-0 mt-2">Jumlah</p>
-              <InputComponents
-                type="number"
-                classStyle="w-100 p-2"
-                placeHolder="Qty"
-                change={(e) =>
-                  setInputPermintaan({
-                    ...inputPermintaan,
-                    qty: e.target.value,
-                  })
-                }
-                val={inputPermintaan.qty}
-              />
-              <p className="m-0 mt-2">Keterangan</p>
-              <InputComponents
-                classStyle="w-100 p-2"
-                placeHolder="Keterangan"
-                change={(e) =>
-                  setInputPermintaan({
-                    ...inputPermintaan,
-                    desc: e.target.value,
-                  })
-                }
-                val={inputPermintaan.desc}
-              />
-              <p className="m-0 mt-2">Unggah Dokumen Disposisi Surat</p>
-              <InputComponents
-                type="file"
-                classStyle="w-100 p-2"
-                change={setFileUpload}
-                //   val={inputPermintaan.desc}
-              />
-            </>
-          }
-        />
-      )}
-      <div className="card me-4 mt-2 mb-4 shadow-lg">
+      />
+      <div className="card me-4 shadow">
         <div className="d-flex justify-content-between">
           <div className="w-100">
             <SearchBarComponent
               submit={handleSearch}
-              placeHolder="Cari data permintaan..."
+              placeHolder="Cari data merk barang..."
               btnTitle="Cari"
               inputChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -206,7 +165,11 @@ const PermintaanPage = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  limit: e.target.value,
+                })
               }
             >
               <option value={10}>10</option>
@@ -216,80 +179,78 @@ const PermintaanPage = () => {
           </div>
         </div>
         <div className="card-body">
-          <div className="overflow-x-scroll">
-            <table className="table table-bordered table-striped">
-              <thead className="table-dark">
-                <tr>
-                  <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Barang Permintaan</td>
-                  <td>Keterangan</td>
-                  <td>Jumlah</td>
-                  {userState.data && userState.data.role === "admin" && (
-                    <td>Asal Permintaan</td>
-                  )}
-                  <td>Tanggal Buat</td>
-                  <td style={{ width: "15%" }}>Disposisi Surat Permintaan</td>
-                  <td style={{ width: "15%" }}>Aksi</td>
-                </tr>
-              </thead>
-              <tbody>
-                {permintaan.permintaan &&
-                  permintaan.permintaan.map((item, index) => {
-                    return (
+          <div className="overflow-auto">
+            {permintaanState.isLoading && permintaanState.isLoading ? (
+              <SpinnerLoading />
+            ) : (
+              <table className="table table-bordered table-striped">
+                <thead className="table-dark">
+                  <tr>
+                    <th>No</th>
+                    <th>Nama Inventaris</th>
+                    <th>Jumlah Minta</th>
+                    <th>Tanggal Minta</th>
+                    <th>Asal</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {permintaanData.permintaan &&
+                    permintaanData.permintaan.map((item, index) => (
                       <tr key={item.id}>
                         <td>
-                          {index + 1 + inputQuery.page * inputQuery.limit}
+                          {index +
+                            1 +
+                            permintaanData.limit * permintaanData.page}
                         </td>
-                        <td>{item.name}</td>
-                        <td>{item.desc}</td>
+                        <td>{item.barang.name}</td>
                         <td>{item.qty}</td>
-                        {userState.data && userState.data.role === "admin" && (
-                          <td>
-                            Ruang {item.user.loc_user?.name ?? "-"} -{" "}
-                            {item.user?.username ?? "-"}
-                          </td>
-                        )}
-
-                        <td>{item.createdAt?.slice(0, 10)}</td>
-                        <td className="text-center">
-                          <button className="btn btn-primary">Unduh</button>
-                        </td>
+                        <td>{item.createdAt.slice(0, 10)}</td>
+                        <td>{item.user.loc_user?.name ?? "-"}</td>
+                        <td>{item.status}</td>
                         <td className="text-center">
                           <button
-                            className="btn btn-primary"
-                            onClick={() => navigate("detail")}
-                          >
-                            Lihat Detail
-                          </button>
-                          <button
-                            className="btn btn-danger ms-1"
+                            className="btn btn-danger"
                             onClick={() => deletePermintaan(item.id)}
                           >
                             Hapus
                           </button>
+                          {user && user.role === "admin" && (
+                            <button
+                              className="btn btn-primary ms-1"
+                              onClick={() => updateStatusPemindahan(item.id)}
+                              disabled={item.status === "disetujui"}
+                            >
+                              Setujui
+                            </button>
+                          )}
                         </td>
                       </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-            {permintaan.permintaan && permintaan.permintaan.length === 0 && (
-              <p>Data tidak ditemukan!</p>
+                    ))}
+                </tbody>
+              </table>
             )}
-            {permintaan && (
+            {permintaanData.permintaan &&
+              permintaanData.permintaan.length === 0 && (
+                <p>Data tidak ditemukan!</p>
+              )}
+            {permintaanData && (
               <p className="text-end">
-                Total row: <strong>{permintaan.count}</strong> page{" "}
-                <strong>{permintaan.count ? permintaan.page + 1 : 0}</strong> of{" "}
-                <strong>{permintaan.totalPage}</strong>
+                Total row: <strong>{permintaanData.count}</strong> page{" "}
+                <strong>
+                  {permintaanData.count ? permintaanData.page + 1 : 0}
+                </strong>{" "}
+                of <strong>{permintaanData.totalPage}</strong>
               </p>
             )}
-            <nav key={(permintaan && permintaan.count) || 0}>
-              {permintaan && permintaan.totalPage > 0 && (
+            <nav key={(permintaanData && permintaanData.count) || 0}>
+              {permintaanData && permintaanData.totalPage > 0 && (
                 <ReactPaginate
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={permintaan ? permintaan.totalPage : 0}
+                  pageCount={permintaanData ? permintaanData.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}
@@ -310,7 +271,7 @@ const PermintaanPage = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

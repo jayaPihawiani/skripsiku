@@ -21,7 +21,7 @@ const initState = {
 };
 
 export const getAllPermintaan = createAsyncThunk(
-  "allPermintaan/getallPermintaan",
+  "allPermintaan/getAllPermintaan",
   async (_, thunkApi) => {
     try {
       const response = await axios.get(`${url}/permintaan/all`);

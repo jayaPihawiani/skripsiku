@@ -287,7 +287,7 @@ const PenghapusanPage = () => {
                         </td>
                         <td>{item.barang.name}</td>
                         <td>{item.qty}</td>
-                        <td>{item.barang.qty}</td>
+                        <td>{item.sisa_stok ?? "-"}</td>
                         <td>{item.tgl_hapus?.slice(0, 10)}</td>
                         <td>{item.desc}</td>
                         <td className="text-center">
@@ -303,7 +303,11 @@ const PenghapusanPage = () => {
                           >
                             Hapus
                           </button>
-                          <button className="btn btn-primary ms-1">
+                          <button
+                            className="btn btn-primary ms-1"
+                            onClick={() => window.open(item.url, "_blank")}
+                            disabled={!item.url}
+                          >
                             Unduh
                           </button>
                         </td>

@@ -1,28 +1,20 @@
 import BarangMasuk from "./BarangMasuk.js";
 import Barang from "./BarangModel.js";
 import BrgRusak from "./BarangRusakModel.js";
-import Divisi from "./DivisiModel.js";
+import BarangUnitModel from "./BarangUnitModel.js";
 import Kategori from "./KategoriBarang.js";
+import {
+  DetailKerusakan,
+  KategoriKerusakan,
+} from "./KategoriKerusakanModel.js";
 import Lokasi from "./LokasiModel.js";
 import MerkBrg from "./MerkModel.js";
 import Pemindahan from "./Pemindahan.js";
+import Pengajuan from "./Pengajuan.js";
 import Penghapusan from "./PenghapusanModel.js";
-import Permintaaan from "./Permintaan.js";
+import Permintaan from "./Permintaan.js";
 import SatuanBrg from "./SatuanModel.js";
 import User from "./UserModels.js";
-import Distribusi from "./DistribusiBrgModel.js";
-
-// user divisi
-Divisi.hasMany(User, {
-  foreignKey: "divisi",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-});
-User.belongsTo(Divisi, {
-  foreignKey: "divisi",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-});
 
 // user lokasi
 Lokasi.hasMany(User, {
@@ -37,14 +29,86 @@ User.belongsTo(Lokasi, {
   as: "loc_user",
 });
 
-// user permintaan
-User.hasMany(Permintaaan, {
+// user pengajuan
+User.hasMany(Pengajuan, {
   foreignKey: "userId",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
-Permintaaan.belongsTo(User, {
+Pengajuan.belongsTo(User, {
   foreignKey: "userId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// user permintaan
+User.hasMany(Permintaan, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+Permintaan.belongsTo(User, {
+  foreignKey: "userId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// barang permintaan
+Barang.hasMany(Permintaan, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+Permintaan.belongsTo(Barang, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// barang -> barang unit
+Barang.hasMany(BarangUnitModel, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+BarangUnitModel.belongsTo(Barang, {
+  foreignKey: "barangId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// lokasi -> barang unit
+Lokasi.hasMany(BarangUnitModel, {
+  foreignKey: "lokasi_barang",
+  onDelete: "SET NULL",
+  as: "loc_barang",
+});
+BarangUnitModel.belongsTo(Lokasi, {
+  foreignKey: "lokasi_barang",
+  as: "loc_barang",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+Lokasi.hasMany(BarangUnitModel, {
+  foreignKey: "lokasi_asal",
+  onUpdate: "CASCADE",
+  as: "loc_asal",
+});
+BarangUnitModel.belongsTo(Lokasi, {
+  foreignKey: "lokasi_asal",
+  as: "loc_asal",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+
+// detail kerusakan -> kategori kerusakan
+KategoriKerusakan.hasMany(DetailKerusakan, {
+  foreignKey: "kategoriKerusakanId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+DetailKerusakan.belongsTo(KategoriKerusakan, {
+  foreignKey: "kategoriKerusakanId",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
@@ -98,6 +162,53 @@ Pemindahan.belongsTo(Barang, {
   as: "nama_barang",
 });
 
+User.hasMany(Pemindahan, {
+  foreignKey: "userId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+Pemindahan.belongsTo(User, {
+  foreignKey: "userId",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+
+// barang unit -> pemindahan
+BarangUnitModel.hasOne(Pemindahan, {
+  foreignKey: "barangUnitId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+Pemindahan.belongsTo(BarangUnitModel, {
+  foreignKey: "barangUnitId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// barang unit -> kerusakan
+BarangUnitModel.hasOne(BrgRusak, {
+  foreignKey: "barangUnitId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+BrgRusak.belongsTo(BarangUnitModel, {
+  foreignKey: "barangUnitId",
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// lokasi barang
+Lokasi.hasMany(Barang, {
+  foreignKey: "lokasi_barang",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+Barang.belongsTo(Lokasi, {
+  foreignKey: "lokasi_barang",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+
 // kerusakan
 Barang.hasMany(BrgRusak, {
   foreignKey: "barangId",
@@ -117,6 +228,17 @@ Kategori.hasMany(Barang, {
   onUpdate: "CASCADE",
 });
 Barang.belongsTo(Kategori, {
+  foreignKey: "kategori",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+
+Kategori.hasMany(BarangUnitModel, {
+  foreignKey: "kategori",
+  onDelete: "SET NULL",
+  onUpdate: "CASCADE",
+});
+BarangUnitModel.belongsTo(Kategori, {
   foreignKey: "kategori",
   onDelete: "SET NULL",
   onUpdate: "CASCADE",
@@ -156,40 +278,5 @@ Barang.hasMany(BarangMasuk, {
 BarangMasuk.belongsTo(Barang, {
   foreignKey: "barangId",
   onDelete: "CASCADE",
-  onUpdate: "CASCADE",
-});
-
-// distribusi barang tiap ruangan
-Barang.hasMany(Distribusi, {
-  foreignKey: "barangId",
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
-});
-Distribusi.belongsTo(Barang, {
-  foreignKey: "barangId",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-});
-
-Lokasi.hasMany(Distribusi, {
-  foreignKey: "lokasiId",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-});
-Distribusi.belongsTo(Lokasi, {
-  foreignKey: "lokasiId",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-  as: "lokasi_ruang",
-});
-
-User.hasMany(Distribusi, {
-  foreignKey: "userId",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-});
-Distribusi.belongsTo(User, {
-  foreignKey: "userId",
-  onDelete: "SET NULL",
   onUpdate: "CASCADE",
 });

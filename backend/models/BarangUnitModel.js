@@ -1,26 +1,21 @@
 import { DataTypes } from "sequelize";
 import db from "../config/database/db.js";
 
-const Barang = db.define(
-  "barang",
+const BarangUnitModel = db.define(
+  "barang_unit",
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    name: DataTypes.STRING(50),
-    desc: DataTypes.STRING,
-    qty: DataTypes.INTEGER,
+    kode_unit: DataTypes.STRING,
+    barangId: DataTypes.UUID,
     tgl_beli: DataTypes.DATE,
     harga: DataTypes.INTEGER,
     kondisi: DataTypes.STRING,
-    satuan: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
-    merk: {
-      type: DataTypes.UUID,
+    riwayat_pemeliharaan: {
+      type: DataTypes.DOUBLE,
       allowNull: true,
     },
     kategori: {
@@ -40,10 +35,19 @@ const Barang = db.define(
       type: DataTypes.UUID,
       allowNull: true,
     },
-    image: DataTypes.STRING,
-    url: DataTypes.STRING,
+    lokasi_asal: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    desc: DataTypes.STRING,
+    sebab_kerusakan: DataTypes.STRING,
+    status_perbaikan: DataTypes.STRING,
+    status: {
+      type: DataTypes.ENUM(["rusak", "baik"]),
+      defaultValue: "baik",
+    },
   },
   { freezeTableName: true }
 );
 
-export default Barang;
+export default BarangUnitModel;

@@ -10,13 +10,12 @@ const UserEdit = () => {
   const userId = useParams().id;
   const url = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
-  const [dataDivisi, setDataDivisi] = useState([]);
   const [lokasi, setLokasi] = useState([]);
+  const [user, setUser] = useState({});
   const [inputDataUser, setInputDataUser] = useState({
     username: "",
     password: "",
     confirmPassword: "",
-    divisi: "",
     lokasiId: "",
   });
 
@@ -24,22 +23,16 @@ const UserEdit = () => {
   const [show, setShow] = useState(false);
   const handleClose = () => {
     setShow(false);
-    setInputDataUser({
-      username: "",
-      password: "",
-      confirmPassword: "",
-      divisi: "",
-    });
   };
   const handleShow = () => setShow(true);
 
   // USE EFFECT
   useEffect(() => {
-    const getDivisiById = async () => {
+    const getUserById = async () => {
       try {
-        const response = await axios.get(`${url}/divisi/all`);
-        if (response.status === 200) {
-          setDataDivisi(response.data);
+        const user = await axios.get(`${url}/user/${userId}`);
+        if (user.status === 200) {
+          setUser(user.data);
         }
       } catch (error) {
         if (error.response) {
@@ -65,9 +58,19 @@ const UserEdit = () => {
       }
     };
 
-    getDivisiById();
+    getUserById();
     getAllLokasi();
   }, []);
+
+  useEffect(() => {
+    if (user && user.username) {
+      setInputDataUser({
+        ...inputDataUser,
+        username: user.username,
+        lokasiId: user.loc_user?.id ?? "",
+      });
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,7 +90,6 @@ const UserEdit = () => {
         console.log(error);
       }
     }
-    console.log(inputDataUser);
   };
 
   return (
@@ -104,21 +106,7 @@ const UserEdit = () => {
           <h2>Ubah Data User</h2>
           <div className="d-flex flex-column">
             <select
-              className="form-select"
-              onChange={(e) =>
-                setInputDataUser({ ...inputDataUser, divisi: e.target.value })
-              }
-            >
-              <option value="">Pilih Divisi</option>
-              {dataDivisi.map((e) => {
-                return (
-                  <option value={e.id} key={e.id}>
-                    {e.name}
-                  </option>
-                );
-              })}
-            </select>
-            <select
+              value={inputDataUser.lokasiId || ""}
               className="form-select mt-2"
               onChange={(e) =>
                 setInputDataUser({
@@ -127,7 +115,7 @@ const UserEdit = () => {
                 })
               }
             >
-              <option value="">Pilih Lokasi</option>
+              <option value="">--Pilih Lokasi--</option>
               {lokasi.map((e) => {
                 return (
                   <option value={e.id} key={e.id}>

@@ -14,6 +14,7 @@ import {
   BsMapFill,
   BsPersonBadgeFill,
   BsTagsFill,
+  BsTools,
   BsTrash3Fill,
   BsTruck,
 } from "react-icons/bs";
@@ -68,6 +69,12 @@ const SideBar = ({ children }) => {
                 </span>
                 <span className="side-desc">Data Barang</span>
               </Link>
+              <Link to="/unit_barang" className="nav-link">
+                <span className="icons">
+                  <BsBoxSeamFill />
+                </span>
+                <span className="side-desc">Data Unit Barang</span>
+              </Link>
 
               <Link to="/merk" className="nav-link">
                 <span className="icons">
@@ -114,13 +121,14 @@ const SideBar = ({ children }) => {
                 </span>
                 <span className="side-desc">Barang Masuk</span>
               </Link>
-
-              <Link to="/pindah" className="nav-link">
-                <span className="icons">
-                  <BsBoxArrowUp />
-                </span>
-                <span className="side-desc">Pemindahan</span>
-              </Link>
+              {state.data && state.data.role === "admin" && (
+                <Link to="/pindah" className="nav-link">
+                  <span className="icons">
+                    <BsBoxArrowUp />
+                  </span>
+                  <span className="side-desc">Pemindahan</span>
+                </Link>
+              )}
 
               <Link to="/kerusakan" className="nav-link">
                 <span className="icons">
@@ -129,12 +137,21 @@ const SideBar = ({ children }) => {
                 <span className="side-desc">Kerusakan</span>
               </Link>
               {state.data && state.data.role === "admin" && (
-                <Link to="/penghapusan" className="nav-link">
-                  <span className="icons">
-                    <BsTrash3Fill />
-                  </span>
-                  <span className="side-desc">Penghapusan</span>
-                </Link>
+                <>
+                  {" "}
+                  <Link to="/perbaikan" className="nav-link">
+                    <span className="icons">
+                      <BsTools />
+                    </span>
+                    <span className="side-desc">Perbaikan</span>
+                  </Link>
+                  <Link to="/penghapusan" className="nav-link">
+                    <span className="icons">
+                      <BsTrash3Fill />
+                    </span>
+                    <span className="side-desc">Penghapusan</span>
+                  </Link>
+                </>
               )}
             </div>
             {/* menu */}
@@ -144,7 +161,7 @@ const SideBar = ({ children }) => {
                 <span className="icons">
                   <BsGraphUpArrow />
                 </span>
-                <span className="side-desc">Masa Ekonomis </span>
+                <span className="side-desc">Usia Pakai</span>
               </Link>
             )}
             <Link to="/distribusi" className="nav-link">
@@ -154,6 +171,12 @@ const SideBar = ({ children }) => {
               <span className="side-desc">Distribusi Barang</span>
             </Link>
             {/* lokasi */}
+            <Link to="/pengajuan" className="nav-link">
+              <span className="icons">
+                <BsClipboardCheckFill />
+              </span>
+              <span className="side-desc">Pengajuan</span>
+            </Link>
             <Link to="/permintaan" className="nav-link">
               <span className="icons">
                 <BsClipboardCheckFill />
@@ -169,12 +192,11 @@ const SideBar = ({ children }) => {
                   </span>
                   <span className="side-desc">Lokasi</span>
                 </Link>
-                {/* divisi */}
-                <Link to="/divisi" className="nav-link">
+                <Link to="/k/kerusakan" className="nav-link">
                   <span className="icons">
                     <BsBuildingFill />
                   </span>
-                  <span className="side-desc">Divisi</span>
+                  <span className="side-desc">Kategori Kerusakan</span>
                 </Link>
                 {/* user */}
                 <Link to="/user" className="nav-link">

@@ -11,6 +11,20 @@ const initState = {
     isSuccess: false,
     message: "",
   },
+  barang_rusak_by_loc: {
+    data: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    message: "",
+  },
+  barang_unit: {
+    data: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    message: "",
+  },
   all_barang: {
     data: null,
     isLoading: false,
@@ -67,6 +81,13 @@ const initState = {
     isSuccess: false,
     message: "",
   },
+  barang_rusak_diperbaiki: {
+    data: null,
+    isLoading: false,
+    isError: false,
+    isSuccess: false,
+    message: "",
+  },
   all_barang_rusak: {
     data: null,
     isLoading: false,
@@ -74,14 +95,7 @@ const initState = {
     isSuccess: false,
     message: "",
   },
-  distribusi: {
-    data: null,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    message: "",
-  },
-  all_distribusi: {
+  unit_barang_by_loc: {
     data: null,
     isLoading: false,
     isError: false,
@@ -89,6 +103,80 @@ const initState = {
     message: "",
   },
 };
+
+export const getUnitBarangByLoc = createAsyncThunk(
+  "getUnitBarangByLoc/getAllUnitBarangByLoc",
+  async (search, thunkApi) => {
+    try {
+      const response = await axios.get(`${url}/barang/c/loc?search=${search}`);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        const msg = error.response.data.msg;
+        console.error(errMessage);
+        return thunkApi.rejectWithValue(msg);
+      } else {
+        console.error(error);
+      }
+    }
+  }
+);
+
+export const getRusakDiperbaiki = createAsyncThunk(
+  "allRusakDiperbaiki/getAllRusakDiperbaiki",
+  async (_, thunkApi) => {
+    try {
+      const response = await axios.get(`${url}/rusak/get_by_status`);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        const msg = error.response.data.msg;
+        console.error(errMessage);
+        return thunkApi.rejectWithValue(msg);
+      } else {
+        console.error(error);
+      }
+    }
+  }
+);
+
+export const getBarangUnit = createAsyncThunk(
+  "allBarangUnit/getAllBarangUnit",
+  async (inputQuery, thunkApi) => {
+    try {
+      const response = await axios.get(
+        `${url}/barang/c/barang_unit?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+      );
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        const msg = error.response.data.msg;
+        console.error(errMessage);
+        return thunkApi.rejectWithValue(msg);
+      } else {
+        console.error(error);
+      }
+    }
+  }
+);
+
+export const getBrgRusakByLoc = createAsyncThunk(
+  "allBrgRusakByLoc/getAllBrgRusakByLoc",
+  async (locId, thunkApi) => {
+    try {
+      const response = await axios.get(`${url}/barang/c/loc?search=${locId}`);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        const msg = error.response.data.msg;
+        console.error(errMessage);
+        return thunkApi.rejectWithValue(msg);
+      } else {
+        console.error(error);
+      }
+    }
+  }
+);
 
 export const getAllDistribusi = createAsyncThunk(
   "allDistribusi/getAllDistribusi",
@@ -203,7 +291,7 @@ export const getBrgRusak = createAsyncThunk(
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/rusak?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+        `${url}/rusak?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}&lokasi=${inputQuery.lokasi}&status_perbaikan=${inputQuery.status_perbaikan}`
       );
       return response.data;
     } catch (error) {
@@ -298,32 +386,26 @@ export const getDataPemindahan = createAsyncThunk(
   }
 );
 
-export const getDataDistribusi = createAsyncThunk(
-  "distribusi/getDistribusi",
-  async (inputQuery, thunkApi) => {
-    try {
-      const response = await axios.get(
-        `${url}/distribusi?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
-      );
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        const errMessage = error.response.data;
-        console.error(errMessage);
-
-        return thunkApi.rejectWithValue(errMessage);
-      } else {
-        console.error(error);
-      }
-    }
-  }
-);
-
 const barangSlice = createSlice({
   name: "barang",
   initialState: initState,
   reducers: { reset: (state) => initState },
   extraReducers: (builder) => {
+    // get unit barang by loc BARANG
+    builder
+      .addCase(getUnitBarangByLoc.pending, (state) => {
+        state.unit_barang_by_loc.isLoading = true;
+      })
+      .addCase(getUnitBarangByLoc.fulfilled, (state, action) => {
+        state.unit_barang_by_loc.isLoading = false;
+        state.unit_barang_by_loc.isSuccess = true;
+        state.unit_barang_by_loc.data = action.payload;
+      })
+      .addCase(getUnitBarangByLoc.rejected, (state, action) => {
+        state.unit_barang_by_loc.isLoading = false;
+        state.unit_barang_by_loc.isError = true;
+        state.unit_barang_by_loc.message = action.payload;
+      });
     // DATA BARANG
     builder
       .addCase(getDataBarang.pending, (state) => {
@@ -338,6 +420,36 @@ const barangSlice = createSlice({
         state.barang.isLoading = false;
         state.barang.isError = true;
         state.barang.message = action.payload;
+      });
+    // DATA BARANG rusak by loc
+    builder
+      .addCase(getBrgRusakByLoc.pending, (state) => {
+        state.barang_rusak_by_loc.isLoading = true;
+      })
+      .addCase(getBrgRusakByLoc.fulfilled, (state, action) => {
+        state.barang_rusak_by_loc.isLoading = false;
+        state.barang_rusak_by_loc.isSuccess = true;
+        state.barang_rusak_by_loc.data = action.payload;
+      })
+      .addCase(getBrgRusakByLoc.rejected, (state, action) => {
+        state.barang_rusak_by_loc.isLoading = false;
+        state.barang_rusak_by_loc.isError = true;
+        state.barang_rusak_by_loc.message = action.payload;
+      });
+    // DATA BARANG  UNIT
+    builder
+      .addCase(getBarangUnit.pending, (state) => {
+        state.barang_unit.isLoading = true;
+      })
+      .addCase(getBarangUnit.fulfilled, (state, action) => {
+        state.barang_unit.isLoading = false;
+        state.barang_unit.isSuccess = true;
+        state.barang_unit.data = action.payload;
+      })
+      .addCase(getBarangUnit.rejected, (state, action) => {
+        state.barang_unit.isLoading = false;
+        state.barang_unit.isError = true;
+        state.barang_unit.message = action.payload;
       });
     // DATA BARANG TANPA PAGINASI
     builder
@@ -459,6 +571,21 @@ const barangSlice = createSlice({
         state.barang_rusak.isError = true;
         state.barang_rusak.message = action.payload;
       });
+    // BARANG RUSAK DIPERBAIKI
+    builder
+      .addCase(getRusakDiperbaiki.pending, (state) => {
+        state.barang_rusak_diperbaiki.isLoading = true;
+      })
+      .addCase(getRusakDiperbaiki.fulfilled, (state, action) => {
+        state.barang_rusak_diperbaiki.isLoading = false;
+        state.barang_rusak_diperbaiki.isSuccess = true;
+        state.barang_rusak_diperbaiki.data = action.payload;
+      })
+      .addCase(getRusakDiperbaiki.rejected, (state, action) => {
+        state.barang_rusak_diperbaiki.isLoading = false;
+        state.barang_rusak_diperbaiki.isError = true;
+        state.barang_rusak_diperbaiki.message = action.payload;
+      });
     // BARANG RUSAK TANPA PAGINASI
     builder
       .addCase(getAllRusak.pending, (state) => {
@@ -473,36 +600,6 @@ const barangSlice = createSlice({
         state.all_barang_rusak.isLoading = false;
         state.all_barang_rusak.isError = true;
         state.all_barang_rusak.message = action.payload;
-      });
-    // DISTRIBUSI
-    builder
-      .addCase(getDataDistribusi.pending, (state) => {
-        state.distribusi.isLoading = true;
-      })
-      .addCase(getDataDistribusi.fulfilled, (state, action) => {
-        state.distribusi.isLoading = false;
-        state.distribusi.isSuccess = true;
-        state.distribusi.data = action.payload;
-      })
-      .addCase(getDataDistribusi.rejected, (state, action) => {
-        state.distribusi.isLoading = false;
-        state.distribusi.isError = true;
-        state.distribusi.message = action.payload;
-      });
-    // DISTRIBUSI TANPA PAGINASI
-    builder
-      .addCase(getAllDistribusi.pending, (state) => {
-        state.all_distribusi.isLoading = true;
-      })
-      .addCase(getAllDistribusi.fulfilled, (state, action) => {
-        state.all_distribusi.isLoading = false;
-        state.all_distribusi.isSuccess = true;
-        state.all_distribusi.data = action.payload;
-      })
-      .addCase(getAllDistribusi.rejected, (state, action) => {
-        state.all_distribusi.isLoading = false;
-        state.all_distribusi.isError = true;
-        state.all_distribusi.message = action.payload;
       });
   },
 });

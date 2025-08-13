@@ -2,24 +2,30 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
+import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
 import { getSatuanBarang } from "../../features/detailBarang";
-import AlertNotify from "../../components/Alert";
 
 const SatuanBarang = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
+  const [satuanId, setSatuanId] = useState(null);
+  const handleCloseEdit = () => setSatuanId(null);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const detailSatuan = useSelector((state) => state.detail_barang.satuan);
-  const [satuanBarang, setSatuanBarang] = useState([]);
+  const detailSatuan = useSelector((state) => state.detail_barang?.satuan);
+  const satuanBarang = detailSatuan?.satuan || {};
   const [show, setShow] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
   const [inputSatuan, setInputSatuan] = useState({ name: "", desc: "" });
+  const [inputSatuanEdit, setInputSatuanEdit] = useState({
+    name: "",
+    desc: "",
+  });
   const [searchQuery, setSearchQuery] = useState();
   const [inputQuery, setInputQuery] = useState({
     page: 0,
@@ -38,12 +44,6 @@ const SatuanBarang = () => {
   useEffect(() => {
     dispatch(getSatuanBarang(inputQuery));
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
-
-  useEffect(() => {
-    if (detailSatuan.satuan && detailSatuan.isSuccess) {
-      setSatuanBarang(detailSatuan.satuan.result);
-    }
-  }, [detailSatuan.satuan, detailSatuan.isSuccess]);
 
   const deleteDataSatuan = async (id) => {
     try {
@@ -83,6 +83,31 @@ const SatuanBarang = () => {
     }
   };
 
+  const updateSatuan = async (e) => {
+    e.preventDefault();
+    if (!inputSatuanEdit.name || !inputSatuanEdit.desc) {
+      alert("Data ada yang kosong! Harap isi semua data!");
+      return;
+    }
+    try {
+      const response = await axios.patch(
+        `${url}/satuan/update/${satuanId}`,
+        inputSatuanEdit
+      );
+      if (response.status === 200) {
+        alert("Berhasil update data satuan.");
+        dispatch(getSatuanBarang(inputQuery));
+        handleCloseEdit();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.log("Gagal mendapatkan data!");
+      }
+    }
+  };
+
   // HANDLE SEARCH
   const handleSearchBarang = (e) => {
     e.preventDefault();
@@ -96,6 +121,41 @@ const SatuanBarang = () => {
 
   return (
     <>
+      {satuanId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseEdit}
+          modalTitle="Ubah Data Satuan"
+          submit={updateSatuan}
+          body={
+            <>
+              <p className="m-0 mb-2">Nama Satuan</p>
+              <InputComponents
+                placeHolder="Nama Satuan"
+                classStyle="w-100 p-2"
+                val={inputSatuanEdit.name || ""}
+                change={(e) =>
+                  setInputSatuanEdit({
+                    ...inputSatuanEdit,
+                    name: e.target.value,
+                  })
+                }
+              />
+              <p className="m-0 mb-2 mt-3">Keterangan</p>
+              <InputComponents
+                placeHolder="Nama Satuan"
+                classStyle="w-100 p-2"
+                val={inputSatuanEdit.desc || ""}
+                change={(e) =>
+                  setInputSatuanEdit({
+                    ...inputSatuanEdit,
+                    desc: e.target.value,
+                  })
+                }
+              />
+            </>
+          }
+        />
+      )}
       <AlertNotify
         alertMsg="Berhasil menambah data satuan."
         showAlert={alertShow}
@@ -161,66 +221,73 @@ const SatuanBarang = () => {
         </div>
         <div className="card-body">
           <div className="overflow-x-scroll">
-            <table className="table table-bordered table-striped">
-              <thead className="table-dark">
-                <tr>
-                  <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Satuan</td>
-                  <td>Keterangan</td>
-                  <td style={{ width: "15%" }}>Aksi</td>
-                </tr>
-              </thead>
-              <tbody>
-                {satuanBarang &&
-                  satuanBarang.map((item, index) => {
-                    return (
-                      <tr key={item.id}>
-                        <td>
-                          {" "}
-                          {index + 1 + inputQuery.page * inputQuery.limit}
-                        </td>
-                        <td>{item.name}</td>
-                        <td>{item.desc}</td>
-                        <td className="text-center">
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => navigate(`edit/${item.id}`)}
-                          >
-                            Ubah
-                          </button>
-                          <button
-                            className="btn btn-danger ms-1"
-                            onClick={() => deleteDataSatuan(item.id)}
-                          >
-                            Hapus
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-            {detailSatuan.satuan && detailSatuan.satuan.result.length === 0 && (
+            {detailSatuan.isLoading ? (
+              <SpinnerLoading />
+            ) : (
+              <table className="table table-bordered table-striped">
+                <thead className="table-dark">
+                  <tr>
+                    <td style={{ width: "5%" }}>No. </td>
+                    <td>Nama Satuan</td>
+                    <td>Keterangan</td>
+                    <td style={{ width: "15%" }}>Aksi</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {satuanBarang.result &&
+                    satuanBarang.result.map((item, index) => {
+                      return (
+                        <tr key={item.id}>
+                          <td>
+                            {index + 1 + inputQuery.page * inputQuery.limit}
+                          </td>
+                          <td>{item.name}</td>
+                          <td>{item.desc}</td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => {
+                                setSatuanId(item.id);
+                                setInputSatuanEdit({
+                                  name: item.name,
+                                  desc: item.desc,
+                                });
+                              }}
+                            >
+                              Ubah
+                            </button>
+                            <button
+                              className="btn btn-danger ms-1"
+                              onClick={() => deleteDataSatuan(item.id)}
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            )}
+            {satuanBarang.result && satuanBarang.result.length === 0 && (
               <p>Data tidak ditemukan!</p>
             )}
-            {detailSatuan.satuan && (
+            {satuanBarang && (
               <p className="text-end">
-                Total row: <strong>{detailSatuan.satuan.count}</strong> page{" "}
+                Total row: <strong>{satuanBarang.count}</strong> page{" "}
                 <strong>
-                  {detailSatuan.satuan.count ? detailSatuan.satuan.page + 1 : 0}
-                </strong>{" "}
-                of <strong>{detailSatuan.satuan.totalPage}</strong>
+                  {satuanBarang.count ? satuanBarang.page + 1 : 0}
+                </strong>
+                of <strong>{satuanBarang.totalPage}</strong>
               </p>
             )}
-            <nav key={detailSatuan.satuan && detailSatuan.satuan.count}>
-              {detailSatuan.satuan && detailSatuan.satuan.totalPage > 0 && (
+            <nav key={satuanBarang && satuanBarang.count}>
+              {satuanBarang && satuanBarang.totalPage > 0 && (
                 <ReactPaginate
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={
-                    detailSatuan.satuan ? detailSatuan.satuan.totalPage : 0
-                  }
+                  pageCount={satuanBarang ? satuanBarang.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}

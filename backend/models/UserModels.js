@@ -15,7 +15,7 @@ const User = db.define(
       unique: true,
     },
     password: DataTypes.STRING,
-    divisi: {
+    lokasiId: {
       type: DataTypes.UUID,
       allowNull: true,
     },

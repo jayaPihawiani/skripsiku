@@ -3,16 +3,13 @@ import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
+import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
-import {
-  getAllBarang,
-  getAllBrgMasuk,
-  getDataBarangMasuk,
-} from "../../features/barangSlice";
-import AlertNotify from "../../components/Alert";
+import { getAllBarang, getDataBarangMasuk } from "../../features/barangSlice";
 
 const BarangMasuk = () => {
   // VARIABEL
@@ -103,11 +100,26 @@ const BarangMasuk = () => {
     setInputQuery({ ...inputQuery, page: selected });
   };
 
+  // format masa ekonomis
+  function formatTahunBulan(masaEkonomis) {
+    const tahun = Math.floor(masaEkonomis);
+    const desimal = masaEkonomis - tahun;
+
+    // Konversi desimal ke bulan
+    const bulan = Math.round(desimal * 12);
+
+    if (desimal === 0) {
+      return `${tahun} tahun`;
+    }
+
+    return `${tahun} tahun ${bulan} bulan`;
+  }
+
   // USEEFFECT
   useEffect(() => {
     dispatch(getDataBarangMasuk(inputQuery));
     dispatch(getAllBarang());
-  }, [dispatch, inputQuery]);
+  }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
 
   useEffect(() => {
     if (barangMasuk.data) {
@@ -127,7 +139,6 @@ const BarangMasuk = () => {
       <div className="mt-4">
         {user.data && user.data.role === "admin" && (
           <div>
-            {" "}
             <ModalComponent
               btntTitle="Tambah"
               show={show}
@@ -147,11 +158,11 @@ const BarangMasuk = () => {
                       })
                     }
                   >
-                    <option value="">Barang</option>
+                    <option value="">--Pilih--</option>
                     {dataBarang.map((e) => {
                       return (
                         <option value={e.id} key={e.id}>
-                          {e.name} - stok: {e.qty}
+                          {e.name}
                         </option>
                       );
                     })}
@@ -228,50 +239,68 @@ const BarangMasuk = () => {
 
         <div className="card-body">
           <div className="overflow-x-scroll">
-            <table className="table table-striped table-bordered">
-              <thead className="table-dark">
-                <tr>
-                  <th>No</th>
-                  <th>Nama</th>
-                  <th>Jumlah</th>
-                  <th>Harga</th>
-                  <th>Kondisi</th>
-                  <th>Tanggal Masuk</th>
-                  <th>Sisa Stok</th>
-                  <th>Keterangan</th>
-                  {user.data.role === "admin" && <th>Aksi</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {brgMasuk.brgMasuk &&
-                  brgMasuk.brgMasuk.map((e, index) => {
-                    return (
-                      <tr key={e.id}>
-                        <td>
-                          {index + 1 + inputQuery.page * inputQuery.limit}
-                        </td>
-                        <td>{e.barang.name}</td>
-                        <td>{e.qty}</td>
-                        <td>{e.barang.harga}</td>
-                        <td>{e.barang.kondisi}</td>
-                        <td>{e.tgl_masuk?.slice(0, 10)}</td>
-                        <td>{e.sisa_stok}</td>
-                        <td>{e.desc}</td>
-                        {user.data.role === "admin" && (
+            {barangMasuk.isLoading ? (
+              <SpinnerLoading />
+            ) : (
+              <table className="table table-striped table-bordered">
+                <thead className="table-dark">
+                  <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>Jumlah</th>
+                    <th>Harga</th>
+                    <th>Kondisi</th>
+                    <th>Tanggal Masuk</th>
+                    <th>Sisa Stok</th>
+                    <th>Usia Ekonomis Pakai</th>
+                    <th>Nilai Buku</th>
+                    <th>Keterangan</th>
+                    {user.data.role === "admin" && <th>Aksi</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {brgMasuk.brgMasuk &&
+                    brgMasuk.brgMasuk.map((e, index) => {
+                      return (
+                        <tr key={e.id}>
                           <td>
-                            <button
-                              className="btn btn-danger ms-1"
-                              onClick={() => deleteDataMasuk(e.id)}
-                            >
-                              Hapus
-                            </button>
+                            {index + 1 + inputQuery.page * inputQuery.limit}
                           </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+                          <td>{e.barang.name}</td>
+                          <td>{e.qty}</td>
+                          <td>
+                            {new Intl.NumberFormat("id-ID", {
+                              style: "currency",
+                              currency: "IDR",
+                            }).format(e.barang.harga)}
+                          </td>
+                          <td>{e.barang.kondisi}</td>
+                          <td>{e.tgl_masuk?.slice(0, 10)}</td>
+                          <td>{e.sisa_stok}</td>
+                          <td>{formatTahunBulan(e.umur_ekonomis)}</td>
+                          <td>
+                            {new Intl.NumberFormat("id-ID", {
+                              style: "currency",
+                              currency: "IDR",
+                            }).format(e.nilai_buku)}
+                          </td>
+                          <td>{e.desc}</td>
+                          {user.data.role === "admin" && (
+                            <td>
+                              <button
+                                className="btn btn-danger ms-1"
+                                onClick={() => deleteDataMasuk(e.id)}
+                              >
+                                Hapus
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            )}
           </div>
           {brgMasuk.brgMasuk && brgMasuk.brgMasuk.length === 0 && (
             <p>Data tidak ditemukan!</p>

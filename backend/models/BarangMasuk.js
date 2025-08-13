@@ -14,6 +14,15 @@ const BarangMasuk = db.define(
     barangId: DataTypes.UUID,
     tgl_masuk: DataTypes.DATE,
     sisa_stok: DataTypes.INTEGER,
+    umur_ekonomis: DataTypes.DOUBLE,
+    biaya_penyusutan: DataTypes.DOUBLE,
+    penyusutan_berjalan: {
+      type: DataTypes.DOUBLE,
+      defaultValue: 0,
+    },
+    nilai_buku: {
+      type: DataTypes.DOUBLE,
+    },
   },
   { freezeTableName: true }
 );

@@ -2,24 +2,33 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
+import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
 import { getMerkBarang } from "../../features/detailBarang";
-import AlertNotify from "../../components/Alert";
 
 const MerkBarang = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
+  const [merkId, setMerkId] = useState(null);
+  const handleCloseEdit = () => {
+    setMerkId(null);
+    setDataMerkEdit({ name: "", desc: "" });
+  };
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const detailBarang = useSelector((state) => state.detail_barang.merk);
-  const [merkBarang, setMerkBarang] = useState([]);
+  const detailBarang = useSelector((state) => state.detail_barang?.merk);
+  const merkBarang = detailBarang.merk?.result || [];
   const [show, setShow] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
   const [dataMerk, setDataMerk] = useState({ name: "", desc: "" });
+  const [dataMerkEdit, setDataMerkEdit] = useState({
+    name: "",
+    desc: "",
+  });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
@@ -38,12 +47,6 @@ const MerkBarang = () => {
   useEffect(() => {
     dispatch(getMerkBarang(inputQuery));
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
-
-  useEffect(() => {
-    if (detailBarang.merk && detailBarang.isSuccess) {
-      setMerkBarang(detailBarang.merk.result);
-    }
-  }, [detailBarang.merk, detailBarang.isSuccess]);
 
   // USE EFFECT
   const deleteDataMerk = async (id) => {
@@ -90,6 +93,28 @@ const MerkBarang = () => {
     }
   };
 
+  const updateDataMerk = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.patch(
+        `${url}/merk/update/${merkId}`,
+        dataMerkEdit
+      );
+      if (response.status === 200) {
+        alert("Berhasil update data merk.");
+        dispatch(getMerkBarang(inputQuery));
+        handleCloseEdit();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+        console.error(error.response.data.msg);
+      } else {
+        console.log("Gagal mendapatkan data!");
+      }
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     setInputQuery({ ...inputQuery, search: searchQuery, page: 0 });
@@ -102,6 +127,37 @@ const MerkBarang = () => {
 
   return (
     <>
+      {merkId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseEdit}
+          modalTitle="Ubah Data Merk"
+          submit={updateDataMerk}
+          body={
+            <>
+              <p className="m-0 mb-2">Nama Merk</p>
+              <InputComponents
+                val={dataMerkEdit.name}
+                type="text"
+                placeHolder="Nama Merk"
+                classStyle="w-100 p-2"
+                change={(e) =>
+                  setDataMerkEdit({ ...dataMerkEdit, name: e.target.value })
+                }
+              />
+              <p className="m-0 mt-2">Keterangan</p>
+              <InputComponents
+                val={dataMerkEdit.desc}
+                type="text"
+                placeHolder="Keterangan"
+                classStyle="w-100 p-2"
+                change={(e) =>
+                  setDataMerkEdit({ ...dataMerkEdit, desc: e.target.value })
+                }
+              />
+            </>
+          }
+        />
+      )}
       <AlertNotify
         showAlert={alertShow}
         alertMsg="Berhasil menambah data merk"
@@ -147,7 +203,11 @@ const MerkBarang = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  limit: e.target.value,
+                })
               }
             >
               <option value={10}>10</option>
@@ -158,44 +218,55 @@ const MerkBarang = () => {
         </div>
         <div className="card-body">
           <div className="overflow-x-scroll">
-            <table className="table table-bordered table-striped">
-              <thead className="table-dark">
-                <tr>
-                  <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Merk</td>
-                  <td>Keterangan</td>
-                  <td style={{ width: "15%" }}>Aksi</td>
-                </tr>
-              </thead>
-              <tbody>
-                {merkBarang &&
-                  merkBarang.map((item, index) => {
-                    return (
-                      <tr key={item.id}>
-                        <td>
-                          {index + 1 + inputQuery.page * inputQuery.limit}
-                        </td>
-                        <td>{item.name}</td>
-                        <td>{item.desc}</td>
-                        <td className="text-center">
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => navigate(`edit/${item.id}`)}
-                          >
-                            Ubah
-                          </button>
-                          <button
-                            className="btn btn-danger ms-1"
-                            onClick={() => deleteDataMerk(item.id)}
-                          >
-                            Hapus
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+            {detailBarang.isLoading ? (
+              <SpinnerLoading />
+            ) : (
+              <table className="table table-bordered table-striped">
+                <thead className="table-dark">
+                  <tr>
+                    <td style={{ width: "5%" }}>No. </td>
+                    <td>Nama Merk</td>
+                    <td>Keterangan</td>
+                    <td style={{ width: "15%" }}>Aksi</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {merkBarang &&
+                    merkBarang.map((item, index) => {
+                      return (
+                        <tr key={item.id}>
+                          <td>
+                            {index + 1 + inputQuery.page * inputQuery.limit}
+                          </td>
+                          <td>{item.name}</td>
+                          <td>{item.desc}</td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => {
+                                setMerkId(item.id);
+                                setDataMerkEdit({
+                                  name: item.name,
+                                  desc: item.desc,
+                                });
+                              }}
+                              // onClick={() => navigate(`edit/${item.id}`)}
+                            >
+                              Ubah
+                            </button>
+                            <button
+                              className="btn btn-danger ms-1"
+                              onClick={() => deleteDataMerk(item.id)}
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            )}
             {detailBarang.merk && detailBarang.merk.result.length === 0 && (
               <p>Data tidak ditemukan!</p>
             )}

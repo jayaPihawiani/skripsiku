@@ -7,22 +7,31 @@ import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
+import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
 import { getKategoriBarang } from "../../features/detailBarang";
 
 const KategoriPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
+  const [kategoriId, setKategoriId] = useState(null);
+  const handleCloseEdit = () => setKategoriId(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const detailBarang = useSelector((state) => state.detail_barang.kategori);
-  const [kategoriBarang, setKategoriBarang] = useState([]);
+  const detailBarang = useSelector((state) => state.detail_barang?.kategori);
+  const kategoriBarang = detailBarang.kategori?.result || [];
   const [show, setShow] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
   const [inputKategori, setInputKategori] = useState({
     name: "",
     desc: "",
-    masa_ekonomis: 0,
+    masa_ekonomis: "",
+  });
+  const [inputKategoriEdit, setInputKategoriEdit] = useState({
+    name: "",
+    desc: "",
+    masa_ekonomis: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [inputQuery, setInputQuery] = useState({
@@ -33,7 +42,7 @@ const KategoriPage = () => {
   const { setLoading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
-    setInputKategori({ name: "", desc: "", masa_ekonomis: 0 });
+    setInputKategori({ name: "", desc: "", masa_ekonomis: "" });
   };
   const handleShow = () => setShow(true);
 
@@ -41,12 +50,6 @@ const KategoriPage = () => {
   useEffect(() => {
     dispatch(getKategoriBarang(inputQuery));
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
-
-  useEffect(() => {
-    if (detailBarang.kategori && detailBarang.isSuccess) {
-      setKategoriBarang(detailBarang.kategori.result);
-    }
-  }, [detailBarang.kategori, detailBarang.isSuccess]);
 
   const deleteDataKategori = async (id) => {
     try {
@@ -89,6 +92,27 @@ const KategoriPage = () => {
     }
   };
 
+  const updateKategori = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.patch(
+        `${url}/kategori/update/${kategoriId}`,
+        inputKategoriEdit
+      );
+      if (response.status === 200) {
+        alert("Berhasil update data kategori.");
+        dispatch(getKategoriBarang(inputQuery));
+        handleCloseEdit();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.log("Gagal mendapatkan data!");
+      }
+    }
+  };
+
   // HANDLE SEARCH
   const handleSearch = (e) => {
     e.preventDefault();
@@ -102,6 +126,54 @@ const KategoriPage = () => {
 
   return (
     <>
+      {kategoriId && (
+        <ModalEditComponent
+          modalTitle="Ubah Data Kategori"
+          handleCloseEdit={handleCloseEdit}
+          submit={updateKategori}
+          body={
+            <>
+              <p className="m-0 mb-1">Nama Kategori</p>
+              <InputComponents
+                classStyle="w-100 p-2"
+                val={inputKategoriEdit.name || ""}
+                placeHolder="Nama Kategori"
+                change={(e) =>
+                  setInputKategoriEdit({
+                    ...inputKategoriEdit,
+                    name: e.target.value,
+                  })
+                }
+              />
+              <p className="m-0 mb-1 mt-2">Keterangan</p>
+              <InputComponents
+                classStyle="w-100 p-2"
+                val={inputKategoriEdit.desc || ""}
+                placeHolder="Keterangan"
+                change={(e) =>
+                  setInputKategoriEdit({
+                    ...inputKategoriEdit,
+                    desc: e.target.value,
+                  })
+                }
+              />
+              <p className="m-0 mb-1 mt-2">Usia Ekonomis Pakai</p>
+              <InputComponents
+                classStyle="w-100 p-2"
+                val={inputKategoriEdit.masa_ekonomis || ""}
+                placeHolder="Usia Ekonomis Pakai"
+                type="number"
+                change={(e) =>
+                  setInputKategoriEdit({
+                    ...inputKategoriEdit,
+                    masa_ekonomis: e.target.value,
+                  })
+                }
+              />
+            </>
+          }
+        />
+      )}
       <AlertNotify
         alertMsg="Berhasil menambah data kategori"
         showAlert={alertShow}
@@ -137,7 +209,7 @@ const KategoriPage = () => {
             <InputComponents
               type="number"
               classStyle="w-100 p-2 mt-2"
-              placeHolder="Masa Ekonomis (Tahun)"
+              placeHolder="Usia Ekonomis Pakai (Tahun)"
               change={(e) =>
                 setInputKategori({
                   ...inputKategori,
@@ -165,7 +237,11 @@ const KategoriPage = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
-                setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  limit: e.target.value,
+                })
               }
             >
               <option value={10}>10</option>
@@ -176,50 +252,60 @@ const KategoriPage = () => {
         </div>
         <div className="card-body">
           <div className="overflow-x-scroll">
-            <table className="table table-bordered table-striped">
-              <thead className="table-dark">
-                <tr>
-                  <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Kategori</td>
-                  <td>Keterangan</td>
-                  <td>Masa Ekonomis Inventaris</td>
-                  <td style={{ width: "15%" }}>Aksi</td>
-                </tr>
-              </thead>
-              <tbody>
-                {kategoriBarang &&
-                  kategoriBarang.map((item, index) => {
-                    return (
-                      <tr key={item.id}>
-                        <td>
-                          {index + 1 + inputQuery.page * inputQuery.limit}
-                        </td>
-                        <td>{item.name}</td>
-                        <td>{item.desc}</td>
-                        <td>{item.masa_ekonomis} Tahun</td>
-                        <td className="text-center">
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => navigate(`edit/${item.id}`)}
-                          >
-                            Ubah
-                          </button>
-                          <button
-                            className="btn btn-danger ms-1"
-                            onClick={() => deleteDataKategori(item.id)}
-                          >
-                            Hapus
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-            {detailBarang.kategori &&
-              detailBarang.kategori.result.length === 0 && (
-                <p>Data tidak ditemukan!</p>
-              )}
+            {detailBarang && detailBarang.isLoading ? (
+              <SpinnerLoading />
+            ) : (
+              <table className="table table-bordered table-striped">
+                <thead className="table-dark">
+                  <tr>
+                    <td style={{ width: "5%" }}>No. </td>
+                    <td>Nama Kategori</td>
+                    <td>Keterangan</td>
+                    <td>Masa Ekonomis Inventaris</td>
+                    <td style={{ width: "15%" }}>Aksi</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {kategoriBarang &&
+                    kategoriBarang.map((item, index) => {
+                      return (
+                        <tr key={item.id}>
+                          <td>
+                            {index + 1 + inputQuery.page * inputQuery.limit}
+                          </td>
+                          <td>{item.name}</td>
+                          <td>{item.desc}</td>
+                          <td>{item.masa_ekonomis} Tahun</td>
+                          <td className="text-center">
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => {
+                                setKategoriId(item.id);
+                                setInputKategoriEdit({
+                                  name: item.name,
+                                  desc: item.desc,
+                                  masa_ekonomis: item.masa_ekonomis,
+                                });
+                              }}
+                            >
+                              Ubah
+                            </button>
+                            <button
+                              className="btn btn-danger ms-1"
+                              onClick={() => deleteDataKategori(item.id)}
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            )}
+            {kategoriBarang && kategoriBarang.length === 0 && (
+              <p>Data tidak ditemukan!</p>
+            )}
             {detailBarang.kategori && (
               <p className="text-end">
                 Total row: <strong>{detailBarang.kategori.count}</strong> page{" "}

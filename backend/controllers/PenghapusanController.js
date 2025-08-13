@@ -26,6 +26,11 @@ class PenghapusanController {
       }
 
       if (!req.files || !req.files.file) {
+        await Barang.update(
+          { qty: barang.qty - parseInt(qty) },
+          { where: { id: barangId } }
+        );
+
         await Penghapusan.create({
           barangId,
           desc,
@@ -33,12 +38,8 @@ class PenghapusanController {
           tgl_hapus,
           file: fileName,
           url,
+          sisa_stok: barang.qty - parseInt(qty),
         });
-
-        await Barang.update(
-          { qty: barang.qty - qty },
-          { where: { id: barangId } }
-        );
 
         return res
           .status(201)
@@ -79,10 +80,11 @@ class PenghapusanController {
         tgl_hapus,
         file: fileName,
         url,
+        sisa_stok: barang.qty - parseInt(qty),
       });
 
       await Barang.update(
-        { qty: barang.qty - qty },
+        { qty: barang.qty - parseInt(qty) },
         { where: { id: barangId } }
       );
 
@@ -123,9 +125,6 @@ class PenghapusanController {
             "tgl_beli",
             "kondisi",
             "riwayat_pemeliharaan",
-            "penyebab_rsk",
-            "stts_perbaikan",
-            "tipe",
             "createdAt",
           ],
           include: [
@@ -156,9 +155,6 @@ class PenghapusanController {
             "tgl_beli",
             "kondisi",
             "riwayat_pemeliharaan",
-            "penyebab_rsk",
-            "stts_perbaikan",
-            "tipe",
           ],
           include: [
             { model: SatuanBrg, attributes: ["name", "desc"] },
@@ -191,9 +187,6 @@ class PenghapusanController {
             "tgl_beli",
             "kondisi",
             "riwayat_pemeliharaan",
-            "penyebab_rsk",
-            "stts_perbaikan",
-            "tipe",
           ],
           include: [
             { model: SatuanBrg, attributes: ["name", "desc"] },

@@ -1,13 +1,27 @@
 import { Op } from "sequelize";
 import BarangMasuk from "../models/BarangMasuk.js";
 import Barang from "../models/BarangModel.js";
+import Kategori from "../models/KategoriBarang.js";
+import BarangController from "./BarangController.js";
+import BarangUnitModel from "../models/BarangUnitModel.js";
 
-class BarangMasukController {
+class BarangMasukController extends BarangController {
+  constructor() {
+    super();
+  }
+
   createBarangMasuk = async (req, res) => {
     const { barangId, qty, desc, tgl_masuk } = req.body;
 
     try {
-      const barang = await Barang.findByPk(barangId);
+      // 1️⃣ Ambil barang beserta kategori
+      const barang = await Barang.findByPk(barangId, {
+        include: { model: Kategori, as: "kategori_brg" },
+      });
+
+      if (!barang) {
+        return res.status(404).json({ msg: "Barang tidak ditemukan" });
+      }
 
       if (!barangId || !qty || !desc || !tgl_masuk) {
         return res
@@ -15,20 +29,81 @@ class BarangMasukController {
           .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
       }
 
-      await Barang.update(
-        { qty: barang.qty + parseInt(qty) },
-        { where: { id: barangId } }
+      // 2️⃣ Hitung masa ekonomis & penyusutan
+      const estimasiByKategori =
+        barang.kategori_brg.masa_ekonomis * this.bulanPerTahun;
+
+      const masaEkonomisBarang = parseFloat(
+        (
+          this.hitungSisaUmurBulan(tgl_masuk, estimasiByKategori) /
+          this.bulanPerTahun
+        ).toFixed(1)
       );
 
-      await BarangMasuk.create({
+      const biayaPenyusutan = parseFloat(
+        (barang.harga / estimasiByKategori).toFixed(2)
+      );
+
+      // 3️⃣ Update stok Barang
+      const stokBaru = barang.qty + parseInt(qty);
+      await Barang.update({ qty: stokBaru }, { where: { id: barangId } });
+
+      // 4️⃣ Simpan riwayat BarangMasuk
+      const barangMasuk = await BarangMasuk.create({
         barangId,
         qty,
         desc,
         tgl_masuk,
-        sisa_stok: barang.qty + parseInt(qty),
+        sisa_stok: stokBaru,
+        umur_ekonomis: masaEkonomisBarang,
+        biaya_penyusutan: biayaPenyusutan,
+        penyusutan_berjalan: 0,
+        nilai_buku: barang.harga,
       });
 
-      res.status(201).json({ msg: "Berhasil menambah data barang masuk." });
+      // 5️⃣ Cari kode_unit terakhir untuk barang ini
+      const lastUnit = await BarangUnitModel.findOne({
+        where: { barangId },
+        order: [["createdAt", "DESC"]],
+      });
+
+      let startNumber = 1;
+      if (lastUnit && lastUnit.kode_unit) {
+        const lastNumber = parseInt(lastUnit.kode_unit.split("-").pop(), 10);
+        if (!isNaN(lastNumber)) {
+          startNumber = lastNumber + 1;
+        }
+      }
+
+      // 6️⃣ Generate unit baru
+      let units = [];
+      for (let i = 0; i < qty; i++) {
+        units.push({
+          barangId,
+          kode_unit: `${barang.name.toLowerCase()}-${startNumber + i}`,
+          lokasi_asal: barang.lokasi_barang,
+          lokasi_barang: barang.lokasi_barang,
+          kategori: barang.kategori,
+          tgl_beli: tgl_masuk,
+          harga: barang.harga,
+          kondisi: "BAIK",
+          riwayat_pemeliharaan: null,
+          kategori: barang.kategori,
+          umur_ekonomis: masaEkonomisBarang,
+          biaya_penyusutan: biayaPenyusutan,
+          penyusutan_berjalan: 0,
+          nilai_buku: barang.harga,
+          status: "baik",
+        });
+      }
+
+      await BarangUnitModel.bulkCreate(units);
+
+      res.status(201).json({
+        msg: "Berhasil menambah data barang masuk & per unit",
+        barangMasuk,
+        totalUnitDitambah: qty,
+      });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
@@ -94,6 +169,56 @@ class BarangMasukController {
       });
 
       res.status(200).json({ page, limit, totalPage, count, brgMasuk });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  updatePenyusutan = async (req, res) => {
+    try {
+      const brgMasukList = await BarangMasuk.findAll({
+        include: { model: Barang, include: [{ model: Kategori }] },
+      });
+
+      for (const item of brgMasukList) {
+        const tglMasuk = new Date(item.tgl_masuk);
+        const now = new Date();
+
+        // Hitung selisih bulan
+        const selisihBulan =
+          (now.getFullYear() - tglMasuk.getFullYear()) * 12 +
+          (now.getMonth() - tglMasuk.getMonth());
+
+        const masaEkonomisKategori =
+          item.barang.kategori_brg.masa_ekonomis * this.bulanPerTahun;
+        const penyusutanPerBulan = item.biaya_penyusutan;
+
+        // Total penyusutan yang sudah terjadi ( max harga beli)
+        const totalPenyusutan = Math.min(
+          selisihBulan * penyusutanPerBulan,
+          item.barang.harga
+        );
+
+        // Nilai buku tidak boleh negatif
+        const nilaiBuku = Math.max(0, item.barang.harga - totalPenyusutan);
+
+        // Update data barang
+        await BarangMasuk.update(
+          {
+            penyusutan_berjalan: totalPenyusutan,
+            nilai_buku: nilaiBuku,
+            umur_ekonomis: parseFloat(
+              (
+                this.hitungSisaUmurBulan(tglMasuk, masaEkonomisKategori) /
+                this.bulanPerTahun
+              ).toFixed(1)
+            ),
+          },
+          { where: { id: item.id } }
+        );
+      }
+
+      res.status(200).json({ msg: "Berhasil update penyusutan semua barang." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

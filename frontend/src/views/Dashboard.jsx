@@ -25,30 +25,29 @@ import {
   getAllMerk,
   getAllSatuan,
 } from "../features/detailBarang";
-import { getAllPermintaan } from "../features/permintaanSlice";
-import { getAllDivisi, getAllUser } from "../features/UserSlice";
+import { getAllPengajuan } from "../features/pengajuanSlice";
+import { getAllUser } from "../features/UserSlice";
 
 const Dashboard = () => {
   const state = useSelector((state) => state.auth);
-  const brgState = useSelector((state) => state.barang);
+  const barang = useSelector((state) => state.barang.all_barang?.data);
+  const brgMasuk = useSelector((state) => state.barang.all_barang_masuk?.data);
+  const brgPindah = useSelector((state) => state.barang.all_pemindahan?.data);
+  const brgRusak = useSelector((state) => state.barang.all_barang_rusak?.data);
+  const brgPenghapusan = useSelector(
+    (state) => state.barang.all_penghapusan?.data
+  );
   const detailState = useSelector((state) => state.detail_barang);
   const userState = useSelector((state) => state.user);
-  const permintaanState = useSelector((state) => state.permintaan);
+  const pengajuan = useSelector((state) => state.pengajuan.all_pengajuan?.data);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [barang, setBarang] = useState([]);
-  const [brgMasuk, setBrgMasuk] = useState([]);
-  const [brgPindah, setBrgPindah] = useState([]);
-  const [brgRusak, setBrgRusak] = useState([]);
-  const [brgPenghapusan, setBrgPenghapusan] = useState([]);
   const [brgDistribusi, setBrgDistribusi] = useState([]);
   const [merk, setMerk] = useState([]);
   const [satuan, setSatuan] = useState([]);
   const [lokasi, setLokasi] = useState([]);
   const [kategori, setKategori] = useState([]);
   const [user, setUser] = useState([]);
-  const [divisi, setDivisi] = useState([]);
-  const [permintaan, setPermintaan] = useState([]);
 
   useEffect(() => {
     dispatch(getAllBarang());
@@ -60,29 +59,10 @@ const Dashboard = () => {
     dispatch(getAllSatuan());
     dispatch(getAllLokasi());
     dispatch(getAllKategori());
-    dispatch(getAllUser());
-    dispatch(getAllDivisi());
-    dispatch(getAllPermintaan());
+    dispatch(getAllUser(""));
+    dispatch(getAllPengajuan());
     dispatch(getAllDistribusi());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (brgState.all_barang && brgState.all_barang.isSuccess) {
-      setBarang(brgState.all_barang.data);
-      setBrgMasuk(brgState.all_barang_masuk.data);
-      setBrgPindah(brgState.all_pemindahan.data);
-      setBrgRusak(brgState.all_barang_rusak.data);
-      setBrgPenghapusan(brgState.all_penghapusan.data);
-      setBrgDistribusi(brgState.all_distribusi.data);
-    }
-  }, [
-    brgState.all_barang.data,
-    brgState.all_barang_masuk.data,
-    brgState.all_pemindahan.data,
-    brgState.all_penghapusan.data,
-    brgState.all_distribusi.data,
-    brgState.all_barang_rusak.data,
-  ]);
 
   useEffect(() => {
     if (detailState.all_merk && detailState.all_merk.isSuccess) {
@@ -96,18 +76,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (userState.all_user && userState.all_user.isSuccess) {
       setUser(userState.all_user.data);
-      setDivisi(userState.all_divisi.data);
     }
   }, [userState.all_user.data, userState.all_user.isSuccess]);
-
-  useEffect(() => {
-    setPermintaan(
-      permintaanState.all_permintaan && permintaanState.all_permintaan.data
-    );
-  }, [
-    permintaanState.all_permintaan.data,
-    permintaanState.all_permintaan.isSuccess,
-  ]);
 
   return (
     <div className="me-4">
@@ -208,18 +178,9 @@ const Dashboard = () => {
             </div>
             <div className="col-lg-3 col-md-6 col-12">
               <CardBeranda
-                title="DIVISI USER"
-                classCard="bg-primary mb-2"
-                qty={(divisi && divisi.length) || 0}
-                icon={<BsPersonBadgeFill className="text-light" size={40} />}
-                action={() => navigate("/divisi")}
-              />
-            </div>
-            <div className="col-lg-3 col-md-6 col-12">
-              <CardBeranda
                 title="MASA EKONOMIS"
                 classCard="bg-primary mb-2"
-                qty={(divisi && divisi.length) || 0}
+                qty={0}
                 icon={<BsPercent className="text-light" size={40} />}
                 action={() => navigate("/ekonomis")}
               />
@@ -228,11 +189,11 @@ const Dashboard = () => {
         )}
         <div className="col-lg-3 col-md-6 col-12">
           <CardBeranda
-            title="PERMINTAAN USER"
+            title="PENGAJUAN USER"
             classCard="bg-primary mb-2"
-            qty={(permintaan && permintaan.length) || 0}
+            qty={(pengajuan && pengajuan.length) || 0}
             icon={<BsPersonBadgeFill className="text-light" size={40} />}
-            action={() => navigate("/permintaan")}
+            action={() => navigate("/pengajuan")}
           />
         </div>
         <div className="col-lg-3 col-md-6 col-12">

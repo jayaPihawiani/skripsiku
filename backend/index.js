@@ -14,13 +14,16 @@ import authRoute from "./routes/AuthRoute.js";
 import brgMasukRoute from "./routes/BarangMasukRoute.js";
 import barangRoute from "./routes/BarangRoute.js";
 import brgRusakRoute from "./routes/BrgRusakRoute.js";
-import distribusiRoute from "./routes/DistribusiRoute copy.js";
-import divisiRoute from "./routes/DivisiRoute.js";
+import {
+  detailRusakRoute,
+  kategoriRusakRoute,
+} from "./routes/KategoriKerusakanRoute.js";
 import kategoriRoute from "./routes/KategoriRoute.js";
 import laporanRouter from "./routes/LaporanRoute.js";
 import lokasiRoute from "./routes/LokasiRoute.js";
 import merkRoute from "./routes/MerkRoute.js";
 import pemindahanRoute from "./routes/PemindahanRoute.js";
+import pengajuanRoute from "./routes/PengajuanRoute.js";
 import penghapusanRoute from "./routes/PenghapusanRoute.js";
 import permintaanRoute from "./routes/PermintaanRoute.js";
 import satuanRoute from "./routes/SatuanRoute.js";
@@ -36,7 +39,7 @@ config();
 (async () => {
   try {
     await db.authenticate();
-    // await db.sync({ alter: true });
+    // await db.sync({ force: true });
     console.log("Database connected...");
   } catch (error) {
     console.log("ERROR " + error.message);
@@ -78,7 +81,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // routes
 app.use("/user", userRoute);
-app.use("/divisi", divisiRoute);
 app.use("/auth", authRoute);
 app.use("/lokasi", lokasiRoute);
 app.use("/merk", merkRoute);
@@ -87,10 +89,12 @@ app.use("/barang", barangRoute);
 app.use("/kategori", kategoriRoute);
 app.use("/rusak", brgRusakRoute);
 app.use("/pindah", pemindahanRoute);
+app.use("/pengajuan", pengajuanRoute);
 app.use("/permintaan", permintaanRoute);
 app.use("/penghapusan", penghapusanRoute);
 app.use("/masuk", brgMasukRoute);
-app.use("/distribusi", distribusiRoute);
+app.use("/kategori_kerusakan", kategoriRusakRoute);
+app.use("/detail_kerusakan", detailRusakRoute);
 
 // print laporan
 app.use("/print", laporanRouter);

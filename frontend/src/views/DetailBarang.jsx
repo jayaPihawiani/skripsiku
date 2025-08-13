@@ -1,28 +1,28 @@
-import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../components/Alert";
 import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
+import { formatTahunBulan } from "../components/kriteriaPengurangEstimasi";
 import ModalEditComponent from "../components/ModalEditComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
-import { getDataLokasi } from "../features/detailBarang";
+import { getBarangUnit } from "../features/barangSlice";
+import { updatePenyusutanBarang } from "../features/penyusutanSlice";
 
-const LokasiPage = () => {
+const DetailBarang = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const [locId, setLocId] = useState(null);
   const [locHapusId, setLocHapusId] = useState(null);
   const handleCloseEdit = (closeUseState) => closeUseState(null);
   const dispatch = useDispatch();
-  const detailLokasi = useSelector((state) => state.detail_barang.lokasi);
-  const [dataLokasi, setDataLokasi] = useState([]);
+  const barangUnitState =
+    useSelector((state) => state.barang.barang_unit?.data) || {};
+  const dataBarangUnit = barangUnitState?.result || [];
   const [show, setShow] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [inputLokasi, setInputLokasi] = useState({ name: "", desc: "" });
   const [inputLokasiEdit, setInputLokasiEdit] = useState({
     name: "",
     desc: "",
@@ -42,67 +42,6 @@ const LokasiPage = () => {
   };
 
   // function
-  const deleteDataLokasi = async (id) => {
-    try {
-      const response = await axios.delete(`${url}/lokasi/del/${id}`);
-      if (response.status === 200) {
-        setInputQuery({ ...inputQuery, page: 0 });
-        dispatch(getDataLokasi(inputQuery));
-        alert("Berhasil menghapus data satuan.");
-        handleCloseEdit(setLocHapusId);
-      }
-    } catch (error) {
-      console.error(error.response.data.msg);
-    }
-  };
-
-  const createDataLokasi = async () => {
-    if (!inputLokasi.name || !inputLokasi.desc) {
-      alert("Data ada yang kosong! Harap isi semua data!");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await axios.post(`${url}/lokasi/create`, inputLokasi);
-      if (response.status === 201) {
-        setInputLokasi({ name: "", desc: "" });
-        dispatch(getDataLokasi(inputQuery));
-        handleClose();
-        setAlertShow(true);
-        setTimeout(() => {
-          setAlertShow(false);
-        }, 2000);
-      }
-    } catch (error) {
-      console.error(error.response.data);
-      alert(error.response.data.msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateDataLokasi = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.patch(
-        `${url}/lokasi/update/${locId}`,
-        inputLokasiEdit
-      );
-      if (response.status === 200) {
-        alert(response.data.msg);
-        dispatch(getDataLokasi(inputQuery));
-        handleCloseEdit();
-      }
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-        return;
-      } else {
-        console.log(error);
-      }
-    }
-  };
 
   // PAGE CHANGE REACT PAGINATION
   const handlePageClick = ({ selected }) => {
@@ -117,14 +56,9 @@ const LokasiPage = () => {
 
   // useEffect
   useEffect(() => {
-    dispatch(getDataLokasi(inputQuery));
+    dispatch(getBarangUnit(inputQuery));
+    dispatch(updatePenyusutanBarang());
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
-
-  useEffect(() => {
-    if (detailLokasi.lokasi && detailLokasi.isSuccess) {
-      setDataLokasi(detailLokasi.lokasi.result);
-    }
-  }, [detailLokasi.lokasi, detailLokasi.isSuccess]);
 
   // MAIN
   return (
@@ -180,42 +114,13 @@ const LokasiPage = () => {
         showAlert={alertShow}
         variantAlert={"success"}
       />
-      <h4>DATA LOKASI</h4>
-      <ModalComponent
-        classStyle="mt-4"
-        btntTitle="Tambah"
-        modalTitle="Tambah Data Lokasi"
-        show={show}
-        handleClose={handleClose}
-        handleShow={handleShow}
-        handleSubmit={createDataLokasi}
-        inputField={
-          <>
-            <InputComponents
-              classStyle="w-100 p-2"
-              placeHolder="Nama Lokasi"
-              change={(e) =>
-                setInputLokasi({ ...inputLokasi, name: e.target.value })
-              }
-              val={inputLokasi.name}
-            />
-            <InputComponents
-              classStyle="w-100 p-2 mt-2"
-              placeHolder="Keterangan"
-              change={(e) =>
-                setInputLokasi({ ...inputLokasi, desc: e.target.value })
-              }
-              val={inputLokasi.desc}
-            />
-          </>
-        }
-      />
-      <div className="card me-4 mt-2 mb-4 shadow-lg">
+      <h4>DATA UNIT BARANG</h4>
+      <div className="card me-4 mt-4 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
           <div className="w-100">
             <SearchBarComponent
               submit={handleSearch}
-              placeHolder="Cari data merk barang..."
+              placeHolder="Cari data barang..."
               btnTitle="Cari"
               inputChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -239,34 +144,38 @@ const LokasiPage = () => {
               <thead className="table-dark">
                 <tr>
                   <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Lokasi</td>
-                  <td>Keterangan</td>
+                  <td>Nama Barang</td>
+                  <td>Kategori Barang</td>
+                  <td>Kondisi</td>
+                  <td>Usia Pakai EKonomis</td>
+                  <td>Nilai Buku</td>
+                  <td>Asal Barang</td>
+                  <td>Lokasi Saat Ini</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
               <tbody>
-                {dataLokasi &&
-                  dataLokasi.map((item, index) => {
+                {dataBarangUnit &&
+                  dataBarangUnit.map((item, index) => {
                     return (
                       <tr key={item.id}>
                         <td>
                           {index + 1 + inputQuery.page * inputQuery.limit}
                         </td>
-                        <td>{item.name}</td>
-                        <td>{item.desc}</td>
+                        <td>{item.barang.name}</td>
+                        <td>{item.kategori_brg?.name ?? "-"}</td>
+                        <td>{item.kondisi}</td>
+                        <td>{formatTahunBulan(item.umur_ekonomis)}</td>
+                        <td>
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                          }).format(item.nilai_buku)}
+                        </td>
+                        <td>{item.loc_asal?.name ?? "-"}</td>
+                        <td>{item.loc_barang?.name ?? "-"}</td>
                         <td className="text-center">
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => {
-                              setLocId(item.id);
-                              setInputLokasiEdit({
-                                name: item.name,
-                                desc: item.desc,
-                              });
-                            }}
-                          >
-                            Ubah
-                          </button>
+                          <button className="btn btn-primary">Ubah</button>
                           <button
                             className="btn btn-danger ms-1"
                             onClick={() => setLocHapusId(item.id)}
@@ -279,27 +188,25 @@ const LokasiPage = () => {
                   })}
               </tbody>
             </table>
-            {detailLokasi.lokasi && detailLokasi.lokasi.result.length === 0 && (
+            {dataBarangUnit && dataBarangUnit.length === 0 && (
               <p>Data tidak ditemukan!</p>
             )}
-            {detailLokasi.lokasi && (
+            {barangUnitState && (
               <p className="text-end">
-                Total row: <strong>{detailLokasi.lokasi.count}</strong> page{" "}
+                Total row: <strong>{barangUnitState.count}</strong> page{" "}
                 <strong>
-                  {detailLokasi.lokasi.count ? detailLokasi.lokasi.page + 1 : 0}
+                  {barangUnitState.count ? barangUnitState.page + 1 : 0}
                 </strong>{" "}
-                of <strong>{detailLokasi.lokasi.totalPage}</strong>
+                of <strong>{barangUnitState.totalPage}</strong>
               </p>
             )}
-            <nav key={detailLokasi.lokasi && detailLokasi.lokasi.count}>
-              {detailLokasi.lokasi && detailLokasi.lokasi.totalPage > 0 && (
+            <nav key={barangUnitState && barangUnitState.count}>
+              {barangUnitState && barangUnitState.totalPage > 0 && (
                 <ReactPaginate
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={
-                    detailLokasi.lokasi ? detailLokasi.lokasi.totalPage : 0
-                  }
+                  pageCount={barangUnitState ? barangUnitState.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}
@@ -324,4 +231,4 @@ const LokasiPage = () => {
   );
 };
 
-export default LokasiPage;
+export default DetailBarang;

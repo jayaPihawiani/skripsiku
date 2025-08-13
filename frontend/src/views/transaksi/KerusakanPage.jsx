@@ -2,22 +2,38 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
+import { formatTahunBulan } from "../../components/kriteriaPengurangEstimasi";
 import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { LoadingContext } from "../../context/Loading";
-import { getAllBarang, getBrgRusak } from "../../features/barangSlice";
-import AlertNotify from "../../components/Alert";
+import {
+  getAllBarang,
+  getBrgRusak,
+  getBrgRusakByLoc,
+} from "../../features/barangSlice";
+import { getAllLokasi } from "../../features/detailBarang";
+import { getAllKategoriKerusakan } from "../../features/kategoriRusak";
 
 const KerusakanPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [rusakId, setRusakId] = useState(null);
+  const handleCloseEdit = () => setRusakId(null);
+  const kategoriRusakState =
+    useSelector((state) => state.kategori_rusak.all_kategori_kerusakan?.data) ||
+    [];
+  const [detailKerusakan, setDetailKerusakan] = useState([]);
+  const [statusPerbaikanEdit, setStatusPerbaikanEdit] = useState("");
   const rusakState = useSelector((state) => state.barang.barang_rusak);
-  const dataBarang =
-    useSelector((state) => state.barang.all_barang?.data) || [];
+  const dataBarangRusak = rusakState?.data || [];
+  const allLokasi =
+    useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
+  const barangByLoc =
+    useSelector((state) => state.barang.barang_rusak_by_loc?.data) || [];
   const userState = useSelector((state) => state.auth);
   const [dataBrgRusak, setDataBrgRusak] = useState([]);
   const [alertShow, SetAlertShow] = useState(false);
@@ -25,23 +41,31 @@ const KerusakanPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [inputKerusakan, setInputKerusakan] = useState({
     desc: "",
-    qty: 0,
-    barangId: "",
+    barangUnitId: "",
+    riwayat_pemeliharaan: "",
+    sebab_kerusakan: "",
+    status_perbaikan: "",
+    locBarang: "",
   });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
     search: "",
+    lokasi: "",
+    status_perbaikan: "",
   });
   const { setLoading, loading } = useContext(LoadingContext);
   const handleClose = () => {
     setShow(false);
-    setInputKerusakan({ desc: "", qty: 0, barangId: "" });
+    setInputKerusakan({ desc: "", barangUnitId: "" });
   };
   const handleShow = () => setShow(true);
 
   // FUNCTION
+
   const addDataKerusakan = async () => {
+    console.log(inputKerusakan);
+
     try {
       setLoading(true);
       const response = await axios.post(`${url}/rusak/create`, inputKerusakan);
@@ -51,7 +75,7 @@ const KerusakanPage = () => {
         setTimeout(() => {
           SetAlertShow(false);
         }, 2000);
-        setInputKerusakan({ desc: "", qty: 0, barangId: "" });
+        setInputKerusakan({ desc: "", barangUnitId: "" });
         dispatch(getBrgRusak(inputQuery));
         dispatch(getAllBarang());
         handleClose();
@@ -63,6 +87,31 @@ const KerusakanPage = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // update
+  const updateStatusPerbaikan = async () => {
+    if (!statusPerbaikanEdit) {
+      alert("Data tidak boleh kosong!");
+      return;
+    }
+    try {
+      const resonse = await axios.patch(`${url}/rusak/update/${rusakId}`, {
+        status_perbaikan: statusPerbaikanEdit,
+      });
+
+      if (resonse.status === 200) {
+        alert("Berhasil update data status.");
+        dispatch(getBrgRusak(inputQuery));
+        handleCloseEdit();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
     }
   };
 
@@ -119,7 +168,21 @@ const KerusakanPage = () => {
   useEffect(() => {
     dispatch(getBrgRusak(inputQuery));
     dispatch(getAllBarang());
-  }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
+    dispatch(getAllLokasi());
+    dispatch(getBrgRusakByLoc(inputKerusakan.locBarang));
+  }, [
+    dispatch,
+    inputQuery.page,
+    inputQuery.limit,
+    inputQuery.search,
+    inputQuery.lokasi,
+    inputQuery.status_perbaikan,
+    inputKerusakan.locBarang,
+  ]);
+
+  useEffect(() => {
+    dispatch(getAllKategoriKerusakan());
+  }, [dispatch]);
 
   useEffect(() => {
     if (rusakState.data && rusakState.isSuccess) {
@@ -130,11 +193,42 @@ const KerusakanPage = () => {
   // MAIN
   return (
     <>
+      {rusakId && (
+        <ModalEditComponent
+          modalTitle="Ubah Status Perbaikan"
+          handleCloseEdit={handleCloseEdit}
+          submit={updateStatusPerbaikan}
+          body={
+            <>
+              <select
+                value={statusPerbaikanEdit || ""}
+                className="form-select"
+                onChange={(e) => setStatusPerbaikanEdit(e.target.value)}
+              >
+                <option value="">--Pilih--</option>
+                <option value="SELESAI DIPERBAIKI BISA DIGUNAKAN">
+                  SELESAI DIPERBAIKI BISA DIGUNAKAN
+                </option>
+                <option value="SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN">
+                  SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN
+                </option>
+                <option value="SEDANG DIPERBAIKI">SEDANG DIPERBAIKI</option>
+                <option value="BELUM DIPERBAIKI">BELUM DIPERBAIKI</option>
+                <option value="TIDAK BISA DIPERBAIKI">
+                  TIDAK BISA DIPERBAIKI
+                </option>
+              </select>
+            </>
+          }
+        />
+      )}
+
       <AlertNotify
         alertMsg={"Berhsil menambah data kerusakan"}
         showAlert={alertShow}
         variantAlert={"success"}
       />
+
       <h4>DATA KERUSAKAN INVENTARIS BARANG</h4>
       <div className="m-0">
         {userState.data && userState.data.role === "admin" && (
@@ -148,47 +242,130 @@ const KerusakanPage = () => {
             modalTitle="Tambah Data Inventaris Barang Rusak"
             inputField={
               <>
-                <p className="m-0">Nama Inventaris Barang</p>
+                <p className="m-0">Lokasi Inventaris</p>
                 <select
                   className="form-select"
                   onChange={(e) =>
                     setInputKerusakan({
                       ...inputKerusakan,
-                      barangId: e.target.value,
+                      locBarang: e.target.value,
                     })
                   }
                 >
                   <option value="">Pilih</option>
-                  {dataBarang &&
-                    dataBarang.map((item) => {
+                  {allLokasi &&
+                    allLokasi.map((item) => {
                       return (
                         <option value={item.id} key={item.id}>
-                          {item.name} - qty: {item.qty}
+                          {item.name}
                         </option>
                       );
                     })}
                 </select>
+                <p className="m-0 mt-2">Nama Inventaris Barang</p>
+                <select
+                  className="form-select"
+                  onChange={(e) =>
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      barangUnitId: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Pilih</option>
+                  {barangByLoc &&
+                    barangByLoc.map((item) => {
+                      return (
+                        <option value={item.id} key={item.id}>
+                          {`${item.id.split("-").pop()} --- ${
+                            item.barang.name
+                          }`}
+                        </option>
+                      );
+                    })}
+                </select>
+
                 <p className="mt-2 m-0">Sebab Kerusakan</p>
+                <select
+                  className="form-select"
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // Simpan sebab kerusakan yang dipilih
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      sebab_kerusakan: value,
+                    });
+
+                    // Cari kategori yang cocok lalu ambil detail_kerusakans-nya
+                    const selectedCategory = kategoriRusakState.find(
+                      (item) => item.jenis === value
+                    );
+
+                    setDetailKerusakan(
+                      selectedCategory ? selectedCategory.detail_kerusakans : []
+                    );
+                  }}
+                >
+                  <option value="">--Pilih--</option>
+                  {kategoriRusakState.map((item) => (
+                    <option value={item.jenis} key={item.id}>
+                      {item.jenis}
+                    </option>
+                  ))}
+                </select>
+
+                <p className="m-0 mt-2">Detail Kerusakan</p>
+                <select
+                  className="form-select"
+                  onChange={(e) =>
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      riwayat_pemeliharaan: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">--Pilih--</option>
+                  {detailKerusakan.map((item, index) => {
+                    return (
+                      <option value={item.pengurang} key={index}>
+                        {item.desc}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                <p className="m-0 mt-2">Status Perbaikan</p>
+                <select
+                  className="form-select"
+                  onChange={(e) =>
+                    setInputKerusakan({
+                      ...inputKerusakan,
+                      status_perbaikan: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">--Pilih--</option>
+                  <option value="SELESAI DIPERBAIKI BISA DIGUNAKAN">
+                    SELESAI DIPERBAIKI BISA DIGUNAKAN
+                  </option>
+                  <option value="SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN">
+                    SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN
+                  </option>
+                  <option value="SEDANG DIPERBAIKI">SEDANG DIPERBAIKI</option>
+                  <option value="BELUM DIPERBAIKI">BELUM DIPERBAIKI</option>
+                  <option value="TIDAK BISA DIPERBAIKI">
+                    TIDAK BISA DIPERBAIKI
+                  </option>
+                </select>
+                <p className="m-0 mt-2">Rincian Kerusakan</p>
                 <InputComponents
-                  type="text"
-                  placeHolder="Sebab Kerusakan  "
                   classStyle="w-100 p-2"
+                  placeHolder="Rincian kerusakan"
                   change={(e) =>
                     setInputKerusakan({
                       ...inputKerusakan,
                       desc: e.target.value,
-                    })
-                  }
-                />
-                <p className="mt-2 m-0">Jumlah Kerusakan</p>
-                <InputComponents
-                  type="number"
-                  placeHolder="Jumlah"
-                  classStyle="w-100 p-2"
-                  change={(e) =>
-                    setInputKerusakan({
-                      ...inputKerusakan,
-                      qty: e.target.value,
                     })
                   }
                 />
@@ -216,6 +393,48 @@ const KerusakanPage = () => {
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  lokasi: e.target.value,
+                })
+              }
+            >
+              <option value="">lokasi</option>
+              {allLokasi.map((e) => {
+                return (
+                  <option value={e.id} key={e.id}>
+                    {e.name}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  status_perbaikan: e.target.value,
+                })
+              }
+            >
+              <option value="">status perbaikan</option>
+              <option value="SELESAI DIPERBAIKI BISA DIGUNAKAN">
+                SELESAI DIPERBAIKI BISA DIGUNAKAN
+              </option>
+              <option value="SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN">
+                SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN
+              </option>
+              <option value="SEDANG DIPERBAIKI">SEDANG DIPERBAIKI</option>
+              <option value="BELUM DIPERBAIKI">BELUM DIPERBAIKI</option>
+              <option value="TIDAK BISA DIPERBAIKI">
+                TIDAK BISA DIPERBAIKI
+              </option>
+            </select>
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
                 setInputQuery({ ...inputQuery, page: 0, limit: e.target.value })
               }
             >
@@ -231,10 +450,15 @@ const KerusakanPage = () => {
               <thead className="table-dark">
                 <tr>
                   <td style={{ width: "5%" }}>No. </td>
+                  <td>Kode Unit</td>
                   <td>Nama Inventaris Barang</td>
-                  <td>Jumlah Rusak</td>
-                  <td>Sisa</td>
                   <td>Sebab Kerusakan</td>
+                  <td>Rincian Kerusakan</td>
+                  <td>Status Perbaikan</td>
+                  <td>Usia Ekonomis Pakai</td>
+                  <td>Keterangan</td>
+                  <td>Lokasi Barang</td>
+
                   {userState.data && userState.data.role === "admin" && (
                     <td style={{ width: "15%" }}>Aksi</td>
                   )}
@@ -248,15 +472,32 @@ const KerusakanPage = () => {
                         <td>
                           {index + 1 + inputQuery.page * inputQuery.limit}
                         </td>
-                        <td>{item.barang.name}</td>
-                        <td>{item.qty}</td>
-                        <td>{item.barang.qty}</td>
+                        <td>{item.id.split("-").pop()}</td>
+                        <td>{item.barang?.name ?? "-"}</td>
+                        <td>{item.sebab_kerusakan}</td>
                         <td>{item.desc}</td>
+                        <td>{item.status_perbaikan}</td>
+                        <td>
+                          {item.status_perbaikan === "SEDANG DIPERBAIKI" ||
+                          item.status_perbaikan === "BELUM DIPERBAIKI"
+                            ? "Proses Hitung"
+                            : formatTahunBulan(item.umur_ekonomis)}
+                        </td>
+                        <td>
+                          {item.status_perbaikan === "SEDANG DIPERBAIKI" ||
+                          item.status_perbaikan === "BELUM DIPERBAIKI"
+                            ? "-"
+                            : `Disusut ${item.riwayat_pemeliharaan} %`}
+                        </td>
+                        <td>{item.loc_barang?.name ?? "-"}</td>
                         {userState.data && userState.data.role === "admin" && (
                           <td className="text-center">
                             <button
                               className="btn btn-primary"
-                              onClick={() => navigate(`edit/${item.id}`)}
+                              onClick={() => {
+                                setRusakId(item.id);
+                                setStatusPerbaikanEdit(item.status_perbaikan);
+                              }}
                             >
                               Ubah
                             </button>

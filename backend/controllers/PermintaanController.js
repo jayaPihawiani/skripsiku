@@ -1,61 +1,33 @@
-import supabase from "../config/supabase/supabaseClient.js";
+import { Op } from "sequelize";
+import Barang from "../models/BarangModel.js";
+import Lokasi from "../models/LokasiModel.js";
 import Permintaan from "../models/Permintaan.js";
 import User from "../models/UserModels.js";
-import Divisi from "../models/DivisiModel.js";
-import { Op } from "sequelize";
-import Lokasi from "../models/LokasiModel.js";
 
 class PermintaanController {
   createPermintaan = async (req, res) => {
-    const { name, desc, qty } = req.body;
-
-    if (!name || !desc || !qty) {
+    const { barangId, qty } = req.body;
+    if (!barangId || !qty) {
       return res
         .status(400)
         .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
     }
 
-    if (!req.files || !req.files.file) {
-      return res.status(400).json({ msg: "File belum dipilih!" });
-    }
-    const fileUpload = req.files;
-
-    const ext = `.${fileUpload.file.name.split(".").pop()}`;
-    const fileName = `file_${Date.now()}${ext}`;
-    const fileType = [".xlsx", ".docx", ".pdf"];
-
-    if (!fileType.includes(ext.toLowerCase()))
-      return res.status(400).json({ msg: "Format file tidak didukung!" });
-
     try {
-      const supabaseUpload = await supabase.storage
-        .from("product")
-        .upload(fileName, fileUpload.file.data, {
-          upsert: true,
-          contentType: fileUpload.file.mimetype,
-        });
+      const barang = await Barang.findByPk(barangId);
 
-      if (supabaseUpload.error) {
-        return res.status(500).json({
-          err: "ERROR: Gagal mengunggah dokumen!",
-          stack: supabaseUpload.error.stack,
-          msg: supabaseUpload.error.message,
-        });
+      if (qty > barang.qty) {
+        return res.status(400).json({ msg: "Input jumlah tidak valid!" });
       }
 
-      const url = supabase.storage.from("product").getPublicUrl(fileName)
-        .data.publicUrl;
-
       await Permintaan.create({
-        name,
-        desc,
-        qty,
-        file: fileName,
-        url,
+        barangId,
         userId: req.uid,
+        qty,
+        status: "belum disetujui",
       });
 
-      res.status(201).json({ msg: "Berhasil membuat data permintaan!" });
+      res.status(201).json({ msg: "Berhasil membuat permintaan inventaris." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
@@ -68,190 +40,75 @@ class PermintaanController {
     const offset = limit * page;
     let totalPage;
     let count;
-    try {
-      let permintaan;
-      if (req.role === "user") {
-        count = await Permintaan.count({
-          where: { userId: req.uid, name: { [Op.like]: `%${search}%` } },
-        });
-
-        totalPage = Math.ceil(count / limit);
-
-        permintaan = await Permintaan.findAll({
-          include: {
-            model: User,
-            attributes: ["nip", "username", "id", "role"],
-            include: [
-              { model: Divisi, attributes: ["name", "desc"] },
-              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
-            ],
-          },
-          attributes: [
-            "id",
-            "name",
-            "desc",
-            "qty",
-            "file",
-            "url",
-            "userId",
-            "createdAt",
-            "updatedAt",
-          ],
-          where: { userId: req.uid, name: { [Op.like]: `%${search}%` } },
-          limit,
-          offset,
-          order: [["createdAt", "ASC"]],
-        });
-      } else {
-        count = await Permintaan.count({
-          where: { name: { [Op.like]: `%${search}%` } },
-        });
-
-        totalPage = Math.ceil(count / limit);
-
-        permintaan = await Permintaan.findAll({
-          where: { name: { [Op.like]: `%${search}%` } },
-          include: {
-            model: User,
-            attributes: ["nip", "username", "id", "role"],
-            include: [
-              { model: Divisi, attributes: ["name", "desc"] },
-              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
-            ],
-          },
-          attributes: [
-            "id",
-            "name",
-            "desc",
-            "qty",
-            "file",
-            "url",
-            "userId",
-            "createdAt",
-            "updatedAt",
-          ],
-          limit,
-          offset,
-          order: [["createdAt", "ASC"]],
-        });
-      }
-
-      res.status(200).json({ limit, page, totalPage, count, permintaan });
-    } catch (error) {
-      res.status(500).json({ msg: "ERROR: " + error.message });
-    }
-  };
-
-  getPermintaanById = async (req, res) => {
     let permintaan;
-    try {
-      if (req.role === "admin") {
-        permintaan = await Permintaan.findByPk(req.params.id, {
-          include: {
-            model: User,
-            attributes: ["nip", "username", "id", "role"],
-          },
-          attributes: [
-            "id",
-            "name",
-            "desc",
-            "qty",
-            "file",
-            "url",
-            "userId",
-            "createdAt",
-            "updatedAt",
-          ],
-        });
-      } else {
-        permintaan = await Permintaan.findOne(
-          { where: { id: req.params.id, userId: req.uid } },
-          {
-            include: {
-              model: User,
-              attributes: ["nip", "username", "id", "role"],
-            },
-            attributes: [
-              "id",
-              "name",
-              "desc",
-              "qty",
-              "file",
-              "url",
-              "userId",
-              "createdAt",
-              "updatedAt",
-            ],
-          }
-        );
-      }
+    let row;
 
-      if (!permintaan) {
-        return res
-          .status(404)
-          .json({ msg: "Data permintaan tidak ditemukan!" });
-      }
-      res.status(200).json(permintaan);
-    } catch (error) {
-      res.status(500).json({ msg: "ERROR: " + error.message });
-    }
-  };
-
-  getAllPermintaan = async (req, res) => {
     try {
-      let permintaan;
       if (req.role === "user") {
-        permintaan = await Permintaan.findAll({
-          include: {
-            model: User,
-            attributes: ["nip", "username", "id", "role"],
-            include: [
-              { model: Divisi, attributes: ["name", "desc"] },
-              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
-            ],
-          },
-          attributes: [
-            "id",
-            "name",
-            "desc",
-            "qty",
-            "file",
-            "url",
-            "userId",
-            "createdAt",
-            "updatedAt",
-          ],
+        count = await Permintaan.count({
           where: { userId: req.uid },
-        });
-      } else {
-        permintaan = await Permintaan.findAll({
           include: {
-            model: User,
-            attributes: ["nip", "username", "id", "role"],
-            include: [
-              { model: Divisi, attributes: ["name", "desc"] },
-              { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
-            ],
+            model: Barang,
+            where: { name: { [Op.like]: `%${search}%` } },
           },
-          attributes: [
-            "id",
-            "name",
-            "desc",
-            "qty",
-            "file",
-            "url",
-            "userId",
-            "createdAt",
-            "updatedAt",
-          ],
         });
-      }
 
-      res.status(200).json(permintaan);
+        totalPage = Math.ceil(count / limit);
+
+        permintaan = await Permintaan.findAll({
+          attributes: ["id", "qty", "userId", "status", "createdAt"],
+          include: [
+            { model: Barang, where: { name: { [Op.like]: `%${search}%` } } },
+            {
+              model: User,
+              where: { id: req.uid },
+              attributes: ["id", "nip", "username", "role"],
+              include: [
+                { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+              ],
+            },
+          ],
+          limit,
+          offset,
+          order: [["createdAt", "ASC"]],
+        });
+
+        row = permintaan.length;
+      } else {
+        count = await Permintaan.count({
+          include: {
+            model: Barang,
+            where: { name: { [Op.like]: `%${search}%` } },
+          },
+        });
+
+        totalPage = Math.ceil(count / limit);
+
+        permintaan = await Permintaan.findAll({
+          attributes: ["id", "qty", "status", "createdAt"],
+          include: [
+            { model: Barang, where: { name: { [Op.like]: `%${search}%` } } },
+            {
+              model: User,
+              attributes: ["id", "nip", "username", "role"],
+              include: [
+                { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
+              ],
+            },
+          ],
+          limit,
+          offset,
+          order: [["createdAt", "ASC"]],
+        });
+        row = permintaan.length;
+      }
+      res.status(200).json({ row, limit, page, totalPage, count, permintaan });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
   };
+
+  getPermintaanById = async (req, res) => {};
 
   deletePermintaan = async (req, res) => {
     try {
@@ -262,20 +119,33 @@ class PermintaanController {
           .json({ msg: "Data permintaan tidak ditemukan!" });
       }
 
-      const supabaseDelete = await supabase.storage
-        .from("product")
-        .remove([`${permintaan.file}`]);
-
-      if (supabaseDelete.error)
-        return res.status(400).json({
-          err: "ERROR: Gagal mengunggah dokumen!",
-          stack: supabaseUpload.error.stack,
-          msg: supabaseUpload.error.message,
-        });
-
       await Permintaan.destroy({ where: { id: permintaan.id } });
+      res.status(200).json({ msg: "Berhasil menghapus permintaan!" });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
 
-      res.status(200).json({ msg: "Berhasil menghapus data permintaan!" });
+  updateStatusPermintaan = async (req, res) => {
+    try {
+      const permintaan = await Permintaan.findByPk(req.params.id, {
+        include: { model: Barang },
+      });
+
+      if (permintaan.qty > permintaan.barang.qty) {
+        return res.status(400).json({ msg: "Barang inventaris kosong!" });
+      }
+
+      await Barang.update(
+        { qty: permintaan.barang.qty - parseInt(permintaan.qty) },
+        { where: { id: permintaan.barang.id } }
+      );
+      await Permintaan.update(
+        { status: "disetujui" },
+        { where: { id: req.params.id } }
+      );
+
+      res.status(200).json({ msg: "Berhasil menyetujui permintaan." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

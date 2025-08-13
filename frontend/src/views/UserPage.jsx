@@ -8,11 +8,7 @@ import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
-import {
-  getAllDivisi,
-  getDataDivisi,
-  getDataUser,
-} from "../features/UserSlice";
+import { getDataUser } from "../features/UserSlice";
 import { getAllLokasi } from "../features/detailBarang";
 
 const UserPage = () => {
@@ -21,7 +17,6 @@ const UserPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const dataUser = useSelector((state) => state.user.user?.data) || [];
-  const dataDivisi = useSelector((state) => state.user.all_divisi?.data) || [];
   const lokasi =
     useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
   const [show, setShow] = useState(false);
@@ -30,7 +25,6 @@ const UserPage = () => {
     nip: "",
     username: "",
     password: "",
-    divisi: "",
     lokasiId: "",
     role: "",
   });
@@ -49,7 +43,6 @@ const UserPage = () => {
       nip: "",
       username: "",
       password: "",
-      divisi: "",
       role: "",
     });
   };
@@ -109,8 +102,6 @@ const UserPage = () => {
 
   useEffect(() => {
     dispatch(getDataUser(inputQuery));
-    dispatch(getDataDivisi(inputQuery));
-    dispatch(getAllDivisi());
     dispatch(getAllLokasi());
     // dispatch(userInfo());
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
@@ -161,22 +152,6 @@ const UserPage = () => {
               }
               val={inputDataUser.password}
             />
-            <p className="m-0 mt-2">Divisi</p>
-            <select
-              className="form-select"
-              onChange={(e) =>
-                setInputDataUser({ ...inputDataUser, divisi: e.target.value })
-              }
-            >
-              <option value="">Pilih Divisi User</option>
-              {dataDivisi.map((e) => {
-                return (
-                  <option value={e.id} key={e.id}>
-                    {e.name}
-                  </option>
-                );
-              })}
-            </select>
             <p className="m-0 mt-2">Lokasi User</p>
             <select
               className="form-select"
@@ -184,7 +159,7 @@ const UserPage = () => {
                 setInputDataUser({ ...inputDataUser, lokasiId: e.target.value })
               }
             >
-              <option value="">Pilih Lokasi User</option>
+              <option value="">--Pilih Lokasi User--</option>
               {lokasi.map((e) => {
                 return (
                   <option value={e.id} key={e.id}>
@@ -200,7 +175,7 @@ const UserPage = () => {
                 setInputDataUser({ ...inputDataUser, role: e.target.value })
               }
             >
-              <option value="">Pilih Role User</option>
+              <option value="">--Pilih Role User--</option>
               <option value="user">user</option>
               <option value="admin">admin</option>
             </select>
@@ -238,7 +213,6 @@ const UserPage = () => {
                   <td style={{ width: "5%" }}>No. </td>
                   <td>NIP Pegawai</td>
                   <td>Username</td>
-                  <td>Divisi</td>
                   <td>Lokasi User</td>
                   <td>Role</td>
                   <td style={{ width: "15%" }}>Aksi</td>
@@ -254,7 +228,6 @@ const UserPage = () => {
                         </td>
                         <td>{item.nip}</td>
                         <td>{item.username}</td>
-                        <td>{item.divisi_user?.name ?? "-"}</td>
                         <td>Ruang {item.loc_user?.name ?? "-"}</td>
                         <td>{item.role}</td>
                         <td className="text-center">

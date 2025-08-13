@@ -1,7 +1,6 @@
 import argon2 from "argon2";
-import User from "../models/UserModels.js";
-import Divisi from "../models/DivisiModel.js";
 import Lokasi from "../models/LokasiModel.js";
+import User from "../models/UserModels.js";
 
 class AuthController {
   // LOGIN
@@ -16,7 +15,11 @@ class AuthController {
     try {
       const checkUser = await User.findOne({
         where: { username },
-        include: { model: Divisi, attributes: ["name", "desc"] },
+        include: {
+          model: Lokasi,
+          as: "loc_user",
+          attributes: ["name", "desc"],
+        },
       });
       if (!checkUser) {
         return res
@@ -33,9 +36,10 @@ class AuthController {
       req.session.uid = checkUser.id;
 
       res.status(200).json({
+        id: checkUser.id,
         username: checkUser.username,
+        lokasi: checkUser.loc_user?.name,
         role: checkUser.role,
-        divisi: checkUser.divisi_user,
       });
     } catch (error) {
       res.status(500).json({ msg: "ERROR " + error.message });
@@ -61,9 +65,8 @@ class AuthController {
 
     try {
       const user = await User.findByPk(req.session.uid, {
-        attributes: ["username", "nip", "divisi", "role"],
+        attributes: ["username", "nip", "role"],
         include: [
-          { model: Divisi, attributes: ["name", "desc"] },
           { model: Lokasi, as: "loc_user", attributes: ["name", "desc"] },
         ],
       });

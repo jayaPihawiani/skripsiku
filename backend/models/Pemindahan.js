@@ -9,7 +9,6 @@ const Pemindahan = db.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    qty: DataTypes.INTEGER,
     desc: DataTypes.STRING,
     from: {
       type: DataTypes.UUID,
@@ -20,6 +19,20 @@ const Pemindahan = db.define(
       allowNull: true,
     },
     tgl_pindah: DataTypes.DATE,
+    sisa_stok: DataTypes.INTEGER,
+    kondisi: DataTypes.STRING,
+    umur_ekonomis: DataTypes.DOUBLE,
+    biaya_penyusutan: DataTypes.DOUBLE,
+    penyusutan_berjalan: {
+      type: DataTypes.DOUBLE,
+      defaultValue: 0,
+    },
+    nilai_buku: {
+      type: DataTypes.DOUBLE,
+    },
+    barangId: DataTypes.UUID,
+    barangUnitId: DataTypes.UUID,
+    userId: DataTypes.UUID,
   },
   { freezeTableName: true }
 );
