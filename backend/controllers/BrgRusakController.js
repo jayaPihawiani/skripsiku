@@ -80,14 +80,52 @@ class BrgRusakController {
   //   const limit = parseInt(req.query.limit) || 10;
   //   const page = parseInt(req.query.page) || 0;
   //   const search = req.query.search || "";
-  //   const lokasi = req.query.lokasi || "";
   //   const offset = limit * page;
+  //   const lokasi = req.query.lokasi || "";
+  //   const status_perbaikan = req.query.status_perbaikan || "";
 
   //   try {
-  //     const brgRusak = await BrgRusak.findAll({
-  //       include: [{ model: BarangUnitModel }],
+  //     // Hitung total item yang cocok dengan pencarian
+  //     const count = await BarangUnitModel.count({
+  //       include: [
+  //         {
+  //           model: Barang,
+  //           where: { name: { [Op.like]: `%${search}%` } },
+  //         },
+  //       ],
+  //       where: { status: "rusak" },
   //     });
-  //     res.status(200).json(brgRusak);
+
+  //     const totalPage = Math.ceil(count / limit);
+
+  //     // Ambil data
+  //     const brg_rusak = await BarangUnitModel.findAll({
+  //       where: { status: "rusak" },
+  //       include: [
+  //         {
+  //           model: Barang,
+  //           attributes: [
+  //             "id",
+  //             "name",
+  //             "desc",
+  //             "umur_ekonomis",
+  //             "image",
+  //             "url",
+  //             "createdAt",
+  //             "updatedAt",
+  //           ],
+  //           where: { name: { [Op.like]: `%${search}%` } },
+  //           include: [{ model: BrgRusak }],
+  //         },
+  //         { model: Lokasi, as: "loc_asal" },
+  //         { model: Lokasi, as: "loc_barang" },
+  //       ],
+  //       limit,
+  //       offset,
+  //       order: [["createdAt", "DESC"]],
+  //     });
+
+  //     res.status(200).json({ page, limit, totalPage, count, brg_rusak });
   //   } catch (error) {
   //     res.status(500).json({ msg: "ERROR: " + error.message });
   //   }
@@ -98,22 +136,41 @@ class BrgRusakController {
     const page = parseInt(req.query.page) || 0;
     const search = req.query.search || "";
     const offset = limit * page;
+    const lokasi = req.query.lokasi || ""; // bisa berupa id lokasi
+    const status_perbaikan = req.query.status_perbaikan || "";
 
     try {
-      // Hitung total item yang cocok dengan pencarian
+      // Buat where dinamis untuk BarangUnitModel
+      let whereUnit = { status: "rusak" };
+      if (status_perbaikan) whereUnit.status_perbaikan = status_perbaikan;
+
+      // Buat include untuk Barang
+      let whereBarang = {};
+      if (search) whereBarang.name = { [Op.like]: `%${search}%` };
+
+      // Buat include untuk Lokasi
+      let includeLokasi = [
+        { model: Lokasi, as: "loc_asal" },
+        { model: Lokasi, as: "loc_barang" },
+      ];
+      if (lokasi) {
+        includeLokasi = [
+          { model: Lokasi, as: "loc_asal" },
+          { model: Lokasi, as: "loc_barang", where: { id: lokasi } },
+        ];
+      }
+
+      // Hitung total item
       const count = await BarangUnitModel.count({
-        include: {
-          model: Barang,
-          where: { name: { [Op.like]: `%${search}%` } },
-        },
-        where: { status: "rusak" },
+        where: whereUnit,
+        include: [{ model: Barang, where: whereBarang }, ...includeLokasi],
       });
 
       const totalPage = Math.ceil(count / limit);
 
       // Ambil data
       const brg_rusak = await BarangUnitModel.findAll({
-        where: { status: "rusak" },
+        where: whereUnit,
         include: [
           {
             model: Barang,
@@ -127,11 +184,10 @@ class BrgRusakController {
               "createdAt",
               "updatedAt",
             ],
-            where: { name: { [Op.like]: `%${search}%` } },
+            where: whereBarang,
             include: [{ model: BrgRusak }],
           },
-          { model: Lokasi, as: "loc_asal" },
-          { model: Lokasi, as: "loc_barang" },
+          ...includeLokasi,
         ],
         limit,
         offset,
@@ -330,11 +386,9 @@ class BrgRusakController {
         status_perbaikan,
       });
 
-      res
-        .status(200)
-        .json({
-          msg: "Berhasil update data barang rusak & penyusutan unit ini saja.",
-        });
+      res.status(200).json({
+        msg: "Berhasil update data barang rusak.",
+      });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
