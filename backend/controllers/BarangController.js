@@ -1,13 +1,11 @@
 import { Op } from "sequelize";
 import supabase from "../config/supabase/supabaseClient.js";
-import BarangMasuk from "../models/BarangMasuk.js";
 import Barang from "../models/BarangModel.js";
 import BarangUnitModel from "../models/BarangUnitModel.js";
 import Kategori from "../models/KategoriBarang.js";
 import Lokasi from "../models/LokasiModel.js";
 import MerkBrg from "../models/MerkModel.js";
 import Penghapusan from "../models/PenghapusanModel.js";
-import SatuanBrg from "../models/SatuanModel.js";
 
 class BarangController {
   bulanPerTahun = 12;
@@ -37,10 +35,9 @@ class BarangController {
       tgl_beli,
       harga,
       kondisi,
-      satuan,
       merk,
       kategori,
-      lokasi_barang,
+      lokasi_bkarang,
     } = req.body;
 
     if (
@@ -50,7 +47,6 @@ class BarangController {
       !tgl_beli ||
       !harga ||
       !kondisi ||
-      !satuan ||
       !merk ||
       !kategori
     ) {
@@ -120,7 +116,6 @@ class BarangController {
         tgl_beli,
         harga,
         kondisi,
-        satuan,
         merk,
         kategori,
         umur_ekonomis: masaEkonomisBarang,
@@ -188,10 +183,7 @@ class BarangController {
             where: {
               name: { [Op.like]: `%${search}%` },
             },
-            include: [
-              { model: SatuanBrg, attributes: ["name", "desc"] },
-              { model: MerkBrg, attributes: ["name", "desc"] },
-            ],
+            include: [{ model: MerkBrg, attributes: ["name", "desc"] }],
             attributes: [
               "id",
               "name",
@@ -249,7 +241,6 @@ class BarangController {
       const barang = await Barang.findAll({
         where: { name: { [Op.like]: `%${search}%` } },
         include: [
-          { model: SatuanBrg, attributes: ["name", "desc"] },
           { model: MerkBrg, attributes: ["name", "desc"] },
           { model: Kategori, attributes: ["name", "desc", "masa_ekonomis"] },
           { model: Lokasi, attributes: ["name", "desc"] },
@@ -257,7 +248,6 @@ class BarangController {
             model: Penghapusan,
             attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
           },
-          { model: BarangMasuk },
         ],
         attributes: [
           "id",
@@ -291,7 +281,6 @@ class BarangController {
     try {
       const barang = await Barang.findByPk(req.params.id, {
         include: [
-          { model: SatuanBrg, attributes: ["name", "desc"] },
           { model: MerkBrg, attributes: ["name", "desc"] },
           { model: Kategori, attributes: ["name", "desc"] },
           { model: Lokasi, attributes: ["name", "desc"] },
@@ -327,14 +316,12 @@ class BarangController {
     try {
       const barang = await Barang.findAll({
         include: [
-          { model: SatuanBrg, attributes: ["name", "desc"] },
           { model: MerkBrg, attributes: ["name", "desc"] },
           { model: Kategori, attributes: ["name", "desc", "masa_ekonomis"] },
           {
             model: Penghapusan,
             attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
           },
-          { model: BarangMasuk },
         ],
         attributes: [
           "id",
@@ -368,7 +355,6 @@ class BarangController {
       tgl_beli,
       harga,
       kondisi,
-      satuan,
       merk,
       kategori,
       umur_ekonomis,
@@ -388,7 +374,6 @@ class BarangController {
           tgl_beli,
           harga,
           kondisi,
-          satuan,
           merk,
           kategori,
           umur_ekonomis,

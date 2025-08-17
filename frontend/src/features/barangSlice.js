@@ -32,20 +32,6 @@ const initState = {
     isSuccess: false,
     message: "",
   },
-  barang_masuk: {
-    data: null,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    message: "",
-  },
-  all_barang_masuk: {
-    data: null,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    message: "",
-  },
   pemindahan: {
     data: null,
     isLoading: false,
@@ -268,24 +254,6 @@ export const getAllBarang = createAsyncThunk(
   }
 );
 
-export const getAllBrgMasuk = createAsyncThunk(
-  "allMasuk/getAllMasuk",
-  async (_, thunkApi) => {
-    try {
-      const response = await axios.get(`${url}/masuk/all`);
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        const msg = error.response.data.msg;
-        console.error(errMessage);
-        return thunkApi.rejectWithValue(msg);
-      } else {
-        console.error(error);
-      }
-    }
-  }
-);
-
 export const getBrgRusak = createAsyncThunk(
   "brgRusak/getBrgRusak",
   async (inputQuery, thunkApi) => {
@@ -332,26 +300,6 @@ export const getDataBarang = createAsyncThunk(
     try {
       const response = await axios.get(
         `${url}/barang?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
-      );
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        const errMessage = error.response.data;
-        console.error(errMessage);
-        return thunkApi.rejectWithValue(errMessage);
-      } else {
-        console.error(error);
-      }
-    }
-  }
-);
-
-export const getDataBarangMasuk = createAsyncThunk(
-  "masuk/getBarangMasuk",
-  async (inputQuery, thunkApi) => {
-    try {
-      const response = await axios.get(
-        `${url}/masuk?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -465,36 +413,6 @@ const barangSlice = createSlice({
         state.all_barang.isLoading = false;
         state.all_barang.isError = true;
         state.all_barang.message = action.payload;
-      });
-    // BARANG MASUK
-    builder
-      .addCase(getDataBarangMasuk.pending, (state) => {
-        state.barang_masuk.isLoading = true;
-      })
-      .addCase(getDataBarangMasuk.fulfilled, (state, action) => {
-        state.barang_masuk.isLoading = false;
-        state.barang_masuk.isSuccess = true;
-        state.barang_masuk.data = action.payload;
-      })
-      .addCase(getDataBarangMasuk.rejected, (state, action) => {
-        state.barang_masuk.isLoading = false;
-        state.barang_masuk.isError = true;
-        state.barang_masuk.message = action.payload;
-      });
-    // BARANG MASUK TANPA PAGINASI
-    builder
-      .addCase(getAllBrgMasuk.pending, (state) => {
-        state.all_barang_masuk.isLoading = true;
-      })
-      .addCase(getAllBrgMasuk.fulfilled, (state, action) => {
-        state.all_barang_masuk.isLoading = false;
-        state.all_barang_masuk.isSuccess = true;
-        state.all_barang_masuk.data = action.payload;
-      })
-      .addCase(getAllBrgMasuk.rejected, (state, action) => {
-        state.all_barang_masuk.isLoading = false;
-        state.all_barang_masuk.isError = true;
-        state.all_barang_masuk.message = action.payload;
       });
     // PEMINDAHAN
     builder

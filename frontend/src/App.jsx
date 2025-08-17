@@ -16,11 +16,9 @@ import LokasiPage from "./views/LokasiPage";
 import Barang from "./views/master_barang/Barang";
 import KategoriPage from "./views/master_barang/KategoriPage";
 import MerkBarang from "./views/master_barang/MerkBarang";
-import SatuanBarang from "./views/master_barang/SatuanBarang";
 import PengajuanPage from "./views/PengajuanPage";
 import PerbaikanPage from "./views/PerbaikanPage";
 import PermintaanPage from "./views/PermintaanPage";
-import BarangMasuk from "./views/transaksi/BarangMasukPage";
 import KerusakanPage from "./views/transaksi/KerusakanPage";
 import Pemindahan from "./views/transaksi/PemindahanPage";
 import PenghapusanPage from "./views/transaksi/PenghapusanPage";
@@ -50,14 +48,6 @@ function App() {
                         element={
                           <AuthAccessComponent>
                             <MerkBarang />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/satuan"
-                        element={
-                          <AuthAccessComponent>
-                            <SatuanBarang />
                           </AuthAccessComponent>
                         }
                       />
@@ -102,7 +92,6 @@ function App() {
                           </AuthAccessComponent>
                         }
                       />
-                      <Route path="/masuk" element={<BarangMasuk />} />
                       <Route
                         path="/pindah"
                         element={

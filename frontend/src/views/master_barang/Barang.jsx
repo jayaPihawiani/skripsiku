@@ -2,7 +2,6 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import { kondisiBarang } from "../../components/kriteriaPengurangEstimasi";
@@ -15,7 +14,6 @@ import {
   getAllKategori,
   getAllLokasi,
   getAllMerk,
-  getAllSatuan,
 } from "../../features/detailBarang";
 import { updatePenyusutanBarang } from "../../features/penyusutanSlice";
 
@@ -27,8 +25,6 @@ const Barang = () => {
   const user = useSelector((state) => state.auth);
   const allLokasi =
     useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
-  const satuanBarang =
-    useSelector((state) => state.detail_barang.all_satuan?.satuan) || [];
   const kategoriBarang =
     useSelector((state) => state.detail_barang.all_kategori?.kategori) || [];
   const merkBarang =
@@ -44,7 +40,6 @@ const Barang = () => {
     tgl_beli: "",
     harga: "",
     kondisi: "",
-    satuan: "",
     merk: "",
     kategori: "",
     lokasi_barang: "",
@@ -66,7 +61,6 @@ const Barang = () => {
       tgl_beli: "",
       harga: 0,
       kondisi: "",
-      satuan: "",
       merk: "",
       kategori: "",
       lokasi_barang: "",
@@ -118,7 +112,6 @@ const Barang = () => {
       formData.append("tgl_beli", inputDataBarang.tgl_beli);
       formData.append("harga", inputDataBarang.harga);
       formData.append("kondisi", inputDataBarang.kondisi);
-      formData.append("satuan", inputDataBarang.satuan);
       formData.append("lokasi_barang", inputDataBarang.lokasi_barang);
       formData.append("merk", inputDataBarang.merk);
       formData.append("kategori", inputDataBarang.kategori);
@@ -139,7 +132,6 @@ const Barang = () => {
           tgl_beli: "",
           harga: 0,
           kondisi: "",
-          satuan: "",
           merk: "",
           kategori: "",
         });
@@ -193,7 +185,6 @@ const Barang = () => {
     dispatch(getDataBarang(inputQuery));
     dispatch(updatePenyusutanBarang());
     dispatch(getAllLokasi());
-    dispatch(getAllSatuan());
     dispatch(getAllKategori());
     dispatch(getAllMerk());
   }, [dispatch, inputQuery.limit, inputQuery.page, inputQuery.search]);
@@ -350,25 +341,6 @@ const Barang = () => {
                         );
                       })}
                     </select>
-                    <p className="m-0 mt-2">Satuan</p>
-                    <select
-                      className="form-select"
-                      onChange={(e) =>
-                        setInputDataBarang({
-                          ...inputDataBarang,
-                          satuan: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">--Pilih Satuan--</option>;
-                      {satuanBarang.map((item) => {
-                        return (
-                          <option value={item.id} key={item.id}>
-                            {item.name}
-                          </option>
-                        );
-                      })}
-                    </select>
                     <p className="m-0 mt-2">Lokasi Barang</p>
                     <select
                       className="form-select"
@@ -444,7 +416,6 @@ const Barang = () => {
                     <th>Tanggal Beli</th>
                     <th>Harga / unit</th>
                     <th>Merk</th>
-                    <th>Satuan</th>
                     <th>Kategori</th>
                     <th>Kondisi</th>
                     <th>Foto</th>
@@ -470,7 +441,6 @@ const Barang = () => {
                             }).format(e.harga)}
                           </td>
                           <td>{(e.merk_brg && e.merk_brg.name) || "-"}</td>
-                          <td>{(e.satuan_brg && e.satuan_brg.name) || "-"}</td>
                           <td>
                             {(e.kategori_brg && e.kategori_brg.name) || "-"}
                           </td>

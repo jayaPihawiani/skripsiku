@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 import CardBeranda from "../components/CardBeranda";
 import {
   getAllBarang,
-  getAllBrgMasuk,
   getAllDistribusi,
   getAllPenghapusan,
   getAllPindah,
@@ -23,7 +22,6 @@ import {
   getAllKategori,
   getAllLokasi,
   getAllMerk,
-  getAllSatuan,
 } from "../features/detailBarang";
 import { getAllPengajuan } from "../features/pengajuanSlice";
 import { getAllUser } from "../features/UserSlice";
@@ -31,7 +29,6 @@ import { getAllUser } from "../features/UserSlice";
 const Dashboard = () => {
   const state = useSelector((state) => state.auth);
   const barang = useSelector((state) => state.barang.all_barang?.data);
-  const brgMasuk = useSelector((state) => state.barang.all_barang_masuk?.data);
   const brgPindah = useSelector((state) => state.barang.all_pemindahan?.data);
   const brgRusak = useSelector((state) => state.barang.all_barang_rusak?.data);
   const brgPenghapusan = useSelector(
@@ -44,19 +41,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [brgDistribusi, setBrgDistribusi] = useState([]);
   const [merk, setMerk] = useState([]);
-  const [satuan, setSatuan] = useState([]);
   const [lokasi, setLokasi] = useState([]);
   const [kategori, setKategori] = useState([]);
   const [user, setUser] = useState([]);
 
   useEffect(() => {
     dispatch(getAllBarang());
-    dispatch(getAllBrgMasuk());
     dispatch(getAllPindah());
     dispatch(getAllRusak());
     dispatch(getAllPenghapusan());
     dispatch(getAllMerk());
-    dispatch(getAllSatuan());
     dispatch(getAllLokasi());
     dispatch(getAllKategori());
     dispatch(getAllUser(""));
@@ -67,7 +61,6 @@ const Dashboard = () => {
   useEffect(() => {
     if (detailState.all_merk && detailState.all_merk.isSuccess) {
       setMerk(detailState.all_merk.merk);
-      setSatuan(detailState.all_satuan.satuan);
       setLokasi(detailState.all_lokasi.lokasi);
       setKategori(detailState.all_kategori.kategori);
     }
@@ -91,15 +84,6 @@ const Dashboard = () => {
             qty={(barang && barang.length) || 0}
             icon={<BsBoxSeam className="text-light" size={40} />}
             action={() => navigate("/barang")}
-          />
-        </div>
-        <div className="col-lg-3 col-md-6 col-12">
-          <CardBeranda
-            title="BARANG MASUK"
-            classCard="bg-primary mb-2"
-            qty={(brgMasuk && brgMasuk.length) || 0}
-            icon={<BsArrowLeftRight className="text-light" size={40} />}
-            action={() => navigate("/masuk")}
           />
         </div>
         <div className="col-lg-3 col-md-6 col-12">
@@ -138,15 +122,6 @@ const Dashboard = () => {
                 qty={(merk && merk.length) || 0}
                 icon={<BsBoxSeam className="text-light" size={40} />}
                 action={() => navigate("/merk")}
-              />
-            </div>
-            <div className="col-lg-3 col-md-6 col-12">
-              <CardBeranda
-                title="SATUAN BARANG"
-                classCard="bg-primary mb-2"
-                qty={(satuan && satuan.length) || 0}
-                icon={<BsBoxSeam className="text-light" size={40} />}
-                action={() => navigate("/satuan")}
               />
             </div>
             <div className="col-lg-3 col-md-6 col-12">

@@ -1,4 +1,3 @@
-import BarangMasuk from "./BarangMasuk.js";
 import Barang from "./BarangModel.js";
 import BrgRusak from "./BarangRusakModel.js";
 import BarangUnitModel from "./BarangUnitModel.js";
@@ -13,7 +12,6 @@ import Pemindahan from "./Pemindahan.js";
 import Pengajuan from "./Pengajuan.js";
 import Penghapusan from "./PenghapusanModel.js";
 import Permintaan from "./Permintaan.js";
-import SatuanBrg from "./SatuanModel.js";
 import User from "./UserModels.js";
 
 // user lokasi
@@ -110,18 +108,6 @@ KategoriKerusakan.hasMany(DetailKerusakan, {
 DetailKerusakan.belongsTo(KategoriKerusakan, {
   foreignKey: "kategoriKerusakanId",
   onDelete: "CASCADE",
-  onUpdate: "CASCADE",
-});
-
-// satuan
-SatuanBrg.hasMany(Barang, {
-  foreignKey: "satuan",
-  onDelete: "SET NULL",
-  onUpdate: "CASCADE",
-});
-Barang.belongsTo(SatuanBrg, {
-  foreignKey: "satuan",
-  onDelete: "SET NULL",
   onUpdate: "CASCADE",
 });
 
@@ -268,15 +254,3 @@ Penghapusan.belongsTo(Barang, {
   onUpdate: "CASCADE",
 });
 //
-
-// Barang masuk
-Barang.hasMany(BarangMasuk, {
-  foreignKey: "barangId",
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
-});
-BarangMasuk.belongsTo(Barang, {
-  foreignKey: "barangId",
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
-});

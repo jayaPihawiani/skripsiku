@@ -11,7 +11,6 @@ import "./models/associations.js";
 import Barang from "./models/BarangModel.js";
 import BrgRusak from "./models/BarangRusakModel.js";
 import authRoute from "./routes/AuthRoute.js";
-import brgMasukRoute from "./routes/BarangMasukRoute.js";
 import barangRoute from "./routes/BarangRoute.js";
 import brgRusakRoute from "./routes/BrgRusakRoute.js";
 import {
@@ -26,7 +25,6 @@ import pemindahanRoute from "./routes/PemindahanRoute.js";
 import pengajuanRoute from "./routes/PengajuanRoute.js";
 import penghapusanRoute from "./routes/PenghapusanRoute.js";
 import permintaanRoute from "./routes/PermintaanRoute.js";
-import satuanRoute from "./routes/SatuanRoute.js";
 import userRoute from "./routes/UserRoute.js";
 
 // direktori
@@ -39,7 +37,7 @@ config();
 (async () => {
   try {
     await db.authenticate();
-    // await db.sync({ force: true });
+    // await db.sync({ alter: true });
     console.log("Database connected...");
   } catch (error) {
     console.log("ERROR " + error.message);
@@ -84,7 +82,6 @@ app.use("/user", userRoute);
 app.use("/auth", authRoute);
 app.use("/lokasi", lokasiRoute);
 app.use("/merk", merkRoute);
-app.use("/satuan", satuanRoute);
 app.use("/barang", barangRoute);
 app.use("/kategori", kategoriRoute);
 app.use("/rusak", brgRusakRoute);
@@ -92,7 +89,6 @@ app.use("/pindah", pemindahanRoute);
 app.use("/pengajuan", pengajuanRoute);
 app.use("/permintaan", permintaanRoute);
 app.use("/penghapusan", penghapusanRoute);
-app.use("/masuk", brgMasukRoute);
 app.use("/kategori_kerusakan", kategoriRusakRoute);
 app.use("/detail_kerusakan", detailRusakRoute);
 

@@ -4,7 +4,6 @@ import Barang from "../models/BarangModel.js";
 import Kategori from "../models/KategoriBarang.js";
 import MerkBrg from "../models/MerkModel.js";
 import Penghapusan from "../models/PenghapusanModel.js";
-import SatuanBrg from "../models/SatuanModel.js";
 
 class PenghapusanController {
   createPenghapusan = async (req, res) => {
@@ -128,7 +127,6 @@ class PenghapusanController {
             "createdAt",
           ],
           include: [
-            { model: SatuanBrg, attributes: ["name", "desc"] },
             { model: MerkBrg, attributes: ["name", "desc"] },
             { model: Kategori, attributes: ["name", "desc"] },
           ],
@@ -157,7 +155,6 @@ class PenghapusanController {
             "riwayat_pemeliharaan",
           ],
           include: [
-            { model: SatuanBrg, attributes: ["name", "desc"] },
             { model: MerkBrg, attributes: ["name", "desc"] },
             { model: Kategori, attributes: ["name", "desc"] },
           ],
@@ -189,7 +186,6 @@ class PenghapusanController {
             "riwayat_pemeliharaan",
           ],
           include: [
-            { model: SatuanBrg, attributes: ["name", "desc"] },
             { model: MerkBrg, attributes: ["name", "desc"] },
             { model: Kategori, attributes: ["name", "desc"] },
           ],

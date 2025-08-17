@@ -1,7 +1,5 @@
 import React from "react";
 import {
-  BsArrowsFullscreen,
-  BsBoxArrowInDown,
   BsBoxArrowUp,
   BsBoxSeamFill,
   BsBuildingFill,
@@ -83,12 +81,6 @@ const SideBar = ({ children }) => {
                 <span className="side-desc">Data Merk</span>
               </Link>
 
-              <Link to="/satuan" className="nav-link">
-                <span className="icons">
-                  <BsArrowsFullscreen />
-                </span>
-                <span className="side-desc">Data Satuan</span>
-              </Link>
               {/* kategori */}
               <Link to="/kategori" className="nav-link">
                 <span className="icons">
@@ -115,12 +107,6 @@ const SideBar = ({ children }) => {
             {/* dropdown menu */}
             {/* menu */}
             <div className="collapse side-bar-style" id="menu-transaksi">
-              <Link to="/masuk" className="nav-link">
-                <span className="icons">
-                  <BsBoxArrowInDown />
-                </span>
-                <span className="side-desc">Barang Masuk</span>
-              </Link>
               {state.data && state.data.role === "admin" && (
                 <Link to="/pindah" className="nav-link">
                   <span className="icons">

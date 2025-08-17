@@ -1,4 +1,4 @@
-// detail barang berupa merk, satuan dan kategori
+// detail barang berupa merk,  dan kategori
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -13,13 +13,6 @@ const initState = {
   },
   lokasi: {
     lokasi: null,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    errMessage: false,
-  },
-  satuan: {
-    satuan: null,
     isLoading: false,
     isError: false,
     isSuccess: false,
@@ -41,13 +34,6 @@ const initState = {
   },
   all_lokasi: {
     lokasi: null,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    errMessage: false,
-  },
-  all_satuan: {
-    satuan: null,
     isLoading: false,
     isError: false,
     isSuccess: false,
@@ -92,21 +78,6 @@ export const getAllLokasi = createAsyncThunk(
   }
 );
 
-export const getAllSatuan = createAsyncThunk(
-  "allSatuan/getallSatuan",
-  async (_, thunkApi) => {
-    try {
-      const response = await axios.get(`${url}/satuan/all`);
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        const errMessage = error.response.data.msg;
-        return thunkApi.rejectWithValue(errMessage);
-      }
-    }
-  }
-);
-
 export const getAllKategori = createAsyncThunk(
   "allKategori/getallKategori",
   async (_, thunkApi) => {
@@ -128,23 +99,6 @@ export const getMerkBarang = createAsyncThunk(
     try {
       const response = await axios.get(
         `${url}/merk?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
-      );
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        const errMessage = error.response.data.msg;
-        return thunkApi.rejectWithValue(errMessage);
-      }
-    }
-  }
-);
-
-export const getSatuanBarang = createAsyncThunk(
-  "merk/getSatuanBarang",
-  async (inputQuery, thunkApi) => {
-    try {
-      const response = await axios.get(
-        `${url}/satuan?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
       );
       return response.data;
     } catch (error) {
@@ -210,21 +164,6 @@ const detailBrg = createSlice({
         state.merk.isError = true;
         state.merk.errMessage = action.payload;
       });
-    // get satuan
-    builder
-      .addCase(getSatuanBarang.pending, (state) => {
-        state.satuan.isLoading = true;
-      })
-      .addCase(getSatuanBarang.fulfilled, (state, action) => {
-        state.satuan.isLoading = false;
-        state.satuan.isSuccess = true;
-        state.satuan.satuan = action.payload;
-      })
-      .addCase(getSatuanBarang.rejected, (state, action) => {
-        state.satuan.isLoading = false;
-        state.satuan.isError = true;
-        state.satuan.errMessage = action.payload;
-      });
     // get kategori
     builder
       .addCase(getKategoriBarang.pending, (state) => {
@@ -269,21 +208,6 @@ const detailBrg = createSlice({
         state.all_merk.isLoading = false;
         state.all_merk.isError = true;
         state.all_merk.errMessage = action.payload;
-      });
-    // get satuan tanpa paginasi
-    builder
-      .addCase(getAllSatuan.pending, (state) => {
-        state.all_satuan.isLoading = true;
-      })
-      .addCase(getAllSatuan.fulfilled, (state, action) => {
-        state.all_satuan.isLoading = false;
-        state.all_satuan.isSuccess = true;
-        state.all_satuan.satuan = action.payload;
-      })
-      .addCase(getAllSatuan.rejected, (state, action) => {
-        state.all_satuan.isLoading = false;
-        state.all_satuan.isError = true;
-        state.all_satuan.errMessage = action.payload;
       });
     // get kategori tanpa paginasi
     builder
