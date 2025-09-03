@@ -1,7 +1,5 @@
 # Aplikasi Pengelolaan Inventaris Barang Berdasarkan Usia Pakai Berbasis Web
 
----
-
 ### Tech
 
 Aplikasi ini dibangun menggunakan
@@ -27,8 +25,6 @@ Aplikasi ini dibangun menggunakan
 - Masuk ke `directory root` tempat folder frontend
   - Contoh `C:\frontend\`
   - Ketik `npm run dev` untuk menjalankan vite client
-
----
 
 # Credit
 
