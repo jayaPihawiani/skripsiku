@@ -1,11 +1,13 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import { kondisiBarang } from "../../components/kriteriaPengurangEstimasi";
 import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
@@ -21,6 +23,10 @@ const Barang = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const [hapusBrgId, setHapusBrgId] = useState(null);
+  const handleCloseHapus = () => setHapusBrgId(null);
+  const [ubahBrgId, setUbahBrgId] = useState(null);
+  const handleCloseEdit = () => setUbahBrgId(null);
   const barang = useSelector((state) => state.barang?.barang);
   const user = useSelector((state) => state.auth);
   const allLokasi =
@@ -43,6 +49,10 @@ const Barang = () => {
     merk: "",
     kategori: "",
     lokasi_barang: "",
+  });
+  const [inputEditBarang, setInputEditBarang] = useState({
+    name: "",
+    desc: "",
   });
 
   const [inputQuery, setInputQuery] = useState({
@@ -77,12 +87,33 @@ const Barang = () => {
       if (response.status === 200) {
         alert(response.data.msg);
         dispatch(getDataBarang(inputQuery));
+        handleCloseHapus();
       }
     } catch (error) {
       if (error.response) {
         alert(error.response.data.msg);
       }
       console.error(error);
+    }
+  };
+
+  const updateDataBarang = async (id) => {
+    try {
+      const response = await axios.patch(
+        `${url}/barang/update/${id}`,
+        inputEditBarang
+      );
+      if (response.status === 200) {
+        alert(response.data.msg);
+        dispatch(getDataBarang(inputQuery));
+        handleCloseEdit();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
     }
   };
 
@@ -102,7 +133,8 @@ const Barang = () => {
     }
   };
 
-  const addBarang = async () => {
+  const addBarang = async (e) => {
+    e.preventDefault();
     try {
       setLoading(true);
       const formData = new FormData();
@@ -199,6 +231,52 @@ const Barang = () => {
 
   return (
     <div className="w-100 pe-3">
+      {hapusBrgId && (
+        <ModalEditComponent
+          modalTitle="Konfirmasi"
+          handleCloseEdit={handleCloseHapus}
+          btnTitle="Hapus"
+          submit={() => deleteDataBarang(hapusBrgId)}
+          body={<p>Yakin ingin menghapus data barang?</p>}
+        />
+      )}
+      {ubahBrgId && (
+        <ModalEditComponent
+          modalTitle="Ubah Data Barang"
+          handleCloseEdit={handleCloseEdit}
+          submit={() => updateDataBarang(ubahBrgId)}
+          body={
+            <>
+              <p className="m-0 mb-2">Nama Barang</p>
+              <InputComponents
+                val={inputEditBarang.name || ""}
+                type="text"
+                classStyle="w-100 p-2"
+                placeHolder="Nama Barang"
+                change={(e) =>
+                  setInputEditBarang({
+                    ...inputEditBarang,
+                    name: e.target.value,
+                  })
+                }
+              />
+              <p className="m-0 my-2">Keterangan</p>
+              <InputComponents
+                val={inputEditBarang.desc}
+                type="text"
+                classStyle="w-100 p-2"
+                placeHolder="Keterangan barang"
+                change={(e) =>
+                  setInputEditBarang({
+                    ...inputEditBarang,
+                    desc: e.target.value,
+                  })
+                }
+              />
+            </>
+          }
+        />
+      )}
       <AlertNotify
         alertMsg="Berhasil menambah data Barang."
         showAlert={alertShow}
@@ -365,8 +443,6 @@ const Barang = () => {
                 </div>
               }
             />
-
-            {/* <DownloadPdfBButton dataBarang={newBarang.barang} /> */}
           </div>
         )}
         <button className="btn btn-primary ms-1 mt-3" onClick={printLaporan}>
@@ -455,14 +531,23 @@ const Barang = () => {
                           <td>
                             {user.data.role === "admin" ? (
                               <>
-                                <button className="btn btn-primary">
-                                  Ubah
+                                <button
+                                  className="btn btn-primary"
+                                  onClick={() => {
+                                    setUbahBrgId(e.id);
+                                    setInputEditBarang({
+                                      name: e.name,
+                                      desc: e.desc,
+                                    });
+                                  }}
+                                >
+                                  {<BsPencilSquare />}
                                 </button>
                                 <button
                                   className="btn btn-danger ms-1"
-                                  onClick={() => deleteDataBarang(e.id)}
+                                  onClick={() => setHapusBrgId(e.id)}
                                 >
-                                  Hapus
+                                  {<BsTrash3 />}
                                 </button>
                               </>
                             ) : (

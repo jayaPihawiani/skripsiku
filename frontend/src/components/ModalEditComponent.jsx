@@ -19,7 +19,7 @@ const ModalEditComponent = ({
           Close
         </Button>
         <Button variant="primary" onClick={submit}>
-          {btnTitle ? btnTitle : "Simpan"}
+          {btnTitle ?? "Simpan"}
         </Button>
       </Modal.Footer>
     </Modal>

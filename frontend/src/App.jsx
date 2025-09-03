@@ -4,23 +4,20 @@ import AuthAccessComponent from "./components/AuthAcessComponent";
 import NavBar from "./components/NavBar";
 import SideBar from "./components/SideBar";
 import UserAuthComponent from "./components/UserAuthComponents";
-import UserEdit from "./components/UserEditComponent";
 import { LoadingProvider } from "./context/Loading";
 import Dashboard from "./views/Dashboard";
-import DetailBarang from "./views/DetailBarang";
 import DetailEkonomis from "./views/DetailEkonomis";
-import DistribusiPage from "./views/DistribusiPage";
-import KategoriKerusakanPage from "./views/KategoriKerusakanPage";
 import Login from "./views/Login";
-import LokasiPage from "./views/LokasiPage";
 import Barang from "./views/master_barang/Barang";
+import DetailBarang from "./views/master_barang/DetailBarang";
+import KategoriKerusakanPage from "./views/master_barang/KategoriKerusakanPage";
 import KategoriPage from "./views/master_barang/KategoriPage";
+import LokasiPage from "./views/master_barang/LokasiPage";
 import MerkBarang from "./views/master_barang/MerkBarang";
 import PengajuanPage from "./views/PengajuanPage";
-import PerbaikanPage from "./views/PerbaikanPage";
 import PermintaanPage from "./views/PermintaanPage";
 import KerusakanPage from "./views/transaksi/KerusakanPage";
-import Pemindahan from "./views/transaksi/PemindahanPage";
+import Penempatan from "./views/transaksi/PenempatanPage";
 import PenghapusanPage from "./views/transaksi/PenghapusanPage";
 import UmurEkonomis from "./views/UmurEkonomis";
 import UserPage from "./views/UserPage";
@@ -67,7 +64,14 @@ function App() {
                           </AuthAccessComponent>
                         }
                       />
-                      <Route path="/kerusakan" element={<KerusakanPage />} />
+                      <Route
+                        path="/kerusakan"
+                        element={
+                          <AuthAccessComponent>
+                            <KerusakanPage />
+                          </AuthAccessComponent>
+                        }
+                      />
                       <Route
                         path="/penghapusan"
                         element={
@@ -84,38 +88,14 @@ function App() {
                           </AuthAccessComponent>
                         }
                       />
-                      <Route
-                        path="/user/edit/:id"
-                        element={
-                          <AuthAccessComponent>
-                            <UserEdit />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/pindah"
-                        element={
-                          <AuthAccessComponent>
-                            <Pemindahan />
-                          </AuthAccessComponent>
-                        }
-                      />
+                      <Route path="/penempatan" element={<Penempatan />} />
                       <Route path="/pengajuan" element={<PengajuanPage />} />
                       <Route path="/permintaan" element={<PermintaanPage />} />
-                      <Route path="/distribusi" element={<DistribusiPage />} />
                       <Route
-                        path="/ekonomis"
+                        path="/usia_pakai"
                         element={
                           <AuthAccessComponent>
                             <UmurEkonomis />
-                          </AuthAccessComponent>
-                        }
-                      />
-                      <Route
-                        path="/perbaikan"
-                        element={
-                          <AuthAccessComponent>
-                            <PerbaikanPage />
                           </AuthAccessComponent>
                         }
                       />

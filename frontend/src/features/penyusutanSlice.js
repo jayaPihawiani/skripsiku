@@ -28,6 +28,8 @@ export const updatePenyusutanBarang = createAsyncThunk(
       return response.data;
     } catch (error) {
       if (error.response) {
+        console.error(error.response);
+
         const errMessage = error.response.data.msg;
         return thunkApi.rejectWithValue(errMessage);
       }

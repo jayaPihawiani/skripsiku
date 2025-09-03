@@ -9,7 +9,11 @@ const BarangUnitModel = db.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    kode_unit: DataTypes.STRING,
+    kode_barang: {
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: true,
+    },
     barangId: DataTypes.UUID,
     tgl_beli: DataTypes.DATE,
     harga: DataTypes.INTEGER,
@@ -45,6 +49,10 @@ const BarangUnitModel = db.define(
     status: {
       type: DataTypes.ENUM(["rusak", "baik"]),
       defaultValue: "baik",
+    },
+    status_penghapusan: {
+      type: DataTypes.ENUM(["null", "diusul", "disetujui", "ditolak"]),
+      defaultValue: "null",
     },
   },
   { freezeTableName: true }

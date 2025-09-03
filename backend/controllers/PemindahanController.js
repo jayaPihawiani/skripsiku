@@ -19,45 +19,24 @@ class PemindahanController extends BarangController {
     }
 
     try {
-      // 1. Ambil data unit barang berdasarkan ID unit
-      const unit = await BarangUnitModel.findByPk(barangUnitId);
-      if (!unit) {
-        return res.status(404).json({ msg: "Barang unit tidak ditemukan" });
+      const brgUnit = await BarangUnitModel.findByPk(barangUnitId);
+      if (!brgUnit) {
+        return res.status(404).json({ msg: "Barang unit tidak ditemukan!" });
       }
 
-      // 2. Ambil data barang induknya
-      const barang = await Barang.findByPk(unit.barangId, {
-        include: { model: Kategori },
-      });
-      if (!barang) {
-        return res.status(404).json({ msg: "Barang tidak ditemukan" });
-      }
-
-      // 3. Pastikan unit yang dipindahkan sesuai lokasi 'from'
-      if (unit.lokasi_barang !== from) {
-        return res.status(400).json({ msg: "Lokasi asal tidak sesuai" });
-      }
-
-      // 4. Update lokasi unit menjadi lokasi 'to'
-      await unit.update({ lokasi_barang: to });
-
-      // 5. Simpan riwayat pemindahan
       await Pemindahan.create({
         barangUnitId,
         desc,
         from,
         to,
         tgl_pindah,
-        sisa_stok: await BarangUnitModel.count({
-          where: { barangId: unit.barangId, lokasi_barang: from },
-        }),
-        umur_ekonomis: barang.umur_ekonomis,
-        biaya_penyusutan: barang.biaya_penyusutan,
-        penyusutan_berjalan: barang.penyusutan_berjalan,
-        nilai_buku: barang.nilai_buku,
         userId,
-        kondisi: barang.kondisi,
       });
+
+      await BarangUnitModel.update(
+        { lokasi_barang: to },
+        { where: { id: barangUnitId } }
+      );
 
       res.status(201).json({ msg: "Berhasil memindahkan unit barang." });
     } catch (error) {
@@ -102,27 +81,14 @@ class PemindahanController extends BarangController {
                 {
                   model: Barang,
 
-                  attributes: ["name", "desc", "qty", "kondisi", "kondisi"],
+                  attributes: ["name", "desc", "kondisi", "kondisi"],
                   where: { name: { [Op.like]: `%${search}%` } },
                 },
               ],
             },
             { model: User, attributes: ["id", "nip", "username", "role"] },
           ],
-          attributes: [
-            "id",
-            "desc",
-            "tgl_pindah",
-            "sisa_stok",
-            "umur_ekonomis",
-            "biaya_penyusutan",
-            "penyusutan_berjalan",
-            "nilai_buku",
-            "kondisi",
-            "userId",
-            "barangUnitId",
-            "createdAt",
-          ],
+          attributes: ["id", "desc", "tgl_pindah", "createdAt"],
           limit,
           offset,
           order: [["createdAt", "ASC"]],
@@ -131,13 +97,16 @@ class PemindahanController extends BarangController {
         count = await Pemindahan.count({
           include: [
             {
+              required: true,
               model: BarangUnitModel,
               include: [
                 {
+                  required: true,
                   model: Barang,
                   where: { name: { [Op.like]: `%${search}%` } },
                 },
               ],
+              where: { status: "baik" },
             },
           ],
           where: { userId: req.uid },
@@ -150,30 +119,23 @@ class PemindahanController extends BarangController {
             { model: Lokasi, as: "pindah_from", attributes: ["name", "desc"] },
             { model: Lokasi, as: "pindah_to", attributes: ["name", "desc"] },
             {
+              required: true,
               model: BarangUnitModel,
               include: [
                 {
                   model: Barang,
-
-                  attributes: ["name", "desc", "qty", "kondisi"],
+                  attributes: ["name", "desc", "kondisi"],
                   where: { name: { [Op.like]: `%${search}%` } },
                 },
               ],
+              where: { status: "baik" },
             },
             {
               model: User,
               attributes: ["id", "nip", "username", "role"],
             },
           ],
-          attributes: [
-            "id",
-            "desc",
-            "tgl_pindah",
-            "sisa_stok",
-            "umur_ekonomis",
-            "kondisi",
-            "userId",
-          ],
+          attributes: ["id", "desc", "tgl_pindah", "createdAt"],
           where: { userId: req.uid },
           limit,
           offset,

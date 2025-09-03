@@ -10,12 +10,16 @@ import SearchBarComponent from "../components/SearchBarComponent";
 import { LoadingContext } from "../context/Loading";
 import { getDataUser } from "../features/UserSlice";
 import { getAllLokasi } from "../features/detailBarang";
+import ModalEditComponent from "../components/ModalEditComponent";
 
 const UserPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [hapusUserId, setHapusUserId] = useState(null);
+  const handleCloseDelete = () => setHapusUserId(null);
+  const [editUserId, setEditUserId] = useState(null);
+  const handleCloseEdit = () => setEditUserId(null);
   const dataUser = useSelector((state) => state.user.user?.data) || [];
   const lokasi =
     useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
@@ -29,6 +33,12 @@ const UserPage = () => {
     role: "",
   });
 
+  const [inputEditUser, setInputEditUser] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+    lokasiId: "",
+  });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
@@ -49,20 +59,41 @@ const UserPage = () => {
   const handleShow = () => setShow(true);
 
   //   FUNCTION
-  const deleteUser = async (id) => {
+  const deleteUser = async () => {
     try {
-      const response = await axios.delete(`${url}/merk/del/${id}`);
+      const response = await axios.delete(`${url}/user/del/${hapusUserId}`);
       if (response.status === 200) {
         setInputQuery({
           ...inputQuery,
           page: 0,
         });
 
-        dispatch(getMerkBarang(inputQuery));
+        dispatch(getDataUser(inputQuery));
         alert("Berhasil menghapus data.");
+        handleCloseDelete();
       }
     } catch (error) {
       console.error(error.response.data.msg);
+    }
+  };
+
+  const updateUser = async () => {
+    try {
+      const response = await axios.patch(
+        `${url}/user/update/${editUserId}`,
+        inputEditUser
+      );
+      if (response.status === 200) {
+        alert(response.data.msg);
+        dispatch(getDataUser(inputQuery));
+        handleCloseEdit();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.log(error);
+      }
     }
   };
 
@@ -82,7 +113,6 @@ const UserPage = () => {
     } catch (error) {
       if (error.response) {
         alert(error.response.data.msg);
-        return;
       }
       console.error([error.message, error.code]);
     } finally {
@@ -109,6 +139,78 @@ const UserPage = () => {
   //   MAIN
   return (
     <>
+      {hapusUserId && (
+        <ModalEditComponent
+          modalTitle="Konfirmasi"
+          handleCloseEdit={handleCloseDelete}
+          submit={deleteUser}
+          body={<p>Yakin ingin menghapus data user?</p>}
+          btnTitle="Hapus"
+        />
+      )}
+      {editUserId && (
+        <ModalEditComponent
+          modalTitle="Konfirmasi"
+          handleCloseEdit={handleCloseEdit}
+          submit={updateUser}
+          body={
+            <>
+              <select
+                value={inputEditUser.lokasiId || ""}
+                className="form-select mt-2"
+                onChange={(e) =>
+                  setInputEditUser({
+                    ...inputEditUser,
+                    lokasiId: e.target.value,
+                  })
+                }
+              >
+                <option value="">--Pilih Lokasi--</option>
+                {lokasi.map((e) => {
+                  return (
+                    <option value={e.id} key={e.id}>
+                      {e.name}
+                    </option>
+                  );
+                })}
+              </select>
+              <InputComponents
+                val={inputEditUser.username || ""}
+                placeHolder="Username"
+                classStyle="w-100 p-2 mt-2"
+                change={(e) =>
+                  setInputEditUser({
+                    ...inputEditUser,
+                    username: e.target.value,
+                  })
+                }
+              />
+              <InputComponents
+                val={inputEditUser.password}
+                placeHolder="Password"
+                classStyle="w-100 p-2 mt-2"
+                change={(e) =>
+                  setInputEditUser({
+                    ...inputEditUser,
+                    password: e.target.value,
+                  })
+                }
+              />
+              <InputComponents
+                val={inputEditUser.confirmPassword}
+                placeHolder="Konfirmasi Password"
+                classStyle="w-100 p-2 mt-2"
+                change={(e) =>
+                  setInputEditUser({
+                    ...inputEditUser,
+                    confirmPassword: e.target.value,
+                  })
+                }
+              />
+            </>
+          }
+        />
+      )}
       <AlertNotify
         alertMsg={"Berhasil menambah data user"}
         showAlert={alertShow}
@@ -233,13 +335,20 @@ const UserPage = () => {
                         <td className="text-center">
                           <button
                             className="btn btn-primary"
-                            onClick={() => navigate(`edit/${item.id}`)}
+                            onClick={() => {
+                              setEditUserId(item.id);
+                              setInputEditUser({
+                                ...inputEditUser,
+                                username: item.username,
+                                lokasiId: item.loc_user?.id ?? "",
+                              });
+                            }}
                           >
                             Ubah
                           </button>
                           <button
                             className="btn btn-danger ms-1"
-                            onClick={() => deleteUser(item.id)}
+                            onClick={() => setHapusUserId(item.id)}
                           >
                             Hapus
                           </button>

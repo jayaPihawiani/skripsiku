@@ -67,7 +67,7 @@ class UserController {
         include: [
           {
             model: Lokasi,
-            attributes: ["name", "desc"],
+            attributes: ["id", "name", "desc"],
             as: "loc_user",
           },
         ],

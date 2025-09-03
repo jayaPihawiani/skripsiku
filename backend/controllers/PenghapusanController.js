@@ -1,92 +1,85 @@
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import supabase from "../config/supabase/supabaseClient.js";
 import Barang from "../models/BarangModel.js";
 import Kategori from "../models/KategoriBarang.js";
 import MerkBrg from "../models/MerkModel.js";
 import Penghapusan from "../models/PenghapusanModel.js";
+import BarangUnitModel from "../models/BarangUnitModel.js";
+import Lokasi from "../models/LokasiModel.js";
 
 class PenghapusanController {
   createPenghapusan = async (req, res) => {
-    const { barangId, desc, qty, tgl_hapus } = req.body;
+    const { barangUnitId, desc, tgl_hapus } = req.body;
     let url = "";
     let fileName = "";
 
-    if (!barangId || !desc || !qty || !tgl_hapus) {
+    if (!barangUnitId || !desc || !tgl_hapus) {
       return res
         .status(400)
         .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
     }
 
     try {
-      const barang = await Barang.findByPk(barangId);
+      const brgUnit = await BarangUnitModel.findByPk(barangUnitId);
 
-      if (qty > barang.qty) {
-        return res.status(400).json({ msg: "Input jumlah tidak valid!" });
+      if (!brgUnit) {
+        return res.status(404).json({ msg: "Barang unit tidak ditemukan!" });
+      }
+
+      const penghapusan = await Penghapusan.findOne({
+        where: { barangUnitId },
+      });
+
+      if (penghapusan) {
+        return res
+          .status(400)
+          .json({ msg: "Barang sudah masuk daftar penghapusan" });
       }
 
       if (!req.files || !req.files.file) {
-        await Barang.update(
-          { qty: barang.qty - parseInt(qty) },
-          { where: { id: barangId } }
-        );
-
         await Penghapusan.create({
-          barangId,
+          barangUnitId,
           desc,
-          qty,
           tgl_hapus,
           file: fileName,
           url,
-          sisa_stok: barang.qty - parseInt(qty),
         });
+      } else {
+        const file = req.files.file;
+        const ext = `.${file.name.split(".").pop()}`;
+        fileName = `file_${Date.now()}${ext}`;
+        const fileType = [".xlsx", ".docx", ".pdf"];
 
-        return res
-          .status(201)
-          .json({ msg: "Berhasil menambah data penghapusan." });
-      }
+        if (!fileType.includes(ext.toLowerCase())) {
+          return res.status(400).json({ msg: "Format file tidak didukung!" });
+        }
 
-      const file = req.files.file;
-      const ext = `.${file.name.split(".").pop()}`;
-      fileName = `file_${Date.now()}${ext}`;
-      const fileType = [".xlsx", ".docx", ".pdf"];
+        const supabaseUpload = await supabase.storage
+          .from("product")
+          .upload(fileName, file.data, {
+            upsert: true,
+            contentType: file.mimetype,
+          });
 
-      if (!fileType.includes(ext.toLowerCase())) {
-        return res.status(400).json({ msg: "Format file tidak didukung!" });
-      }
+        if (supabaseUpload.error) {
+          return res.status(500).json({
+            err: "ERROR: Gagal mengunggah dokumen!",
+            stack: supabaseUpload.error.stack,
+            msg: supabaseUpload.error.message,
+          });
+        }
 
-      const supabaseUpload = await supabase.storage
-        .from("product")
-        .upload(fileName, file.data, {
-          upsert: true,
-          contentType: file.mimetype,
+        url = supabase.storage.from("product").getPublicUrl(fileName)
+          .data.publicUrl;
+
+        await Penghapusan.create({
+          barangUnitId,
+          desc,
+          tgl_hapus,
+          file: fileName,
+          url,
         });
-
-      if (supabaseUpload.error) {
-        return res.status(500).json({
-          err: "ERROR: Gagal mengunggah dokumen!",
-          stack: supabaseUpload.error.stack,
-          msg: supabaseUpload.error.message,
-        });
       }
-
-      url = supabase.storage.from("product").getPublicUrl(fileName)
-        .data.publicUrl;
-
-      await Penghapusan.create({
-        barangId,
-        desc,
-        qty,
-        tgl_hapus,
-        file: fileName,
-        url,
-        sisa_stok: barang.qty - parseInt(qty),
-      });
-
-      await Barang.update(
-        { qty: barang.qty - parseInt(qty) },
-        { where: { id: barangId } }
-      );
-
       res.status(201).json({ msg: "Berhasil menambah data penghapusan." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
@@ -99,45 +92,51 @@ class PenghapusanController {
     const search = req.query.search || "";
     const offset = limit * page;
     let totalPage;
+
     try {
-      const count = await Penghapusan.count({
+      const count = await BarangUnitModel.count({
+        where: {
+          status_penghapusan: { [Op.or]: ["diusul", "disetujui", "ditolak"] },
+        },
         include: {
           model: Barang,
-          where: {
-            name: { [Op.like]: `%${search}%` },
-          },
+          where: { name: { [Op.like]: `%${search}%` } },
         },
       });
 
       totalPage = Math.ceil(count / limit);
 
-      const penghapusan = await Penghapusan.findAll({
-        include: {
-          model: Barang,
-          where: {
-            name: { [Op.like]: `%${search}%` },
-          },
-          attributes: [
-            "name",
-            "desc",
-            "qty",
-            "tgl_beli",
-            "kondisi",
-            "riwayat_pemeliharaan",
-            "createdAt",
-          ],
-          include: [
-            { model: MerkBrg, attributes: ["name", "desc"] },
-            { model: Kategori, attributes: ["name", "desc"] },
-          ],
+      const result = await BarangUnitModel.findAll({
+        where: {
+          status_penghapusan: { [Op.or]: ["diusul", "disetujui", "ditolak"] },
         },
+        include: [
+          {
+            model: Lokasi,
+            as: "loc_barang",
+            attributes: ["name"],
+          },
+          {
+            model: Kategori,
+            attributes: ["name"],
+          },
+          {
+            model: Barang,
+            where: { name: { [Op.like]: `%${search}%` } },
+          },
+          {
+            model: Penghapusan,
+            // where: { name: { [Op.like]: `%${search}%` } },
+          },
+        ],
         limit,
         offset,
         order: [["createdAt", "ASC"]],
       });
-      res.status(200).json({ page, limit, totalPage, count, penghapusan });
+
+      res.status(200).json({ page, limit, totalPage, count, result });
     } catch (error) {
-      res.status(400).json({ msg: "ERROR: " + error.message });
+      res.status(500).json({ msg: "ERROR: " + error.message });
     }
   };
 
@@ -198,24 +197,68 @@ class PenghapusanController {
     }
   };
 
+  updateStatusPersetujuan = async (req, res) => {
+    const { status } = req.body;
+    try {
+      const penghapusan = await Penghapusan.findByPk(req.params.id, {
+        include: { model: BarangUnitModel, include: [{ model: Barang }] },
+      });
+
+      const idBarang = penghapusan.barang_unit.barang.id;
+
+      if (!penghapusan) {
+        return res
+          .status(404)
+          .json({ msg: "Data penghapusan tidak ditemukan!" });
+      }
+
+      await Penghapusan.update({ status }, { where: { id: penghapusan.id } });
+
+      await BarangUnitModel.update(
+        { status_penghapusan: status },
+        { where: { id: penghapusan.barang_unit.id } }
+      );
+
+      await Barang.update(
+        {
+          qty: await BarangUnitModel.count({
+            where: {
+              status_penghapusan: { [Op.or]: ["diusul", "null", "ditolak"] },
+            },
+          }),
+        },
+        { where: { id: idBarang } }
+      );
+
+      res.status(200).json({ msg: "Berhasil ubah status penghapusan." });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ msg: "ERROR: " + error.message, stack: error.stack });
+    }
+  };
+
   deletePenghapusan = async (req, res) => {
     try {
-      const penghapusan = await Penghapusan.findByPk(req.params.id);
+      const penghapusan = await Penghapusan.findByPk(req.params.id, {
+        include: { model: BarangUnitModel, include: [{ model: Barang }] },
+      });
+
       if (!penghapusan) {
         return res
           .status(200)
           .json({ msg: "Data penghapusan tidak ditemukan!" });
       }
 
-      await Penghapusan.destroy({ where: { id: penghapusan.id } });
+      const idUnitBrg = penghapusan.barang_unit.id;
+
+      await BarangUnitModel.destroy({ where: { id: idUnitBrg } });
 
       res.status(200).json({ msg: "Berhasil menghapus data penghapusan." });
     } catch (error) {
       res.status(400).json({ msg: "ERROR: " + error.message });
     }
   };
-
-  // createPenghapusan = async(req, res)=>{}
 }
 
 export default PenghapusanController;

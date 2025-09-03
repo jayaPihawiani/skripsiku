@@ -1,6 +1,6 @@
 import express from "express";
 import BarangController from "../controllers/BarangController.js";
-import { verifyUser, isAdmin } from "../middleware/authMiddleware.js";
+import { isAdmin, verifyUser } from "../middleware/authMiddleware.js";
 
 const barangRoute = express.Router();
 const barang = new BarangController();
@@ -13,6 +13,18 @@ barangRoute.get("/:id", verifyUser, barang.getBarangById);
 barangRoute.get("/c/loc", verifyUser, barang.getDetailBarangByLokasi);
 barangRoute.patch("/update", verifyUser, isAdmin, barang.updatePenyusutan);
 barangRoute.patch("/update/:id", verifyUser, isAdmin, barang.updateBarang);
+barangRoute.patch(
+  "/c/barang_unit/update/:id",
+  verifyUser,
+  isAdmin,
+  barang.updateDetailBarang
+);
 barangRoute.delete("/del/:id", verifyUser, isAdmin, barang.deleteBarang);
+barangRoute.delete(
+  "/c/barang_unit/del/:id",
+  verifyUser,
+  isAdmin,
+  barang.deleteDetailBarang
+);
 
 export default barangRoute;

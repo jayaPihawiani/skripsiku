@@ -12,7 +12,7 @@ const Permintaan = db.define(
     barangId: DataTypes.UUID,
     userId: DataTypes.UUID,
     qty: DataTypes.INTEGER,
-    status: DataTypes.ENUM(["disetujui", "belum disetujui"]),
+    status: DataTypes.ENUM(["disetujui", "belum disetujui", "ditolak"]),
   },
   { freezeTableName: true }
 );

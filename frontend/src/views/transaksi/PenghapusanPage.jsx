@@ -1,56 +1,66 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
-import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
+import { formatTahunBulan } from "../../components/kriteriaPengurangEstimasi";
 import { LoadingContext } from "../../context/Loading";
-import { getAllBarang, getDataPenghapusan } from "../../features/barangSlice";
+import {
+  getAllBarang,
+  getDataPenghapusan,
+  getUnitBarangByLoc,
+} from "../../features/barangSlice";
+import { getAllLokasi } from "../../features/detailBarang";
+import { updatePenyusutanBarang } from "../../features/penyusutanSlice";
 
 const PenghapusanPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [brgId, setBrgid] = useState(null);
+  const [hapusId, setHapusId] = useState("");
+  const [statusPenghapusan, setStatusPenghapusan] = useState("");
+  const [penghapusanDeleteId, setPenghapusanDeleteId] = useState(null);
+  const handleClosePenghapusanDelete = () => setPenghapusanDeleteId(null);
+  const handleClosePenghapusan = () => setBrgid(null);
+  const handleCloseStatus = () => setHapusId(null);
   const [isLoading, setIsLoading] = useState(false);
   const dataBarang =
-    useSelector((state) => state.barang.all_barang?.data) || [];
-  const penghapusanState = useSelector((state) => state.barang.penghapusan);
-  const [dataPenghapusan, setDataPenghapusan] = useState([]);
+    useSelector((state) => state.barang.unit_barang_by_loc?.data) || [];
+  const dataPenghapusan =
+    useSelector((state) => state.barang.penghapusan?.data) || {};
   const [file, setFile] = useState("");
-  const [show, setShow] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
   const [inputPenghapusan, setInputPenghapusan] = useState({
     desc: "",
-    qty: 0,
     tgl_hapus: "",
-    barangId: "",
+    barangUnitId: "",
   });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
     search: "",
+    // kategori: "",
+    // lokasi: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const { setLoading } = useContext(LoadingContext);
-  const handleClose = () => {
-    setShow(false);
-    setInputPenghapusan({ desc: "", qty: 0, tgl_hapus: "", barangId: "" });
-    setFile("");
-  };
-  const handleShow = () => setShow(true);
 
   // FUNCTION
   const deleteDataPenghapusan = async (id) => {
     try {
       const response = await axios.delete(`${url}/penghapusan/del/${id}`);
+
       if (response.status === 200) {
-        alert("Berhasil menghapus data kerusakan.");
+        alert(response.data.msg);
         dispatch(getDataPenghapusan(inputQuery));
         setInputQuery({ ...inputQuery, page: 0 });
+
+        handleClosePenghapusanDelete();
       }
     } catch (error) {
       if (error.response) {
@@ -80,9 +90,8 @@ const PenghapusanPage = () => {
       setLoading(true);
       const formData = new FormData();
       formData.append("desc", inputPenghapusan.desc);
-      formData.append("qty", inputPenghapusan.qty);
       formData.append("tgl_hapus", inputPenghapusan.tgl_hapus);
-      formData.append("barangId", inputPenghapusan.barangId);
+      formData.append("barangUnitId", inputPenghapusan.barangUnitId);
       formData.append("file", file);
 
       const response = await axios.post(`${url}/penghapusan/create`, formData, {
@@ -98,7 +107,7 @@ const PenghapusanPage = () => {
         dispatch(getDataPenghapusan(inputQuery));
         dispatch(getAllBarang());
         setInputQuery({ ...inputQuery, page: 0 });
-        handleClose();
+        handleClosePenghapusan();
       }
     } catch (error) {
       if (error.response) {
@@ -107,6 +116,25 @@ const PenghapusanPage = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateStatusPenghapusan = async (id) => {
+    try {
+      const response = await axios.patch(`${url}/penghapusan/update/${id}`, {
+        status: statusPenghapusan,
+      });
+      if (response.status === 200) {
+        dispatch(getDataPenghapusan(inputQuery));
+        alert(response.data.msg);
+        handleCloseStatus();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+      } else {
+        console.error(error);
+      }
     }
   };
 
@@ -141,100 +169,107 @@ const PenghapusanPage = () => {
   // useEffect
   useEffect(() => {
     dispatch(getDataPenghapusan(inputQuery));
-    dispatch(getAllBarang());
+    dispatch(getAllLokasi());
+    dispatch(getUnitBarangByLoc(""));
   }, [dispatch, inputQuery.page, inputQuery.limit, inputQuery.search]);
 
   useEffect(() => {
-    if (penghapusanState.data && penghapusanState.isSuccess) {
-      setDataPenghapusan(penghapusanState.data);
-    }
-  }, [penghapusanState.data, penghapusanState.isSuccess]);
+    dispatch(updatePenyusutanBarang());
+  }, [dispatch]);
 
   // MAIN
   return (
     <>
+      {penghapusanDeleteId && (
+        <ModalEditComponent
+          handleCloseEdit={handleClosePenghapusanDelete}
+          submit={() => deleteDataPenghapusan(penghapusanDeleteId)}
+          modalTitle="Konfirmasi"
+          body={<p>Yakin ingin menghapus data penghapusan?</p>}
+          btnTitle="Hapus"
+        />
+      )}
+      {hapusId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseStatus}
+          submit={() => updateStatusPenghapusan(hapusId)}
+          modalTitle="Status Penghapusan"
+          body={
+            <>
+              <select
+                className="form-select"
+                value={statusPenghapusan || ""}
+                onChange={(e) => setStatusPenghapusan(e.target.value)}
+              >
+                <option value="">--Pilih--</option>
+                <option value="diusul">diusul</option>
+                <option value="disetujui">disetujui</option>
+                <option value="ditolak">ditolak</option>
+              </select>
+            </>
+          }
+        />
+      )}
+      {brgId && (
+        <ModalEditComponent
+          handleCloseEdit={handleClosePenghapusan}
+          modalTitle="Ajukan Penghapusan"
+          submit={addDataPenghapusan}
+          body={
+            <>
+              <p className="m-0 mb-2">Nama Barang</p>
+              <select
+                className="form-select"
+                value={inputPenghapusan.barangUnitId || ""}
+                disabled={true}
+              >
+                {dataBarang.map((e) => (
+                  <option value={e.id} key={e.id}>
+                    {`${e?.kode_barang ?? "-"} - ${e.barang?.name ?? "-"}`}
+                  </option>
+                ))}
+              </select>
+              <p className="m-0 my-2">Alasan Penghapusan</p>
+              <InputComponents
+                type="text"
+                placeHolder="Keterangan"
+                classStyle="w-100 p-2"
+                change={(e) =>
+                  setInputPenghapusan({
+                    ...inputPenghapusan,
+                    desc: e.target.value,
+                  })
+                }
+              />
+              <p className="m-0 my-2">Tanggal Penghapusan</p>
+              <InputComponents
+                type="date"
+                placeHolder="Jumlah"
+                classStyle="w-100 p-2"
+                change={(e) =>
+                  setInputPenghapusan({
+                    ...inputPenghapusan,
+                    tgl_hapus: e.target.value,
+                  })
+                }
+              />
+              <p className="m-0 mt-2">Unggah file</p>
+              <InputComponents
+                type="file"
+                placeHolder="Jumlah"
+                classStyle="w-100 p-2"
+                change={setFileUpload}
+              />
+            </>
+          }
+        />
+      )}
       <AlertNotify
         alertMsg={"Berhasil menambah data penghapusan"}
         showAlert={alertShow}
         variantAlert={"success"}
       />
-      <h4>DATA PENGHAPUSAN INVENTARIS BARANG</h4>
-      <ModalComponent
-        handleSubmit={addDataPenghapusan}
-        classStyle="mt-3"
-        btntTitle="Tambah Data"
-        show={show}
-        handleShow={handleShow}
-        handleClose={handleClose}
-        modalTitle="Tambah Data Penghapusan Inventaris"
-        inputField={
-          <>
-            <p className="m-0">Nama Inventaris Barang</p>
-            <select
-              className="form-select"
-              onChange={(e) =>
-                setInputPenghapusan({
-                  ...inputPenghapusan,
-                  barangId: e.target.value,
-                })
-              }
-            >
-              <option value="">Pilih</option>
-              {dataBarang &&
-                dataBarang.map((item) => {
-                  return (
-                    <option value={item.id} key={item.id}>
-                      {item.name} - qty: {item.qty}
-                    </option>
-                  );
-                })}
-            </select>
-            <p className="m-0">Keterangan</p>
-            <InputComponents
-              type="text"
-              placeHolder="Keterangan"
-              classStyle="w-100 p-2"
-              change={(e) =>
-                setInputPenghapusan({
-                  ...inputPenghapusan,
-                  desc: e.target.value,
-                })
-              }
-            />
-            <p className="m-0">Jumlah Penghapusan</p>
-            <InputComponents
-              type="number"
-              placeHolder="Jumlah"
-              classStyle="w-100 p-2"
-              change={(e) =>
-                setInputPenghapusan({
-                  ...inputPenghapusan,
-                  qty: e.target.value,
-                })
-              }
-            />
-            <p className="m-0">Tanggal Penghapusan</p>
-            <InputComponents
-              type="date"
-              placeHolder="Jumlah"
-              classStyle="w-100 p-2"
-              change={(e) =>
-                setInputPenghapusan({
-                  ...inputPenghapusan,
-                  tgl_hapus: e.target.value,
-                })
-              }
-            />
-            <p className="m-0">Unggah file</p>
-            <InputComponents
-              type="file"
-              placeHolder="Jumlah"
-              classStyle="w-100 p-2"
-              change={setFileUpload}
-            />
-          </>
-        }
-      />
+      <h4>DATA INVENTARIS MASUK DAFTAR PENGHAPUSAN</h4>
 
       <button className="btn btn-primary mt-3 ms-1" onClick={printLaporan}>
         {isLoading ? "Loading..." : " Cetak Laporan Penghapusan"}
@@ -269,57 +304,96 @@ const PenghapusanPage = () => {
               <thead className="table-dark">
                 <tr>
                   <td style={{ width: "5%" }}>No. </td>
-                  <td>Nama Inventaris Barang</td>
-                  <td>Jumlah Penghapusan</td>
-                  <td>Sisa Inventaris Barang</td>
+                  <td>Nama Barang</td>
+                  <td>Kode Barang</td>
+                  <td>Asal Ruangan</td>
+                  <td>Usia Ekonomis Pakai</td>
+                  <td>Nilai Buku</td>
                   <td>Tanggal Hapus</td>
-                  <td>Keterangan</td>
+                  <td>Alasan Hapus</td>
+                  <td>Status</td>
                   <td style={{ width: "15%" }}>Aksi</td>
                 </tr>
               </thead>
               <tbody>
-                {dataPenghapusan.penghapusan &&
-                  dataPenghapusan.penghapusan.map((item, index) => {
+                {dataPenghapusan.result &&
+                  dataPenghapusan.result.map((item, index) => {
                     return (
                       <tr key={item.id}>
                         <td>
                           {index + 1 + inputQuery.page * inputQuery.limit}
                         </td>
-                        <td>{item.barang.name}</td>
-                        <td>{item.qty}</td>
-                        <td>{item.sisa_stok ?? "-"}</td>
-                        <td>{item.tgl_hapus?.slice(0, 10)}</td>
-                        <td>{item.desc}</td>
+                        <td>{item.barang?.name ?? "-"}</td>
+                        <td>{item?.kode_barang ?? "-"}</td>
+                        <td>{item.loc_barang?.name ?? "-"}</td>
+                        <td>{formatTahunBulan(item.umur_ekonomis)}</td>
+                        <td>
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                          }).format(item.nilai_buku)}
+                        </td>
+                        <td>
+                          {item.penghapusan?.tgl_hapus.slice(0, 10) ?? "-"}
+                        </td>
+                        <td>{item.penghapusan?.desc ?? "-"}</td>
+                        <td>
+                          {item.penghapusan?.status ?? "-"}
+                          {item.penghapusan?.id && (
+                            <button
+                              className="btn btn-success ms-1"
+                              onClick={() => {
+                                setHapusId(item.penghapusan.id);
+                                setStatusPenghapusan(
+                                  item.penghapusan?.status ?? ""
+                                );
+                              }}
+                            >
+                              <BsPencilSquare />
+                            </button>
+                          )}
+                        </td>
                         <td className="text-center">
                           <button
                             className="btn btn-primary"
-                            onClick={() => navigate(`edit/${item.id}`)}
+                            disabled={item.penghapusan}
+                            onClick={() => {
+                              setBrgid(item.id);
+                              setInputPenghapusan({
+                                ...inputPenghapusan,
+                                barangUnitId: item.id,
+                              });
+                            }}
                           >
-                            Ubah
+                            Ajukan Penghapusan
                           </button>
-                          <button
-                            className="btn btn-danger ms-1"
-                            onClick={() => deleteDataPenghapusan(item.id)}
-                          >
-                            Hapus
-                          </button>
-                          <button
+                          {item.penghapusan?.status === "disetujui" && (
+                            <button
+                              className="btn btn-danger ms-1"
+                              onClick={() =>
+                                setPenghapusanDeleteId(item.penghapusan.id)
+                              }
+                            >
+                              <BsTrash3 />
+                            </button>
+                          )}
+                          {/* <button
                             className="btn btn-primary ms-1"
                             onClick={() => window.open(item.url, "_blank")}
                             disabled={!item.url}
                           >
                             Unduh
-                          </button>
+                          </button> */}
                         </td>
                       </tr>
                     );
                   })}
               </tbody>
             </table>
-            {dataPenghapusan.penghapusan &&
-              dataPenghapusan.penghapusan.length === 0 &&
+            {dataPenghapusan.result &&
+              dataPenghapusan.result.length === 0 &&
               "Data tidak ditemukan!"}
-            {dataPenghapusan.penghapusan && (
+            {dataPenghapusan && (
               <p className="text-end">
                 Total row: <strong>{dataPenghapusan.count}</strong> page{" "}
                 <strong>
@@ -334,9 +408,7 @@ const PenghapusanPage = () => {
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={
-                    dataPenghapusan.penghapusan ? dataPenghapusan.totalPage : 0
-                  }
+                  pageCount={dataPenghapusan ? dataPenghapusan.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}

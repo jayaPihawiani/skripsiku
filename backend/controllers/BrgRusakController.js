@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import Barang from "../models/BarangModel.js";
 import BrgRusak from "../models/BarangRusakModel.js";
 import BarangUnitModel from "../models/BarangUnitModel.js";
@@ -14,60 +14,47 @@ class BrgRusakController {
       sebab_kerusakan,
       status_perbaikan,
       barangUnitId,
-      locBarang,
     } = req.body;
 
     try {
       // Validasi input
       if (
+        !desc ||
         !barangUnitId ||
         !riwayat_pemeliharaan ||
         !sebab_kerusakan ||
-        !status_perbaikan ||
-        !locBarang
+        !status_perbaikan
       ) {
         return res
           .status(400)
           .json({ msg: "Data ada yang kosong! Harap isi semua data!" });
       }
 
-      // Ambil unit barang di lokasi tersebut yg masih kondisi "baik"
-      const checkBarang = await BarangUnitModel.findAll({
+      const unitBrg = await BarangUnitModel.findOne({
         where: {
           id: barangUnitId,
-          lokasi_barang: locBarang,
           status: "baik",
         },
       });
 
-      // Tandai unit sebagai "rusak"
-      for (const unit of checkBarang) {
-        await unit.update({
-          status: "rusak",
-          desc,
-          riwayat_pemeliharaan,
-          sebab_kerusakan,
-          status_perbaikan,
-        });
+      if (!unitBrg) {
+        return res
+          .status(404)
+          .json({ msg: "Data unit barang tidak ditemukan!" });
       }
 
-      // Hitung sisa stok di lokasi tersebut setelah rusak
-      const sisaStok = await BarangUnitModel.count({
-        where: {
-          id: barangUnitId,
-          lokasi_barang: locBarang,
-          status: "baik",
-        },
-      });
+      await BarangUnitModel.update(
+        { status: "rusak" },
+        { where: { id: barangUnitId } }
+      );
 
-      // Simpan riwayat ke tabel BrgRusak
       await BrgRusak.create({
         desc,
-        barangUnitId,
         riwayat_pemeliharaan,
         sebab_kerusakan,
         status_perbaikan,
-        sisa_stok: sisaStok,
+        barangUnitId,
+        sisa_stok: await BarangUnitModel.count({ where: { status: "baik" } }),
       });
 
       res.status(201).json({ msg: "Berhasil menandai barang sebagai rusak." });
@@ -76,125 +63,79 @@ class BrgRusakController {
     }
   };
 
-  // getBrgRusak = async (req, res) => {
-  //   const limit = parseInt(req.query.limit) || 10;
-  //   const page = parseInt(req.query.page) || 0;
-  //   const search = req.query.search || "";
-  //   const offset = limit * page;
-  //   const lokasi = req.query.lokasi || "";
-  //   const status_perbaikan = req.query.status_perbaikan || "";
-
-  //   try {
-  //     // Hitung total item yang cocok dengan pencarian
-  //     const count = await BarangUnitModel.count({
-  //       include: [
-  //         {
-  //           model: Barang,
-  //           where: { name: { [Op.like]: `%${search}%` } },
-  //         },
-  //       ],
-  //       where: { status: "rusak" },
-  //     });
-
-  //     const totalPage = Math.ceil(count / limit);
-
-  //     // Ambil data
-  //     const brg_rusak = await BarangUnitModel.findAll({
-  //       where: { status: "rusak" },
-  //       include: [
-  //         {
-  //           model: Barang,
-  //           attributes: [
-  //             "id",
-  //             "name",
-  //             "desc",
-  //             "umur_ekonomis",
-  //             "image",
-  //             "url",
-  //             "createdAt",
-  //             "updatedAt",
-  //           ],
-  //           where: { name: { [Op.like]: `%${search}%` } },
-  //           include: [{ model: BrgRusak }],
-  //         },
-  //         { model: Lokasi, as: "loc_asal" },
-  //         { model: Lokasi, as: "loc_barang" },
-  //       ],
-  //       limit,
-  //       offset,
-  //       order: [["createdAt", "DESC"]],
-  //     });
-
-  //     res.status(200).json({ page, limit, totalPage, count, brg_rusak });
-  //   } catch (error) {
-  //     res.status(500).json({ msg: "ERROR: " + error.message });
-  //   }
-  // };
-
   getBrgRusak = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 0;
     const search = req.query.search || "";
     const offset = limit * page;
-    const lokasi = req.query.lokasi || ""; // bisa berupa id lokasi
+    const lokasi = req.query.lokasi || "";
     const status_perbaikan = req.query.status_perbaikan || "";
+    let totalPage;
 
     try {
-      // Buat where dinamis untuk BarangUnitModel
-      let whereUnit = { status: "rusak" };
-      if (status_perbaikan) whereUnit.status_perbaikan = status_perbaikan;
-
-      // Buat include untuk Barang
-      let whereBarang = {};
-      if (search) whereBarang.name = { [Op.like]: `%${search}%` };
-
-      // Buat include untuk Lokasi
-      let includeLokasi = [
-        { model: Lokasi, as: "loc_asal" },
-        { model: Lokasi, as: "loc_barang" },
-      ];
-      if (lokasi) {
-        includeLokasi = [
-          { model: Lokasi, as: "loc_asal" },
-          { model: Lokasi, as: "loc_barang", where: { id: lokasi } },
-        ];
-      }
-
-      // Hitung total item
-      const count = await BarangUnitModel.count({
-        where: whereUnit,
-        include: [{ model: Barang, where: whereBarang }, ...includeLokasi],
+      const count = await BrgRusak.count({
+        include: {
+          model: BarangUnitModel,
+          required: true,
+          include: [
+            {
+              model: Barang,
+              required: true,
+              where: { name: { [Op.like]: `%${search}%` } },
+            },
+            {
+              model: Lokasi,
+              as: "loc_barang",
+              required: true,
+              where: { name: { [Op.like]: `%${lokasi}%` } },
+            },
+          ],
+        },
+        where: {
+          status_perbaikan: { [Op.like]: `%${status_perbaikan}%` },
+        },
       });
 
-      const totalPage = Math.ceil(count / limit);
+      totalPage = Math.ceil(count / limit);
 
-      // Ambil data
-      const brg_rusak = await BarangUnitModel.findAll({
-        where: whereUnit,
-        include: [
-          {
-            model: Barang,
-            attributes: [
-              "id",
-              "name",
-              "desc",
-              "umur_ekonomis",
-              "image",
-              "url",
-              "createdAt",
-              "updatedAt",
-            ],
-            where: whereBarang,
-            include: [{ model: BrgRusak }],
-          },
-          ...includeLokasi,
-        ],
+      const result = await BrgRusak.findAll({
+        include: {
+          model: BarangUnitModel,
+          required: true,
+          attributes: [
+            "kode_barang",
+            "tgl_beli",
+            "harga",
+            "umur_ekonomis",
+            "biaya_penyusutan",
+            "penyusutan_berjalan",
+            "nilai_buku",
+          ],
+          include: [
+            {
+              model: Barang,
+              required: true,
+              attributes: ["name", "desc"],
+              where: { name: { [Op.like]: `%${search}%` } },
+            },
+            {
+              model: Lokasi,
+              as: "loc_barang",
+              required: true,
+              attributes: ["name", "desc"],
+              where: { name: { [Op.like]: `%${lokasi}%` } },
+            },
+          ],
+        },
+        where: {
+          status_perbaikan: { [Op.like]: `%${status_perbaikan}%` },
+        },
         limit,
         offset,
         order: [["createdAt", "DESC"]],
       });
 
-      res.status(200).json({ page, limit, totalPage, count, brg_rusak });
+      res.status(200).json({ page, limit, totalPage, count, result });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
@@ -247,106 +188,12 @@ class BrgRusakController {
     }
   };
 
-  // updateBrgRusak = async (req, res) => {
-  //   const { status_perbaikan } = req.body;
-  //   try {
-  //     const brg_rusak = await BrgRusak.findByPk(req.params.id, {
-  //       include: { model: Barang },
-  //     });
-
-  //     if (!brg_rusak) {
-  //       return res
-  //         .status(404)
-  //         .json({ msg: "Data inventaris barang rusak tidak ditemukan!" });
-  //     }
-
-  //     const idBarang = brg_rusak.barang.id;
-
-  //     await BrgRusak.update(
-  //       { status_perbaikan },
-  //       { where: { id: brg_rusak.id } }
-  //     );
-  //     res.status(200).json({ msg: "Berhasil update data barang rusak." });
-  //   } catch (error) {
-  //     res.status(500).json({ msg: "ERROR: " + error.message });
-  //   }
-  // };
-
-  // updateBrgRusak = async (req, res) => {
-  //   const { status_perbaikan } = req.body;
-
-  //   try {
-  //     const brg_rusak = await BarangUnitModel.findByPk(req.params.id, {
-  //       include: { model: Barang },
-  //     });
-
-  //     if (!brg_rusak) {
-  //       return res
-  //         .status(404)
-  //         .json({ msg: "Data inventaris barang rusak tidak ditemukan!" });
-  //     }
-
-  //     const barangId = brg_rusak.barangId;
-  //     const pengurangPersen = brg_rusak.riwayat_pemeliharaan || 0;
-
-  //     // Update status perbaikan di tabel BrgRusak
-  //     await BrgRusak.update(
-  //       { status_perbaikan },
-  //       { where: { id: brg_rusak.id } }
-  //     );
-
-  //     // Ambil semua unit rusak dari barang ini
-  //     const unitRusak = await BarangUnitModel.findAll({
-  //       where: {
-  //         barangId,
-  //         status: "rusak",
-  //       },
-  //     });
-
-  //     for (const unit of unitRusak) {
-  //       if (status_perbaikan === "SELESAI DIPERBAIKI BISA DIGUNAKAN") {
-  //         const umurBaru = Math.max(
-  //           unit.umur_ekonomis - (unit.umur_ekonomis * pengurangPersen) / 100,
-  //           0
-  //         );
-  //         const nilaiBaru = Math.max(
-  //           unit.nilai_buku - (unit.nilai_buku * pengurangPersen) / 100,
-  //           0
-  //         );
-
-  //         await unit.update({
-  //           // status: "baik",
-  //           umur_ekonomis: umurBaru,
-  //           nilai_buku: nilaiBaru,
-  //           status_perbaikan,
-  //         });
-  //       } else if (
-  //         status_perbaikan === "SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN" ||
-  //         status_perbaikan === "TIDAK BISA DIPERBAIKI"
-  //       ) {
-  //         await unit.update({
-  //           umur_ekonomis: 0,
-  //           nilai_buku: 0,
-  //           status_perbaikan,
-  //         });
-  //       }
-  //     }
-
-  //     res
-  //       .status(200)
-  //       .json({ msg: "Berhasil update data barang rusak & unit." });
-  //   } catch (error) {
-  //     res.status(500).json({ msg: "ERROR: " + error.message });
-  //   }
-  // };
-
   updateBrgRusak = async (req, res) => {
     const { status_perbaikan } = req.body;
 
     try {
-      // Ambil unit rusak yang dimaksud
-      const brg_rusak = await BarangUnitModel.findByPk(req.params.id, {
-        include: { model: Barang },
+      const brg_rusak = await BrgRusak.findByPk(req.params.id, {
+        include: { model: BarangUnitModel },
       });
 
       if (!brg_rusak) {
@@ -363,8 +210,8 @@ class BrgRusakController {
         { where: { id: brg_rusak.id } }
       );
 
-      let umurBaru = brg_rusak.umur_ekonomis;
-      let nilaiBaru = brg_rusak.nilai_buku;
+      let umurBaru = brg_rusak.barang_unit.umur_ekonomis;
+      let nilaiBaru = brg_rusak.barang_unit.nilai_buku;
 
       // Hitung penyusutan
       umurBaru = Math.max(umurBaru - (umurBaru * pengurangPersen) / 100, 0);
@@ -380,11 +227,18 @@ class BrgRusakController {
       }
 
       // Update hanya unit ini saja
-      await brg_rusak.update({
-        umur_ekonomis: umurBaru,
-        nilai_buku: nilaiBaru,
-        status_perbaikan,
-      });
+      await BarangUnitModel.update(
+        {
+          umur_ekonomis: umurBaru,
+          nilai_buku: nilaiBaru,
+          status_perbaikan,
+          status:
+            status_perbaikan === "SELESAI DIPERBAIKI BISA DIGUNAKAN"
+              ? "baik"
+              : "rusak",
+        },
+        { where: { id: brg_rusak.barang_unit.id } }
+      );
 
       res.status(200).json({
         msg: "Berhasil update data barang rusak.",

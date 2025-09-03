@@ -1,13 +1,14 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import AlertNotify from "../components/Alert";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import ModalEditComponent from "../components/ModalEditComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { getKategoriKerusakan } from "../features/kategoriRusak";
+import AlertNotify from "../../components/Alert";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { getKategoriKerusakan } from "../../features/kategoriRusak";
 
 const KategoriKerusakanPage = () => {
   // variabel
@@ -17,6 +18,8 @@ const KategoriKerusakanPage = () => {
   const handleCloseTambahDetail = () => setKategoriRusakId(null);
   const [detailRusakId, setDetailRusakId] = useState(null);
   const handleCloseDeleteDetail = () => setDetailRusakId(null);
+  const [delJenisRusakId, setDelJenisRusakId] = useState(null);
+  const handleCloseDeleteJenis = () => setDelJenisRusakId(null);
   const [alertShow, setAlertShow] = useState(false);
   const detailKerusakanState =
     useSelector((state) => state.kategori_rusak.kategori_kerusakan?.data) || {};
@@ -99,8 +102,9 @@ const KategoriKerusakanPage = () => {
       );
 
       if (response.status === 200) {
-        alert("Berhasil menghapus data.");
+        alert(response.data.msg);
         dispatch(getKategoriKerusakan(inputQuery));
+        handleCloseDeleteJenis();
       }
     } catch (error) {
       if (error.response) {
@@ -187,6 +191,15 @@ const KategoriKerusakanPage = () => {
           btnTitle="Hapus"
         />
       )}
+      {delJenisRusakId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseDeleteJenis}
+          modalTitle="Konfirmasi"
+          submit={() => deleteJenisKerusakan(delJenisRusakId)}
+          body={<p>Yakin ingin menghapus jenis kerusakan?</p>}
+          btnTitle="Hapus"
+        />
+      )}
       <AlertNotify
         alertMsg="Berhasil menambah data kategori"
         showAlert={alertShow}
@@ -262,22 +275,24 @@ const KategoriKerusakanPage = () => {
                         <td>{item.jenis}</td>
                         <td className="d-flex justify-content-between align-items-center">
                           <div>
-                            {item.detail_kerusakans.length > 0
-                              ? item.detail_kerusakans.map((e, index) => (
-                                  <div className="d-flex" key={e.id}>
-                                    <p>
-                                      - {e.desc} (bobot {e.pengurang}%)
-                                    </p>
-                                    <div className="ms-3" key={index}>
-                                      <button
-                                        onClick={() => setDetailRusakId(e.id)}
-                                      >
-                                        x
-                                      </button>
-                                    </div>
+                            {item.detail_kerusakans.length > 0 ? (
+                              item.detail_kerusakans.map((e, index) => (
+                                <div className="d-flex" key={e.id}>
+                                  <p>
+                                    - {e.desc} (bobot {e.pengurang}%)
+                                  </p>
+                                  <div className="ms-3" key={index}>
+                                    <button
+                                      onClick={() => setDetailRusakId(e.id)}
+                                    >
+                                      x
+                                    </button>
                                   </div>
-                                ))
-                              : "-"}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="fst-italic">Tidak ada data!</p>
+                            )}
                           </div>
                           <div>
                             <button
@@ -306,13 +321,13 @@ const KategoriKerusakanPage = () => {
                               });
                             }}
                           >
-                            Ubah
+                            {<BsPencilSquare />}
                           </button>
                           <button
                             className="btn btn-danger ms-1"
-                            onClick={() => deleteJenisKerusakan(item.id)}
+                            onClick={() => setDelJenisRusakId(item.id)}
                           >
-                            Hapus
+                            {<BsTrash3 />}
                           </button>
                         </td>
                       </tr>

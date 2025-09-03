@@ -6,7 +6,7 @@ import { formatTahunBulan } from "../components/kriteriaPengurangEstimasi";
 import ModalEditComponent from "../components/ModalEditComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
 import { getBarangUnit } from "../features/barangSlice";
-import { updatePenyusutanBarang } from "../features/penyusutanSlice";
+import { getAllKategori, getAllLokasi } from "../features/detailBarang";
 
 const UmurEkonomis = () => {
   // variabel
@@ -18,6 +18,10 @@ const UmurEkonomis = () => {
     masa_ekonomis_baru: "",
     nilai_buku_manual: "",
   });
+  const dataLokasi =
+    useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
+  const dataKategori =
+    useSelector((state) => state.detail_barang.all_kategori?.kategori) || [];
   const brgStateStatus = useSelector((state) => state.barang.barang?.data);
   const brgUnitState =
     useSelector((state) => state.barang.barang_unit?.data) || {};
@@ -27,6 +31,8 @@ const UmurEkonomis = () => {
     search: "",
     page: 0,
     limit: 10,
+    lokasi: "",
+    kategori: "",
   });
 
   // function
@@ -43,7 +49,19 @@ const UmurEkonomis = () => {
   useEffect(() => {
     dispatch(getBarangUnit(inputQuery));
     // dispatch(updatePenyusutanBarang());
-  }, [dispatch, inputQuery]);
+  }, [
+    dispatch,
+    inputQuery.page,
+    inputQuery.limit,
+    inputQuery.search,
+    inputQuery.lokasi,
+    inputQuery.kategori,
+  ]);
+
+  useEffect(() => {
+    dispatch(getAllLokasi());
+    dispatch(getAllKategori());
+  }, [dispatch]);
 
   return (
     <>
@@ -94,6 +112,43 @@ const UmurEkonomis = () => {
             />
           </div>
           <div className="mt-3 me-3 d-flex">
+            {/* kategori */}
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  kategori: e.target.value,
+                })
+              }
+            >
+              <option value="">Kategori</option>
+              {dataKategori.map((e) => (
+                <option key={e.id} value={e.name}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+            {/* lokasi */}
+            <select
+              className="py-2 px-1 ms-auto"
+              onChange={(e) =>
+                setInputQuery({
+                  ...inputQuery,
+                  page: 0,
+                  lokasi: e.target.value,
+                })
+              }
+            >
+              <option value="">Lokasi</option>
+              {dataLokasi.map((e) => (
+                <option key={e.id} value={e.name}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+            {/* limit */}
             <select
               className="py-2 px-1 ms-auto"
               onChange={(e) =>
@@ -128,7 +183,7 @@ const UmurEkonomis = () => {
                   dataBarangUnit.map((item, index) => (
                     <tr key={item.id}>
                       <td>{index + 1 + inputQuery.page * inputQuery.limit}</td>
-                      <td>{item.id.split("-").pop()}</td>
+                      <td>{item?.kode_barang ?? "-"}</td>
                       <td>{item.barang.name}</td>
                       <td>{item.kategori_brg?.name ?? "-"}</td>
                       <td>{item.barang.tgl_beli.slice(0, 10)}</td>
@@ -138,7 +193,7 @@ const UmurEkonomis = () => {
                           currency: "IDR",
                         }).format(item.barang.harga)}
                       </td>
-                      <td>{item.kondisi}</td>
+                      <td>{item.status}</td>
                       <td>{formatTahunBulan(item.umur_ekonomis)}</td>
                       <td>
                         {new Intl.NumberFormat("id-ID", {

@@ -15,10 +15,6 @@ const Barang = db.define(
     tgl_beli: DataTypes.DATE,
     harga: DataTypes.INTEGER,
     kondisi: DataTypes.STRING,
-    satuan: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
     merk: {
       type: DataTypes.UUID,
       allowNull: true,

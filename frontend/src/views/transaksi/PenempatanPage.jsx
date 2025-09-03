@@ -1,11 +1,12 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
-import { formatTahunBulan } from "../../components/kriteriaPengurangEstimasi";
 import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
@@ -18,16 +19,17 @@ import { getAllLokasi } from "../../features/detailBarang";
 import { updatePenyusutanBrgPindah } from "../../features/penyusutanSlice";
 import { getAllUser } from "../../features/UserSlice";
 
-const Pemindahan = () => {
+const Penempatan = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const [pindahId, setPindahId] = useState(null);
+  const handleCloseDelete = () => setPindahId(null);
+  const user = useSelector((state) => state.auth?.data) || {};
   const dataLokasi =
     useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
   const unitBrgByLoc =
     useSelector((state) => state.barang.unit_barang_by_loc?.data) || [];
-  const dataBarang =
-    useSelector((state) => state.barang.all_barang?.data) || [];
   const allUser = useSelector((state) => state.user.all_user?.data) || [];
   const barangPindah = useSelector((state) => state.barang.pemindahan);
   const [alertShow, setAlertShow] = useState(false);
@@ -63,12 +65,13 @@ const Pemindahan = () => {
   const handleShow = () => setShow(true);
 
   // FUNTION
-  const deleteDataPindah = async (id) => {
+  const deleteDataPenempatan = async (id) => {
     try {
       const response = await axios.delete(`${url}/pindah/del/${id}`);
       if (response.status === 200) {
         alert(response.data.msg);
         dispatch(getDataPemindahan(inputQuery));
+        handleCloseDelete();
       }
     } catch (error) {
       if (error.response) {
@@ -144,132 +147,147 @@ const Pemindahan = () => {
   // MAIN
   return (
     <div className="w-100 pe-3">
+      {pindahId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseDelete}
+          modalTitle="Konfirmasi"
+          body={<p>Yakin ingin menghapus data penempatan inventaris?</p>}
+          btnTitle="Hapus"
+          submit={() => deleteDataPenempatan(pindahId)}
+        />
+      )}
       <AlertNotify
-        alertMsg="Berhasil menambah data pemindahan"
+        alertMsg="Berhasil menambah data penempatan"
         showAlert={alertShow}
         variantAlert={"success"}
       />
-      <h4>DATA PEMINDAHAN INVENTARIS</h4>
+      <h4>
+        {user && user.role === "admin"
+          ? "DATA PENEMPATAN INVENTARIS"
+          : `DATA INVENTARIS RUANG ${user.loc_user?.name ?? "-"}`}
+      </h4>
       <div className="mt-4  ">
-        <div>
-          <ModalComponent
-            btntTitle="Tambah"
-            show={show}
-            handleClose={handleClose}
-            handleShow={handleShow}
-            handleSubmit={addBarangPindah}
-            modalTitle="Tambah Data Pemindahan Inventaris"
-            inputField={
-              <>
-                <p className="m-0">Asal Barang</p>
-                <select
-                  value={inputDataPindah.from || ""}
-                  className="form-select"
-                  onChange={(e) => {
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      from: e.target.value,
-                    });
-                  }}
-                >
-                  <option value="">--Pilih Asal Barang--</option>
-                  {dataLokasi.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-3">Nama Barang</p>
-                <select
-                  className="form-select"
-                  onChange={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      barangUnitId: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">--Barang--</option>
-                  {unitBrgByLoc.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {`${e.id.split("-").pop()} --- ${e.barang.name}`}
-                      </option>
-                    );
-                  })}
-                </select>
+        {user && user.role === "admin" && (
+          <div>
+            <ModalComponent
+              btntTitle="Tambah"
+              show={show}
+              handleClose={handleClose}
+              handleShow={handleShow}
+              handleSubmit={addBarangPindah}
+              modalTitle="Tambah Data Pemindahan Inventaris"
+              inputField={
+                <>
+                  <p className="m-0">Asal Barang</p>
+                  <select
+                    value={inputDataPindah.from || ""}
+                    className="form-select"
+                    onChange={(e) => {
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        from: e.target.value,
+                      });
+                    }}
+                  >
+                    <option value="">--Pilih Asal Barang--</option>
+                    {dataLokasi.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-3">Nama Barang</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        barangUnitId: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">--Barang--</option>
+                    {unitBrgByLoc.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {`${e?.kode_barang ?? "-"} ${e.barang.name}`}
+                        </option>
+                      );
+                    })}
+                  </select>
 
-                <p className="m-0 mt-3">Tujuan Pindah</p>
-                <select
-                  className="form-select"
-                  onChange={(e) => {
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      to: e.target.value,
-                    });
-                  }}
-                >
-                  <option value="">--Pilih Tujuan Barang--</option>
-                  {dataLokasi.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-3">Penerima</p>
-                <select
-                  className="form-select"
-                  onChange={(e) => {
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      userId: e.target.value,
-                    });
-                  }}
-                >
-                  <option value="">--Pilih Penerima--</option>
-                  {allUser.map((e) => {
-                    return (
-                      <option value={e.id} key={e.id}>
-                        {e.username}
-                      </option>
-                    );
-                  })}
-                </select>
-                <p className="m-0 mt-3">Keterangan</p>
-                <InputComponents
-                  type="text"
-                  classStyle="w-100 p-2"
-                  placeHolder="Keterangan"
-                  change={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      desc: e.target.value,
-                    })
-                  }
-                />
-                <p className="m-0 mt-3">Tanggal Pemindahan</p>
-                <InputComponents
-                  type="date"
-                  classStyle="w-100 p-2"
-                  placeHolder="Tanggal Masuk"
-                  change={(e) =>
-                    setInputDataPindah({
-                      ...inputDataPindah,
-                      tgl_pindah: e.target.value,
-                    })
-                  }
-                />
-              </>
-            }
-          />
-          <button className="btn btn-primary ms-1">
-            Cetak Laporan Pemindahan
-          </button>
-        </div>
+                  <p className="m-0 mt-3">Tujuan Pindah</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) => {
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        to: e.target.value,
+                      });
+                    }}
+                  >
+                    <option value="">--Pilih Tujuan Barang--</option>
+                    {dataLokasi.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-3">Penerima</p>
+                  <select
+                    className="form-select"
+                    onChange={(e) => {
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        userId: e.target.value,
+                      });
+                    }}
+                  >
+                    <option value="">--Pilih Penerima--</option>
+                    {allUser.map((e) => {
+                      return (
+                        <option value={e.id} key={e.id}>
+                          {e.username}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="m-0 mt-3">Keterangan</p>
+                  <InputComponents
+                    type="text"
+                    classStyle="w-100 p-2"
+                    placeHolder="Keterangan"
+                    change={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        desc: e.target.value,
+                      })
+                    }
+                  />
+                  <p className="m-0 mt-3">Tanggal Pemindahan</p>
+                  <InputComponents
+                    type="date"
+                    classStyle="w-100 p-2"
+                    placeHolder="Tanggal Masuk"
+                    change={(e) =>
+                      setInputDataPindah({
+                        ...inputDataPindah,
+                        tgl_pindah: e.target.value,
+                      })
+                    }
+                  />
+                </>
+              }
+            />
+            <button className="btn btn-primary ms-1">
+              Cetak Laporan Pemindahan
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="card shadow-lg mb-4 mt-2 w-100">
@@ -277,7 +295,7 @@ const Pemindahan = () => {
           <div className="w-100">
             <SearchBarComponent
               submit={handleSearchBarang}
-              placeHolder="Cari data pemindahan..."
+              placeHolder="Cari data penempatan..."
               btnTitle="Cari"
               inputChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -307,12 +325,17 @@ const Pemindahan = () => {
                     <th>No</th>
                     <th>Kode Unit</th>
                     <th>Nama</th>
-                    <th>Asal Barang</th>
-                    <th>Tujuan Pindah</th>
+                    {user && user.role === "admin" && <th>Asal Barang</th>}
+                    {user && user.role === "admin" ? (
+                      <th>Tujuan Penempatan</th>
+                    ) : (
+                      <th>Penempatan</th>
+                    )}
+
                     <th>Penerima</th>
                     <th>Keterangan</th>
                     <th>Tanggal Pemindahan</th>
-                    <th>Aksi</th>
+                    {user && user.role === "admin" && <th>Aksi</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -323,21 +346,26 @@ const Pemindahan = () => {
                           <td>
                             {index + 1 + inputQuery.page * inputQuery.limit}
                           </td>
-                          <td>{e.id.split("-").pop()}</td>
-                          <td>{e.barang_unit.barang?.name ?? "-"}</td>
-                          <td>{e.pindah_from?.name ?? "-"}</td>
+                          <td>{e.barang_unit?.kode_barang ?? "-"}</td>
+                          <td>{e.barang_unit?.barang?.name ?? "-"}</td>
+
+                          {user && user.role === "admin" && (
+                            <td>{e.pindah_from?.name ?? "-"}</td>
+                          )}
                           <td>{e.pindah_to?.name ?? "-"}</td>
                           <td>{e.user?.username ?? "-"}</td>
-                          <td>{e.desc}</td>
-                          <td>{e.tgl_pindah?.slice(0, 10)}</td>
-                          <td>
-                            <button
-                              className="btn btn-danger ms-1"
-                              onClick={() => deleteDataPindah(e.id)}
-                            >
-                              Hapus
-                            </button>
-                          </td>
+                          <td>{e?.desc ?? "-"}</td>
+                          <td>{e.tgl_pindah?.slice(0, 10) ?? "-"}</td>
+                          {user && user.role === "admin" && (
+                            <td>
+                              <button
+                                className="btn btn-danger ms-1"
+                                onClick={() => setPindahId(e.id)}
+                              >
+                                {<BsTrash3 />}
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -386,4 +414,4 @@ const Pemindahan = () => {
   );
 };
 
-export default Pemindahan;
+export default Penempatan;

@@ -8,11 +8,16 @@ import SearchBarComponent from "../components/SearchBarComponent";
 import { getAllBarang } from "../features/barangSlice";
 import { getPermintaan } from "../features/permintaanSlice";
 import SpinnerLoading from "../components/SpinnerLoading";
+import ModalEditComponent from "../components/ModalEditComponent";
 
 const PermintaanPage = () => {
   // VARIABEL
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const [ubahId, setUbahId] = useState(null);
+  const handleCloseEdit = () => setUbahId(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const handleCloseDelete = () => setDeleteId(null);
   const [inputQuery, setInputQuery] = useState({
     page: 0,
     limit: 10,
@@ -22,8 +27,13 @@ const PermintaanPage = () => {
     barangId: "",
     qty: "",
   });
+  const [inputEditPermintaan, setInputEditPermintaan] = useState({
+    qty: "",
+    status: "",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [show, setShow] = useState(false);
+
   const permintaanState = useSelector((state) => state.permintaan?.permintaan);
   const permintaanData = permintaanState?.data || {};
   const allBarang = useSelector((state) => state.barang.all_barang?.data) || [];
@@ -67,12 +77,16 @@ const PermintaanPage = () => {
     }
   };
 
-  const updateStatusPemindahan = async (id) => {
+  const updateStatusPemindahan = async () => {
     try {
-      const response = await axios.patch(`${url}/permintaan/update/${id}`);
+      const response = await axios.patch(
+        `${url}/permintaan/update/${ubahId}`,
+        inputEditPermintaan
+      );
       if (response.status === 200) {
         dispatch(getPermintaan(inputQuery));
         alert(response.data.msg);
+        handleCloseEdit();
       }
     } catch (error) {
       if (error.response) {
@@ -83,11 +97,13 @@ const PermintaanPage = () => {
     }
   };
 
-  const deletePermintaan = async (id) => {
+  const deletePermintaan = async () => {
     try {
-      const response = await axios.delete(`${url}/permintaan/del/${id}`);
+      const response = await axios.delete(`${url}/permintaan/del/${deleteId}`);
       if (response.status === 200) {
+        alert(response.data.msg);
         dispatch(getPermintaan(inputQuery));
+        handleCloseDelete();
         setInputQuery({
           ...inputQuery,
           page: 0,
@@ -109,6 +125,59 @@ const PermintaanPage = () => {
   // FUNCTION
   return (
     <div>
+      {deleteId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseDelete}
+          submit={deletePermintaan}
+          modalTitle="Konfirmasi"
+          btnTitle="Hapus"
+          body={<p>Yakin ingin menghapus data permintaan?</p>}
+        />
+      )}
+      {ubahId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseEdit}
+          submit={updateStatusPemindahan}
+          modalTitle="Ubah Data Permintaan"
+          body={
+            <>
+              <p className="m-0 mb-2">Jumlah</p>
+              <InputComponents
+                placeHolder="Qty"
+                classStyle="w-100 p-2"
+                val={inputEditPermintaan.qty || ""}
+                type="number"
+                change={(e) =>
+                  setInputEditPermintaan({
+                    ...inputEditPermintaan,
+                    qty: e.target.value,
+                  })
+                }
+              />
+              {user && user.role === "admin" && (
+                <>
+                  <p className="m-0 my-2">Status Permintaan</p>
+                  <select
+                    className="form-select"
+                    value={inputEditPermintaan.status}
+                    onChange={(e) =>
+                      setInputEditPermintaan({
+                        ...inputEditPermintaan,
+                        status: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">--Pilih--</option>
+                    <option value="disetujui">disetujui</option>
+                    <option value="belum disetujui">belum disetujui</option>
+                    <option value="ditolak">ditolak</option>
+                  </select>
+                </>
+              )}
+            </>
+          }
+        />
+      )}
       <h4>PERMINTAAN USER</h4>
       <ModalComponent
         classStyle="btn btn-primary me-3 mt-3 mb-2"
@@ -208,23 +277,27 @@ const PermintaanPage = () => {
                         <td>{item.qty}</td>
                         <td>{item.createdAt.slice(0, 10)}</td>
                         <td>{item.user.loc_user?.name ?? "-"}</td>
-                        <td>{item.status}</td>
+                        <td className="fw-bold">{item.status}</td>
                         <td className="text-center">
                           <button
-                            className="btn btn-danger"
-                            onClick={() => deletePermintaan(item.id)}
+                            disabled={item.status === "disetujui" && true}
+                            className="btn btn-primary"
+                            onClick={() => {
+                              setUbahId(item.id);
+                              setInputEditPermintaan({
+                                qty: item.qty,
+                                status: item.status,
+                              });
+                            }}
+                          >
+                            Ubah
+                          </button>
+                          <button
+                            className="ms-1 btn btn-danger"
+                            onClick={() => setDeleteId(item.id)}
                           >
                             Hapus
                           </button>
-                          {user && user.role === "admin" && (
-                            <button
-                              className="btn btn-primary ms-1"
-                              onClick={() => updateStatusPemindahan(item.id)}
-                              disabled={item.status === "disetujui"}
-                            >
-                              Setujui
-                            </button>
-                          )}
                         </td>
                       </tr>
                     ))}

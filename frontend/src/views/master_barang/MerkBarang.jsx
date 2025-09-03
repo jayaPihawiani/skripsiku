@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
@@ -19,6 +20,8 @@ const MerkBarang = () => {
     setMerkId(null);
     setDataMerkEdit({ name: "", desc: "" });
   };
+  const [deleteMerkId, setDeleteMerkId] = useState(null);
+  const handleCloseDelete = () => setDeleteMerkId(null);
   const dispatch = useDispatch();
   const detailBarang = useSelector((state) => state.detail_barang?.merk);
   const merkBarang = detailBarang.merk?.result || [];
@@ -59,7 +62,8 @@ const MerkBarang = () => {
         });
 
         dispatch(getMerkBarang(inputQuery));
-        alert("Berhasil menghapus data.");
+        alert(response.data.msg);
+        handleCloseDelete();
       }
     } catch (error) {
       console.error(error.response.data.msg);
@@ -158,6 +162,15 @@ const MerkBarang = () => {
           }
         />
       )}
+      {deleteMerkId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseDelete}
+          modalTitle="Konfirmasi"
+          btnTitle="Hapus"
+          submit={() => deleteDataMerk(deleteMerkId)}
+          body={<p>Yakin ingin menghapus data merk?</p>}
+        />
+      )}
       <AlertNotify
         showAlert={alertShow}
         alertMsg="Berhasil menambah data merk"
@@ -252,13 +265,13 @@ const MerkBarang = () => {
                               }}
                               // onClick={() => navigate(`edit/${item.id}`)}
                             >
-                              Ubah
+                              <BsPencilSquare />
                             </button>
                             <button
                               className="btn btn-danger ms-1"
-                              onClick={() => deleteDataMerk(item.id)}
+                              onClick={() => setDeleteMerkId(item.id)}
                             >
-                              Hapus
+                              {<BsTrash3 />}
                             </button>
                           </td>
                         </tr>

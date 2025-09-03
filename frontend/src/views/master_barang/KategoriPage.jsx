@@ -1,13 +1,13 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import ModalComponent from "../../components/ModalComponent";
-import SearchBarComponent from "../../components/SearchBarComponent";
 import ModalEditComponent from "../../components/ModalEditComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
 import SpinnerLoading from "../../components/SpinnerLoading";
 import { LoadingContext } from "../../context/Loading";
 import { getKategoriBarang } from "../../features/detailBarang";
@@ -17,8 +17,9 @@ const KategoriPage = () => {
   const url = import.meta.env.VITE_API_URL;
   const [kategoriId, setKategoriId] = useState(null);
   const handleCloseEdit = () => setKategoriId(null);
+  const [deleteKategoriId, setDeleteKategoriId] = useState(null);
+  const handleCloseDelete = () => setDeleteKategoriId(null);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const detailBarang = useSelector((state) => state.detail_barang?.kategori);
   const kategoriBarang = detailBarang.kategori?.result || [];
   const [show, setShow] = useState(false);
@@ -57,7 +58,8 @@ const KategoriPage = () => {
       if (response.status === 200) {
         setInputQuery({ ...inputQuery, page: 0 });
         dispatch(getKategoriBarang(inputQuery));
-        alert("Berhasil menghapus data.");
+        alert(response.data.msg);
+        handleCloseDelete();
       }
     } catch (error) {
       console.error(error.response.data.msg);
@@ -126,6 +128,14 @@ const KategoriPage = () => {
 
   return (
     <>
+      {deleteKategoriId && (
+        <ModalEditComponent
+          modalTitle="Konfirmasi"
+          handleCloseEdit={handleCloseDelete}
+          submit={() => deleteDataKategori(deleteKategoriId)}
+          body={<p>Yakin ingin menghapus data kategori?</p>}
+        />
+      )}
       {kategoriId && (
         <ModalEditComponent
           modalTitle="Ubah Data Kategori"
@@ -288,13 +298,13 @@ const KategoriPage = () => {
                                 });
                               }}
                             >
-                              Ubah
+                              {<BsPencilSquare />}
                             </button>
                             <button
                               className="btn btn-danger ms-1"
-                              onClick={() => deleteDataKategori(item.id)}
+                              onClick={() => setDeleteKategoriId(item.id)}
                             >
-                              Hapus
+                              {<BsTrash3 />}
                             </button>
                           </td>
                         </tr>

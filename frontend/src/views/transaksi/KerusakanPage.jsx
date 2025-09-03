@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
@@ -23,19 +24,20 @@ const KerusakanPage = () => {
   const dispatch = useDispatch();
   const [rusakId, setRusakId] = useState(null);
   const handleCloseEdit = () => setRusakId(null);
+  const [hapusRusakId, setHapusRusakId] = useState(null);
+  const handleCloseDelete = () => setHapusRusakId(null);
   const kategoriRusakState =
     useSelector((state) => state.kategori_rusak.all_kategori_kerusakan?.data) ||
     [];
   const [detailKerusakan, setDetailKerusakan] = useState([]);
   const [statusPerbaikanEdit, setStatusPerbaikanEdit] = useState("");
   const rusakState = useSelector((state) => state.barang.barang_rusak);
-  const dataBarangRusak = rusakState?.data || [];
+  const dataBrgRusak = rusakState?.data || [];
   const allLokasi =
     useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
   const barangByLoc =
     useSelector((state) => state.barang.barang_rusak_by_loc?.data) || [];
   const userState = useSelector((state) => state.auth);
-  const [dataBrgRusak, setDataBrgRusak] = useState([]);
   const [alertShow, SetAlertShow] = useState(false);
   const [show, setShow] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,7 +47,6 @@ const KerusakanPage = () => {
     riwayat_pemeliharaan: "",
     sebab_kerusakan: "",
     status_perbaikan: "",
-    locBarang: "",
   });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
@@ -64,8 +65,6 @@ const KerusakanPage = () => {
   // FUNCTION
 
   const addDataKerusakan = async () => {
-    console.log(inputKerusakan);
-
     try {
       setLoading(true);
       const response = await axios.post(`${url}/rusak/create`, inputKerusakan);
@@ -115,13 +114,14 @@ const KerusakanPage = () => {
     }
   };
 
-  const deleteDataKerusakan = async (id) => {
+  const deleteDataKerusakan = async () => {
     try {
-      const response = await axios.delete(`${url}/rusak/del/${id}`);
+      const response = await axios.delete(`${url}/rusak/del/${hapusRusakId}`);
       if (response.status === 200) {
         alert("Berhasil menghapus data kerusakan.");
         dispatch(getBrgRusak(inputQuery));
         setInputQuery({ ...inputQuery, page: 0 });
+        handleCloseDelete();
       }
     } catch (error) {
       if (error.response) {
@@ -184,15 +184,18 @@ const KerusakanPage = () => {
     dispatch(getAllKategoriKerusakan());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (rusakState.data && rusakState.isSuccess) {
-      setDataBrgRusak(rusakState.data);
-    }
-  }, [rusakState.data, rusakState.isSuccess]);
-
   // MAIN
   return (
     <>
+      {hapusRusakId && (
+        <ModalEditComponent
+          modalTitle="Konfirmasi"
+          handleCloseEdit={handleCloseDelete}
+          submit={deleteDataKerusakan}
+          body={<p>Yakin ingin menghapus data kerusakan?</p>}
+          btnTitle="Hapus"
+        />
+      )}
       {rusakId && (
         <ModalEditComponent
           modalTitle="Ubah Status Perbaikan"
@@ -277,7 +280,7 @@ const KerusakanPage = () => {
                     barangByLoc.map((item) => {
                       return (
                         <option value={item.id} key={item.id}>
-                          {`${item.id.split("-").pop()} --- ${
+                          {`${item?.kode_barang ?? "-"} --- ${
                             item.barang.name
                           }`}
                         </option>
@@ -403,7 +406,7 @@ const KerusakanPage = () => {
               <option value="">lokasi</option>
               {allLokasi.map((e) => {
                 return (
-                  <option value={e.id} key={e.id}>
+                  <option value={e.name} key={e.id}>
                     {e.name}
                   </option>
                 );
@@ -465,15 +468,15 @@ const KerusakanPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {dataBrgRusak.brg_rusak &&
-                  dataBrgRusak.brg_rusak.map((item, index) => {
+                {dataBrgRusak.result &&
+                  dataBrgRusak.result.map((item, index) => {
                     return (
                       <tr key={item.id}>
                         <td>
                           {index + 1 + inputQuery.page * inputQuery.limit}
                         </td>
-                        <td>{item.id.split("-").pop()}</td>
-                        <td>{item.barang?.name ?? "-"}</td>
+                        <td>{item.barang_unit?.kode_barang ?? "-"}</td>
+                        <td>{item.barang_unit.barang?.name ?? "-"}</td>
                         <td>{item.sebab_kerusakan}</td>
                         <td>{item.desc}</td>
                         <td>{item.status_perbaikan}</td>
@@ -481,7 +484,7 @@ const KerusakanPage = () => {
                           {item.status_perbaikan === "SEDANG DIPERBAIKI" ||
                           item.status_perbaikan === "BELUM DIPERBAIKI"
                             ? "Proses Hitung"
-                            : formatTahunBulan(item.umur_ekonomis)}
+                            : formatTahunBulan(item.barang_unit.umur_ekonomis)}
                         </td>
                         <td>
                           {item.status_perbaikan === "SEDANG DIPERBAIKI" ||
@@ -489,7 +492,7 @@ const KerusakanPage = () => {
                             ? "-"
                             : `Disusut ${item.riwayat_pemeliharaan} %`}
                         </td>
-                        <td>{item.loc_barang?.name ?? "-"}</td>
+                        <td>{item.barang_unit.loc_barang?.name ?? "-"}</td>
                         {userState.data && userState.data.role === "admin" && (
                           <td className="text-center">
                             <button
@@ -499,13 +502,13 @@ const KerusakanPage = () => {
                                 setStatusPerbaikanEdit(item.status_perbaikan);
                               }}
                             >
-                              Ubah
+                              <BsPencilSquare />
                             </button>
                             <button
                               className="btn btn-danger ms-1"
-                              onClick={() => deleteDataKerusakan(item.id)}
+                              onClick={() => setHapusRusakId(item.id)}
                             >
-                              Hapus
+                              <BsTrash3 />
                             </button>
                           </td>
                         )}
@@ -514,10 +517,10 @@ const KerusakanPage = () => {
                   })}
               </tbody>
             </table>
-            {dataBrgRusak.brg_rusak && dataBrgRusak.brg_rusak.length === 0 && (
+            {dataBrgRusak.result && dataBrgRusak.result.length === 0 && (
               <p>Data tidak ditemukan!</p>
             )}
-            {dataBrgRusak.brg_rusak && (
+            {dataBrgRusak && (
               <p className="text-end">
                 Total row: <strong>{dataBrgRusak.count}</strong> page{" "}
                 <strong>
@@ -532,9 +535,7 @@ const KerusakanPage = () => {
                   previousLabel={"<<"}
                   nextLabel={">>"}
                   breakLabel={"..."}
-                  pageCount={
-                    dataBrgRusak.brg_rusak ? dataBrgRusak.totalPage : 0
-                  }
+                  pageCount={dataBrgRusak ? dataBrgRusak.totalPage : 0}
                   marginPagesDisplayed={2}
                   pageRangeDisplayed={5}
                   onPageChange={handlePageClick}

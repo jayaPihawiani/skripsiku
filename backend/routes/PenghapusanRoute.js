@@ -20,11 +20,11 @@ penghapusanRoute.delete(
   isAdmin,
   penghapusan.deletePenghapusan
 );
-// penghapusanRoute.patch(
-//   "/update/:id",
-//   verifyUser,
-//   isAdmin,
-//   penghapusan.
-// );
+penghapusanRoute.patch(
+  "/update/:id",
+  verifyUser,
+  isAdmin,
+  penghapusan.updateStatusPersetujuan
+);
 
 export default penghapusanRoute;

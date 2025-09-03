@@ -5,7 +5,6 @@ import BarangUnitModel from "../models/BarangUnitModel.js";
 import Kategori from "../models/KategoriBarang.js";
 import Lokasi from "../models/LokasiModel.js";
 import MerkBrg from "../models/MerkModel.js";
-import Penghapusan from "../models/PenghapusanModel.js";
 
 class BarangController {
   bulanPerTahun = 12;
@@ -37,7 +36,7 @@ class BarangController {
       kondisi,
       merk,
       kategori,
-      lokasi_bkarang,
+      lokasi_barang,
     } = req.body;
 
     if (
@@ -129,9 +128,13 @@ class BarangController {
 
       // 👇 Hanya untuk barang yang baru dibuat
       for (let i = 0; i < newBarang.qty; i++) {
+        const miliSecond = new Date().getTime().toString().slice(-3);
+        const year = new Date().getFullYear();
+        const sliceName = name.slice(0, 3);
+
         await BarangUnitModel.create({
           barangId: newBarang.id,
-          kode_unit: `${newBarang.name}-${i + 1}`,
+          kode_barang: `${sliceName}.${year}.${miliSecond}.${i + 1}`,
           desc: newBarang.desc,
           tgl_beli: newBarang.tgl_beli,
           harga: newBarang.harga,
@@ -157,26 +160,63 @@ class BarangController {
     const page = parseInt(req.query.page) || 0;
     const search = req.query.search || "";
     const offset = limit * page;
+    const kategori = req.query.kategori || "";
+    const lokasi = req.query.lokasi || "";
     let totalPage;
     try {
       const count = await BarangUnitModel.count({
-        include: {
-          model: Barang,
-          where: {
-            name: { [Op.like]: `%${search}%` },
+        where: {
+          status_penghapusan: {
+            [Op.or]: ["null", "diusul", "ditolak"],
           },
         },
+        include: [
+          {
+            model: Barang,
+            where: {
+              name: { [Op.like]: `%${search}%` },
+            },
+          },
+          {
+            model: Kategori,
+            as: "kategori_brg",
+            where: {
+              name: { [Op.like]: `%${kategori}%` },
+            },
+          },
+          {
+            model: Lokasi,
+            as: "loc_barang",
+            where: {
+              name: { [Op.like]: `%${lokasi}%` },
+            },
+          },
+        ],
       });
 
       totalPage = Math.ceil(count / limit);
 
       const result = await BarangUnitModel.findAll({
+        where: {
+          status_penghapusan: {
+            [Op.or]: ["null", "diusul", "ditolak"],
+          },
+        },
         include: [
           { model: Lokasi, as: "loc_asal" },
-          { model: Lokasi, as: "loc_barang" },
+          {
+            model: Lokasi,
+            as: "loc_barang",
+            where: {
+              name: { [Op.like]: `%${lokasi}%` },
+            },
+          },
           {
             model: Kategori,
             attributes: ["name", "desc", "masa_ekonomis"],
+            where: {
+              name: { [Op.like]: `%${kategori}%` },
+            },
           },
           {
             model: Barang,
@@ -213,7 +253,7 @@ class BarangController {
     const search = req.query.search || "";
     try {
       const barangUnit = await BarangUnitModel.findAll({
-        where: { lokasi_barang: { [Op.like]: `%${search}%` } },
+        where: { lokasi_barang: { [Op.like]: `%${search}%` }, status: "baik" },
         include: { model: Barang },
         order: [["createdAt", "ASC"]],
       });
@@ -243,11 +283,7 @@ class BarangController {
         include: [
           { model: MerkBrg, attributes: ["name", "desc"] },
           { model: Kategori, attributes: ["name", "desc", "masa_ekonomis"] },
-          { model: Lokasi, attributes: ["name", "desc"] },
-          {
-            model: Penghapusan,
-            attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
-          },
+          { model: Lokasi, attributes: ["id", "name", "desc"] },
         ],
         attributes: [
           "id",
@@ -284,10 +320,6 @@ class BarangController {
           { model: MerkBrg, attributes: ["name", "desc"] },
           { model: Kategori, attributes: ["name", "desc"] },
           { model: Lokasi, attributes: ["name", "desc"] },
-          {
-            model: Penghapusan,
-            attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
-          },
         ],
         attributes: [
           "id",
@@ -318,10 +350,6 @@ class BarangController {
         include: [
           { model: MerkBrg, attributes: ["name", "desc"] },
           { model: Kategori, attributes: ["name", "desc", "masa_ekonomis"] },
-          {
-            model: Penghapusan,
-            attributes: ["desc", "qty", "tgl_hapus", "file", "url"],
-          },
         ],
         attributes: [
           "id",
@@ -348,17 +376,7 @@ class BarangController {
   };
 
   updateBarang = async (req, res) => {
-    const {
-      name,
-      desc,
-      qty,
-      tgl_beli,
-      harga,
-      kondisi,
-      merk,
-      kategori,
-      umur_ekonomis,
-    } = req.body;
+    const { name, desc } = req.body;
 
     try {
       const barang = await Barang.findByPk(req.params.id);
@@ -370,13 +388,6 @@ class BarangController {
         {
           name,
           desc,
-          qty,
-          tgl_beli,
-          harga,
-          kondisi,
-          merk,
-          kategori,
-          umur_ekonomis,
         },
         { where: { id: barang.id } }
       );
@@ -387,9 +398,46 @@ class BarangController {
     }
   };
 
+  updateDetailBarang = async (req, res) => {
+    const { kode_barang, lokasi_barang, lokasi_asal, tgl_beli } = req.body;
+    try {
+      const barangUnit = await BarangUnitModel.findByPk(req.params.id);
+      if (!barangUnit) {
+        return res
+          .status(404)
+          .json({ msg: "Data unit barang tidak ditemukan!" });
+      }
+
+      if (!kode_barang) {
+        await BarangUnitModel.update(
+          {
+            kode_barang: barangUnit.kode_barang,
+            lokasi_barang,
+            lokasi_asal,
+            tgl_beli,
+          },
+          { where: { id: barangUnit.id } }
+        );
+      } else {
+        await BarangUnitModel.update(
+          { kode_barang, lokasi_barang, lokasi_asal, tgl_beli },
+          { where: { id: barangUnit.id } }
+        );
+      }
+
+      res.status(200).json({ msg: "Berhasil ubah data unit barang." });
+    } catch (error) {
+      if (error.name === "SequelizeUniqueConstraintError") {
+        return res.status(400).json({
+          msg: "Kode barang sudah digunakan!",
+        });
+      }
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
   // updatePenyusutan = async (req, res) => {
   //   try {
-  //     // Ambil semua unit barang, include kategori untuk ambil masa ekonomis
   //     const unitList = await BarangUnitModel.findAll({
   //       include: [
   //         {
@@ -401,55 +449,62 @@ class BarangController {
   //     });
 
   //     const bulanPerTahun = 12;
+  //     const now = new Date();
 
   //     for (const unit of unitList) {
-  //       const tglBeli = new Date(unit.tgl_beli);
-  //       const now = new Date();
+  //       // Jika status perbaikan / status rusak permanen → langsung nol
+  //       if (
+  //         unit.status_perbaikan === "SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN" ||
+  //         unit.status_perbaikan === "TIDAK BISA DIPERBAIKI"
+  //       ) {
+  //         await unit.update({
+  //           penyusutan_berjalan: unit.harga,
+  //           nilai_buku: 0,
+  //           umur_ekonomis: 0,
+  //           status_penghapusan: "diusul", // langsung dianggap dihapus
+  //         });
+  //         continue; // skip hitung normal
+  //       }
 
-  //       // Hitung selisih bulan dari pembelian sampai sekarang
+  //       // Hitung selisih bulan sejak pembelian
+  //       const tglBeli = new Date(unit.tgl_beli);
   //       const selisihBulan =
   //         (now.getFullYear() - tglBeli.getFullYear()) * 12 +
   //         (now.getMonth() - tglBeli.getMonth());
 
-  //       // Ambil masa ekonomis (tahun → bulan)
   //       const masaEkonomisBulan =
   //         unit.kategori_brg.masa_ekonomis * bulanPerTahun;
 
-  //       // Penyusutan per bulan
   //       const penyusutanPerBulan = unit.harga / masaEkonomisBulan;
 
-  //       // Total penyusutan (tidak boleh lebih dari harga)
   //       const totalPenyusutan = Math.min(
   //         selisihBulan * penyusutanPerBulan,
   //         unit.harga
   //       );
 
-  //       // Nilai buku minimal 0
   //       const nilaiBuku = Math.max(0, unit.harga - totalPenyusutan);
 
-  //       // Hitung umur ekonomis tersisa (dalam tahun, 1 desimal)
   //       const umurEkonomisTersisa = parseFloat(
   //         (
   //           Math.max(masaEkonomisBulan - selisihBulan, 0) / bulanPerTahun
   //         ).toFixed(1)
   //       );
 
-  //       // Update data unit
-  //       await BarangUnitModel.update(
-  //         {
-  //           penyusutan_berjalan: totalPenyusutan,
-  //           nilai_buku: nilaiBuku,
-  //           umur_ekonomis: umurEkonomisTersisa,
-  //         },
-  //         { where: { id: unit.id } }
-  //       );
+  //       await unit.update({
+  //         penyusutan_berjalan: totalPenyusutan,
+  //         nilai_buku: nilaiBuku,
+  //         umur_ekonomis: umurEkonomisTersisa,
+  //         status_penghapusan: nilaiBuku === 0 ? "diusul" : "null",
+  //       });
   //     }
 
   //     res.status(200).json({
-  //       msg: "Berhasil update penyusutan semua unit barang.",
+  //       msg: "Berhasil update penyusutan semua unit barang (dengan mempertahankan kerusakan).",
   //     });
   //   } catch (error) {
-  //     res.status(500).json({ msg: "ERROR: " + error.message });
+  //     res
+  //       .status(500)
+  //       .json({ msg: "ERROR: " + error.message, stack: error.stack });
   //   }
   // };
 
@@ -469,20 +524,30 @@ class BarangController {
       const now = new Date();
 
       for (const unit of unitList) {
-        // Jika status perbaikan / status rusak permanen → langsung nol
+        // Jika status perbaikan / rusak permanen → langsung 0
         if (
           unit.status_perbaikan === "SELESAI DIPERBAIKI TIDAK BISA DIGUNAKAN" ||
           unit.status_perbaikan === "TIDAK BISA DIPERBAIKI"
         ) {
-          await unit.update({
+          const updateData = {
             penyusutan_berjalan: unit.harga,
             nilai_buku: 0,
             umur_ekonomis: 0,
-          });
-          continue; // skip hitung normal
+          };
+
+          // hanya update status_penghapusan kalau masih null/diusul
+          if (
+            unit.status_penghapusan === "null" ||
+            unit.status_penghapusan === "diusul"
+          ) {
+            updateData.status_penghapusan = "diusul";
+          }
+
+          await unit.update(updateData);
+          continue;
         }
 
-        // Hitung selisih bulan sejak pembelian
+        // Hitung umur ekonomis normal
         const tglBeli = new Date(unit.tgl_beli);
         const selisihBulan =
           (now.getFullYear() - tglBeli.getFullYear()) * 12 +
@@ -490,7 +555,6 @@ class BarangController {
 
         const masaEkonomisBulan =
           unit.kategori_brg.masa_ekonomis * bulanPerTahun;
-
         const penyusutanPerBulan = unit.harga / masaEkonomisBulan;
 
         const totalPenyusutan = Math.min(
@@ -506,18 +570,31 @@ class BarangController {
           ).toFixed(1)
         );
 
-        await unit.update({
+        const updateData = {
           penyusutan_berjalan: totalPenyusutan,
           nilai_buku: nilaiBuku,
           umur_ekonomis: umurEkonomisTersisa,
-        });
+        };
+
+        // kalau nilai buku 0, usulkan hapus (kecuali sudah disetujui/ditolak)
+        if (
+          nilaiBuku === 0 &&
+          (unit.status_penghapusan === "null" ||
+            unit.status_penghapusan === "diusul")
+        ) {
+          updateData.status_penghapusan = "diusul";
+        }
+
+        await unit.update(updateData);
       }
 
       res.status(200).json({
-        msg: "Berhasil update penyusutan semua unit barang (dengan mempertahankan kerusakan).",
+        msg: "Berhasil update penyusutan semua unit barang (tanpa mengubah status penghapusan yang sudah disetujui/ditolak).",
       });
     } catch (error) {
-      res.status(500).json({ msg: "ERROR: " + error.message });
+      res
+        .status(500)
+        .json({ msg: "ERROR: " + error.message, stack: error.stack });
     }
   };
 
@@ -543,6 +620,21 @@ class BarangController {
       await Barang.destroy({ where: { id: barang.id } });
 
       res.status(200).json({ msg: "Berhasil menghapus data barang." });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error.message });
+    }
+  };
+
+  deleteDetailBarang = async (req, res) => {
+    try {
+      const barang = await BarangUnitModel.findByPk(req.params.id);
+      if (!barang) {
+        return res.status(404).json({ msg: "Data barang tidak ditemukan!" });
+      }
+
+      await BarangUnitModel.destroy({ where: { id: barang.id } });
+
+      res.status(200).json({ msg: "Berhasil menghapus data unit barang." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }

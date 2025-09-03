@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import InputComponents from "../components/InputComponents";
 import ModalComponent from "../components/ModalComponent";
 import SearchBarComponent from "../components/SearchBarComponent";
+import ModalEditComponent from "../components/ModalEditComponent";
 import { LoadingContext } from "../context/Loading";
 import { userInfo } from "../features/authSlice";
 import { getPengajuan } from "../features/pengajuanSlice";
@@ -13,6 +14,8 @@ const PengajuanPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const [hapusId, setHapusId] = useState(null);
+  const handleCloseHapus = () => setHapusId(null);
   const [file, setFile] = useState("");
   const pengajuanState = useSelector(
     (state) => state.pengajuan.pengajuan?.data
@@ -25,7 +28,7 @@ const PengajuanPage = () => {
   const [inputPengajuan, setInputPengajuan] = useState({
     name: "",
     desc: "",
-    qty: 0,
+    qty: "",
   });
   const [inputQuery, setInputQuery] = useState({
     page: 0,
@@ -50,9 +53,9 @@ const PengajuanPage = () => {
 
   // USE EFFECT
 
-  const deletepengajuan = async (id) => {
+  const deletepengajuan = async () => {
     try {
-      const response = await axios.delete(`${url}/pengajuan/del/${id}`);
+      const response = await axios.delete(`${url}/pengajuan/del/${hapusId}`);
       if (response.status === 200) {
         setInputQuery({
           ...inputQuery,
@@ -60,7 +63,8 @@ const PengajuanPage = () => {
         });
 
         dispatch(getPengajuan(inputQuery));
-        alert("Berhasil menghapus data.");
+        alert(response.data.msg);
+        handleCloseHapus();
       }
     } catch (error) {
       if (error.response) {
@@ -123,76 +127,79 @@ const PengajuanPage = () => {
 
   return (
     <>
-      <h4
-        className={
-          userState.data && userState.data.role === "admin" ? "mb-4" : ""
-        }
-      >
+      <h4>
         {userState.data && userState.data.role == "user"
           ? `DATA PENGAJUAN INVENTARIS RUANG ${
               userState.data.loc_user?.name ?? ""
             }`
           : `DATA PENGAJUAN INVENTARIS RUANGAN`}
       </h4>
-      {userState.data && userState.data.role === "user" && (
-        <ModalComponent
-          classStyle={"mt-4"}
-          btntTitle="Tambah"
-          modalTitle="Tambah Data pengajuan"
-          show={show}
-          handleClose={handleClose}
-          handleShow={handleShow}
-          handleSubmit={createpengajuan}
-          inputField={
-            <>
-              <p className="m-0">Nama Barang</p>
-              <InputComponents
-                classStyle="w-100 p-2"
-                placeHolder="Nama Barang"
-                change={(e) =>
-                  setInputPengajuan({
-                    ...inputPengajuan,
-                    name: e.target.value,
-                  })
-                }
-                val={inputPengajuan.name}
-              />
-              <p className="m-0 mt-2">Jumlah</p>
-              <InputComponents
-                type="number"
-                classStyle="w-100 p-2"
-                placeHolder="Qty"
-                change={(e) =>
-                  setInputPengajuan({
-                    ...inputPengajuan,
-                    qty: e.target.value,
-                  })
-                }
-                val={inputPengajuan.qty}
-              />
-              <p className="m-0 mt-2">Keterangan</p>
-              <InputComponents
-                classStyle="w-100 p-2"
-                placeHolder="Keterangan"
-                change={(e) =>
-                  setInputPengajuan({
-                    ...inputPengajuan,
-                    desc: e.target.value,
-                  })
-                }
-                val={inputPengajuan.desc}
-              />
-              <p className="m-0 mt-2">Unggah Dokumen Disposisi Surat</p>
-              <InputComponents
-                type="file"
-                classStyle="w-100 p-2"
-                change={setFileUpload}
-                //   val={inputPengajuan.desc}
-              />
-            </>
-          }
+      {hapusId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseHapus}
+          btnTitle="hapus"
+          modalTitle="Konfirmasi"
+          submit={deletepengajuan}
+          body={<p>Yakin ingin menghapus data pengajuan?</p>}
         />
       )}
+      <ModalComponent
+        classStyle={"mt-4"}
+        btntTitle="Tambah"
+        modalTitle="Tambah Data pengajuan"
+        show={show}
+        handleClose={handleClose}
+        handleShow={handleShow}
+        handleSubmit={createpengajuan}
+        inputField={
+          <>
+            <p className="m-0">Nama Barang</p>
+            <InputComponents
+              classStyle="w-100 p-2"
+              placeHolder="Nama Barang"
+              change={(e) =>
+                setInputPengajuan({
+                  ...inputPengajuan,
+                  name: e.target.value,
+                })
+              }
+              val={inputPengajuan.name}
+            />
+            <p className="m-0 mt-2">Jumlah</p>
+            <InputComponents
+              type="number"
+              classStyle="w-100 p-2"
+              placeHolder="Qty"
+              change={(e) =>
+                setInputPengajuan({
+                  ...inputPengajuan,
+                  qty: e.target.value,
+                })
+              }
+              val={inputPengajuan.qty}
+            />
+            <p className="m-0 mt-2">Keterangan</p>
+            <InputComponents
+              classStyle="w-100 p-2"
+              placeHolder="Keterangan"
+              change={(e) =>
+                setInputPengajuan({
+                  ...inputPengajuan,
+                  desc: e.target.value,
+                })
+              }
+              val={inputPengajuan.desc}
+            />
+            <p className="m-0 mt-2">Unggah Dokumen Disposisi Surat</p>
+            <InputComponents
+              type="file"
+              classStyle="w-100 p-2"
+              change={setFileUpload}
+              //   val={inputPengajuan.desc}
+            />
+          </>
+        }
+      />
       <div className="card me-4 mt-2 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
           <div className="w-100">
@@ -264,7 +271,7 @@ const PengajuanPage = () => {
                         <td className="text-center">
                           <button
                             className="btn btn-danger ms-1"
-                            onClick={() => deletepengajuan(item.id)}
+                            onClick={() => setHapusId(item.id)}
                           >
                             Hapus
                           </button>

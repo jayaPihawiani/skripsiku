@@ -1,8 +1,9 @@
 import { Op } from "sequelize";
-import Barang from "../models/BarangModel.js";
+import BarangUnitModel from "../models/BarangUnitModel.js";
 import Lokasi from "../models/LokasiModel.js";
 import BaseService from "./BaseService.js";
 import Pemindahan from "../models/Pemindahan.js";
+import Barang from "../models/BarangModel.js";
 
 class LokasiController extends BaseService {
   constructor() {
@@ -33,7 +34,12 @@ class LokasiController extends BaseService {
         where: {
           name: { [Op.like]: `%${search}%` },
         },
-        include: [{ model: Barang, include: [{ model: Pemindahan }] }],
+        include: {
+          model: BarangUnitModel,
+          as: "loc_barang",
+          attributes: ["id", "kode_barang"],
+          include: [{ model: Barang, attributes: ["name"] }],
+        },
         limit,
         offset,
         order: [["createdAt", "ASC"]],

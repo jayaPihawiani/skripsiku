@@ -127,11 +127,11 @@ export const getRusakDiperbaiki = createAsyncThunk(
 );
 
 export const getBarangUnit = createAsyncThunk(
-  "allBarangUnit/getAllBarangUnit",
+  "barangUnit/getBarangUnit",
   async (inputQuery, thunkApi) => {
     try {
       const response = await axios.get(
-        `${url}/barang/c/barang_unit?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}`
+        `${url}/barang/c/barang_unit?page=${inputQuery.page}&limit=${inputQuery.limit}&search=${inputQuery.search}&lokasi=${inputQuery.lokasi}&kategori=${inputQuery.kategori}`
       );
       return response.data;
     } catch (error) {

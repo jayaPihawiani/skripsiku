@@ -1,15 +1,15 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
-import AlertNotify from "../components/Alert";
-import InputComponents from "../components/InputComponents";
-import ModalComponent from "../components/ModalComponent";
-import ModalEditComponent from "../components/ModalEditComponent";
-import SearchBarComponent from "../components/SearchBarComponent";
-import { LoadingContext } from "../context/Loading";
-import { getDataLokasi } from "../features/detailBarang";
-
+import AlertNotify from "../../components/Alert";
+import InputComponents from "../../components/InputComponents";
+import ModalComponent from "../../components/ModalComponent";
+import ModalEditComponent from "../../components/ModalEditComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
+import { LoadingContext } from "../../context/Loading";
+import { getDataLokasi } from "../../features/detailBarang";
 const LokasiPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
@@ -92,7 +92,7 @@ const LokasiPage = () => {
       if (response.status === 200) {
         alert(response.data.msg);
         dispatch(getDataLokasi(inputQuery));
-        handleCloseEdit();
+        handleCloseEdit(setLocId);
       }
     } catch (error) {
       if (error.response) {
@@ -265,13 +265,13 @@ const LokasiPage = () => {
                               });
                             }}
                           >
-                            Ubah
+                            {<BsPencilSquare />}
                           </button>
                           <button
                             className="btn btn-danger ms-1"
                             onClick={() => setLocHapusId(item.id)}
                           >
-                            Hapus
+                            {<BsTrash3 />}
                           </button>
                         </td>
                       </tr>

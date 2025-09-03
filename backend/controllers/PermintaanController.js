@@ -3,6 +3,8 @@ import Barang from "../models/BarangModel.js";
 import Lokasi from "../models/LokasiModel.js";
 import Permintaan from "../models/Permintaan.js";
 import User from "../models/UserModels.js";
+import BarangUnitModel from "../models/BarangUnitModel.js";
+import Pemindahan from "../models/Pemindahan.js";
 
 class PermintaanController {
   createPermintaan = async (req, res) => {
@@ -127,25 +129,74 @@ class PermintaanController {
   };
 
   updateStatusPermintaan = async (req, res) => {
+    const { qty, status } = req.body;
     try {
       const permintaan = await Permintaan.findByPk(req.params.id, {
-        include: { model: Barang },
+        include: [
+          { model: Barang },
+          { model: User, include: [{ model: Lokasi, as: "loc_user" }] },
+        ],
       });
 
-      if (permintaan.qty > permintaan.barang.qty) {
-        return res.status(400).json({ msg: "Barang inventaris kosong!" });
+      const barangName = permintaan.barang.name;
+
+      const lokasi = await Lokasi.findOne({
+        where: { name: "ASET & PERLENGKAPAN" },
+      });
+      const lokasiId = lokasi.id;
+      const locUser = permintaan.user.lokasiId;
+      const userId = permintaan.user.id;
+
+      const jumlahBarangUnit = await BarangUnitModel.count({
+        include: {
+          required: true,
+          model: Barang,
+          where: { name: barangName },
+        },
+        where: { lokasi_barang: lokasiId },
+      });
+
+      if (qty > jumlahBarangUnit) {
+        return res.status(400).json({ msg: "Input jumlah tidak valid!" });
       }
 
-      await Barang.update(
-        { qty: permintaan.barang.qty - parseInt(permintaan.qty) },
-        { where: { id: permintaan.barang.id } }
-      );
-      await Permintaan.update(
-        { status: "disetujui" },
-        { where: { id: req.params.id } }
-      );
+      if (status === "disetujui") {
+        await Permintaan.update(
+          { qty, status },
+          { where: { id: req.params.id } }
+        );
 
-      res.status(200).json({ msg: "Berhasil menyetujui permintaan." });
+        const brgUnit = await BarangUnitModel.findAll({
+          include: {
+            required: true,
+            model: Barang,
+            where: { name: barangName },
+          },
+          where: { lokasi_barang: lokasiId },
+          limit: Number(qty),
+        });
+
+        for (let item of brgUnit) {
+          await Pemindahan.create({
+            barangUnitId: item.id,
+            userId,
+            from: lokasiId,
+            to: locUser,
+          });
+          await BarangUnitModel.update(
+            { lokasi_barang: locUser },
+            { where: { id: item.id } }
+          );
+        }
+      } else {
+        await Permintaan.update(
+          { qty, status },
+          { where: { id: req.params.id } }
+        );
+      }
+
+      // res.status(200).json({ locUser });
+      res.status(200).json({ msg: "Berhasil ubah data permintaan." });
     } catch (error) {
       res.status(500).json({ msg: "ERROR: " + error.message });
     }
