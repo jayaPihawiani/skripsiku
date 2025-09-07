@@ -19,12 +19,13 @@ Aplikasi ini dibangun menggunakan
 ### Cara menjalankan
 
 - Buka terminal (`CMD`) atau (`GitBash`)
+- Masuk directory file code
   - ![alt text](image.png)
-- Masuk ke `directory root` tempat folder backend
-  - Contoh `C:\backend\`
+- Masuk ke `directory root` tempat folder backend dengan ketik `cd backend`
+  - ![alt text](image-1.png)
   - Ketik `nodemon index` untuk menjalankan server
-- Masuk ke `directory root` tempat folder frontend
-  - Contoh `C:\frontend\`
+- Masuk ke `directory root` tempat folder frontend dengan ketik `cd frontend`
+  - ![alt text](image-2.png)
   - Ketik `npm run dev` untuk menjalankan vite client
 
 # Credit
