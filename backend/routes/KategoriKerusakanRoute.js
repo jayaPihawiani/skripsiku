@@ -36,7 +36,7 @@ kategoriRusakRoute.get(
   kategoriKerusakan.getKategoriKerusakanyJenis
 );
 kategoriRusakRoute.patch(
-  "/update",
+  "/update/:id",
   verifyUser,
   isAdmin,
   kategoriKerusakan.updateKategoriKerusakan
@@ -59,12 +59,6 @@ detailRusakRoute.get(
   verifyUser,
   isAdmin,
   detailKerusakan.getDetailKerusakan
-);
-detailRusakRoute.patch(
-  "/update",
-  verifyUser,
-  isAdmin,
-  detailKerusakan.updateDetailKerusakan
 );
 detailRusakRoute.delete(
   "/del/:id",

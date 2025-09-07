@@ -82,7 +82,33 @@ class KategoriKerusakanController {
     }
   };
 
-  updateKategoriKerusakan = async (req, res) => {};
+  updateKategoriKerusakan = async (req, res) => {
+    try {
+      const { jenis } = req.body;
+      const kategoriRusak = await KategoriKerusakan.findByPk(req.params.id);
+      if (!kategoriRusak) {
+        return res
+          .status(404)
+          .json({ msg: "Data kategori kerusakan tidak ditemukan!" });
+      }
+
+      if (!jenis) {
+        await KategoriKerusakan.update(
+          { jenis: kategoriRusak.jenis },
+          { where: { id: kategoriRusak.id } }
+        );
+      } else {
+        await KategoriKerusakan.update(
+          { jenis },
+          { where: { id: kategoriRusak.id } }
+        );
+      }
+
+      res.status(200).json({ msg: "Berhasil update data kategori kerusakan." });
+    } catch (error) {
+      res.status(500).json({ msg: "ERROR: " + error });
+    }
+  };
 
   deleteKategoriKerusakan = async (req, res) => {
     try {
@@ -131,8 +157,6 @@ class DetailKerusakanController {
       res.status(500).json({ msg: "ERROR: " + error });
     }
   };
-
-  updateDetailKerusakan = async (req, res) => {};
 
   deleteDetailKerusakan = async (req, res) => {
     try {

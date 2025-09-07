@@ -627,12 +627,30 @@ class BarangController {
 
   deleteDetailBarang = async (req, res) => {
     try {
-      const barang = await BarangUnitModel.findByPk(req.params.id);
+      let idBarang;
+      const barang = await BarangUnitModel.findByPk(req.params.id, {
+        include: { model: Barang },
+      });
+
       if (!barang) {
         return res.status(404).json({ msg: "Data barang tidak ditemukan!" });
       }
+      idBarang = barang.barang.id;
 
       await BarangUnitModel.destroy({ where: { id: barang.id } });
+
+      await Barang.update(
+        {
+          qty: await BarangUnitModel.count({
+            where: {
+              status_penghapusan: {
+                [Op.or]: ["null", "diusul", "ditolak"],
+              },
+            },
+          }),
+        },
+        { where: { id: idBarang } }
+      );
 
       res.status(200).json({ msg: "Berhasil menghapus data unit barang." });
     } catch (error) {

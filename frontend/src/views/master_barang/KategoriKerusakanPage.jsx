@@ -14,6 +14,8 @@ const KategoriKerusakanPage = () => {
   // variabel
   const url = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
+  const [kategoriEditId, setKategoriEditId] = useState(null);
+  const handleCloseEditKategori = () => setKategoriEditId(null);
   const [kategoriRusakId, setKategoriRusakId] = useState(null);
   const handleCloseTambahDetail = () => setKategoriRusakId(null);
   const [detailRusakId, setDetailRusakId] = useState(null);
@@ -37,6 +39,7 @@ const KategoriKerusakanPage = () => {
   const handleShow = () => setShow(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [jenis, setJenis] = useState("");
+  const [jenisUpdate, setJenisUpdate] = useState("");
   const [inputDetailKerusakan, setInputDetailKerusakan] = useState({
     desc: "",
     pengurang: "",
@@ -66,6 +69,29 @@ const KategoriKerusakanPage = () => {
       setTimeout(() => {
         setAlertShow(false);
       }, 3000);
+    }
+  };
+
+  const updateKategoriKerusakan = async () => {
+    try {
+      const response = await axios.patch(
+        `${url}/kategori_kerusakan/update/${kategoriEditId}`,
+        { jenis: jenisUpdate }
+      );
+
+      if (response.status === 200) {
+        alert(response.data.msg);
+        dispatch(getKategoriKerusakan(inputQuery));
+        setInputQuery({ ...inputQuery, page: 0 });
+        handleCloseEditKategori();
+      }
+    } catch (error) {
+      if (error.response) {
+        alert(error.response.data.msg);
+        console.error(error);
+      } else {
+        console.error(error);
+      }
     }
   };
 
@@ -200,6 +226,21 @@ const KategoriKerusakanPage = () => {
           btnTitle="Hapus"
         />
       )}
+      {kategoriEditId && (
+        <ModalEditComponent
+          handleCloseEdit={handleCloseEditKategori}
+          modalTitle="Konfirmasi"
+          submit={updateKategoriKerusakan}
+          body={
+            <InputComponents
+              placeHolder="Jenis Kerusakan"
+              val={jenisUpdate || ""}
+              change={(e) => setJenisUpdate(e.target.value)}
+              classStyle="w-100 p-2"
+            />
+          }
+        />
+      )}
       <AlertNotify
         alertMsg="Berhasil menambah data kategori"
         showAlert={alertShow}
@@ -313,12 +354,8 @@ const KategoriKerusakanPage = () => {
                           <button
                             className="btn btn-primary"
                             onClick={() => {
-                              setKategoriId(item.id);
-                              setInputKategoriEdit({
-                                name: item.name,
-                                desc: item.desc,
-                                masa_ekonomis: item.masa_ekonomis,
-                              });
+                              setKategoriEditId(item.id);
+                              setJenisUpdate(item.jenis);
                             }}
                           >
                             {<BsPencilSquare />}
