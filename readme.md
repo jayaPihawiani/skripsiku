@@ -19,6 +19,7 @@ Aplikasi ini dibangun menggunakan
 ### Cara menjalankan
 
 - Buka terminal (`CMD`) atau (`GitBash`)
+  - ![alt text](image.png)
 - Masuk ke `directory root` tempat folder backend
   - Contoh `C:\backend\`
   - Ketik `nodemon index` untuk menjalankan server
