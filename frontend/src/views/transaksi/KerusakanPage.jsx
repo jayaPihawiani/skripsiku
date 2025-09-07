@@ -1,11 +1,14 @@
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import { formatTahunBulan } from "../../components/kriteriaPengurangEstimasi";
+import LaporanKerusakan, {
+  PDFButton,
+} from "../../components/Laporan/Lap_Kerusakan";
 import ModalComponent from "../../components/ModalComponent";
 import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
@@ -61,6 +64,8 @@ const KerusakanPage = () => {
     setInputKerusakan({ desc: "", barangUnitId: "" });
   };
   const handleShow = () => setShow(true);
+
+  // if (!logo) return <p>Loading logo...</p>;
 
   // FUNCTION
 
@@ -183,6 +188,10 @@ const KerusakanPage = () => {
   useEffect(() => {
     dispatch(getAllKategoriKerusakan());
   }, [dispatch]);
+
+  const pdfDocument = useMemo(() => {
+    return <LaporanKerusakan data={dataBrgRusak && dataBrgRusak.result} />;
+  }, [dataBrgRusak.result]);
 
   // MAIN
   return (
@@ -376,10 +385,9 @@ const KerusakanPage = () => {
             }
           />
         )}
-
-        <button className="btn btn-primary ms-1 mt-3" onClick={printLaporan}>
-          {loading ? "Loading..." : "Cetak Laporan Kerusakan"}
-        </button>
+        {dataBrgRusak.result && dataBrgRusak.result.length > 0 ? (
+          <PDFButton document={pdfDocument} />
+        ) : null}
       </div>
 
       <div className="card me-4 mt-2 mb-4 shadow-lg">

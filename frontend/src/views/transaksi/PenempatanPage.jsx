@@ -1,10 +1,13 @@
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
+import LaporanPenempatan, {
+  PDFButton,
+} from "../../components/Laporan/Penempatan";
 import ModalComponent from "../../components/ModalComponent";
 import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
@@ -143,6 +146,10 @@ const Penempatan = () => {
       setBrgPindah(barangPindah.data);
     }
   }, [barangPindah.data, barangPindah.isSuccess]);
+
+  const pdfDocument = useMemo(() => {
+    return <LaporanPenempatan data={brgPindah && brgPindah.pindah} />;
+  }, [brgPindah.pindah]);
 
   // MAIN
   return (
@@ -283,9 +290,9 @@ const Penempatan = () => {
                 </>
               }
             />
-            <button className="btn btn-primary ms-1">
-              Cetak Laporan Pemindahan
-            </button>
+            {brgPindah.pindah && brgPindah.pindah.length > 0 ? (
+              <PDFButton document={brgPindah && pdfDocument} />
+            ) : null}
           </div>
         )}
       </div>

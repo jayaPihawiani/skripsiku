@@ -1,11 +1,12 @@
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
 import { kondisiBarang } from "../../components/kriteriaPengurangEstimasi";
+import LaporanBarang, { PDFButton } from "../../components/Laporan/Barang";
 import ModalComponent from "../../components/ModalComponent";
 import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
@@ -28,6 +29,8 @@ const Barang = () => {
   const [ubahBrgId, setUbahBrgId] = useState(null);
   const handleCloseEdit = () => setUbahBrgId(null);
   const barang = useSelector((state) => state.barang?.barang);
+  const data_barang =
+    useSelector((state) => state.barang.barang.data?.barang) || [];
   const user = useSelector((state) => state.auth);
   const allLokasi =
     useSelector((state) => state.detail_barang.all_lokasi?.lokasi) || [];
@@ -185,28 +188,6 @@ const Barang = () => {
     }
   };
 
-  // print laporan
-  const printLaporan = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${url}/print/barang`, {
-        responseType: "blob",
-      });
-
-      const file = new Blob([response.data], { type: "application/pdf" });
-      const fileUrl = URL.createObjectURL(file);
-      window.open(fileUrl);
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      } else {
-        console.error(error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // PAGE CHANGE REACT PAGINATION
   const handlePageClick = ({ selected }) => {
     setInputQuery({ ...inputQuery, page: selected });
@@ -226,6 +207,10 @@ const Barang = () => {
       setNewBarang(barang.data);
     }
   }, [barang.data]);
+
+  const pdfDocument = useMemo(() => {
+    return <LaporanBarang data={data_barang} />;
+  }, [data_barang]);
 
   // MAIN
 
@@ -445,9 +430,12 @@ const Barang = () => {
             />
           </div>
         )}
-        <button className="btn btn-primary ms-1 mt-3" onClick={printLaporan}>
-          Cetak Laporan
-        </button>
+        {data_barang && data_barang.length > 0 ? (
+          <PDFButton
+            data={data_barang && data_barang}
+            document={data_barang && pdfDocument}
+          />
+        ) : null}
       </div>
       <div className="card shadow-lg mb-4 mt-2 w-100">
         <div className="d-flex justify-content-between">

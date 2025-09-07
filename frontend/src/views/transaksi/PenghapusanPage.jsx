@@ -1,10 +1,13 @@
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { BsPencilSquare, BsTrash3 } from "react-icons/bs";
 import ReactPaginate from "react-paginate";
 import { useDispatch, useSelector } from "react-redux";
 import AlertNotify from "../../components/Alert";
 import InputComponents from "../../components/InputComponents";
+import LaporanPenghapusan, {
+  PDFButton,
+} from "../../components/Laporan/Penghapusan";
 import ModalEditComponent from "../../components/ModalEditComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
 import { formatTahunBulan } from "../../components/kriteriaPengurangEstimasi";
@@ -138,27 +141,11 @@ const PenghapusanPage = () => {
     }
   };
 
-  // print laporan
-  const printLaporan = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`${url}/print/hapus`, {
-        responseType: "blob",
-      });
-
-      const file = new Blob([response.data], { type: "application/pdf" });
-      const fileUrl = URL.createObjectURL(file);
-      window.open(fileUrl);
-    } catch (error) {
-      if (error.response) {
-        alert(error.response.data.msg);
-      } else {
-        console.error(error);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const pdfDocument = useMemo(() => {
+    return (
+      <LaporanPenghapusan data={dataPenghapusan && dataPenghapusan.result} />
+    );
+  }, [dataPenghapusan.result]);
 
   // search
   const handleSearch = (e) => {
@@ -270,10 +257,9 @@ const PenghapusanPage = () => {
         variantAlert={"success"}
       />
       <h4>DATA INVENTARIS MASUK DAFTAR PENGHAPUSAN</h4>
-
-      <button className="btn btn-primary mt-3 ms-1" onClick={printLaporan}>
-        {isLoading ? "Loading..." : " Cetak Laporan Penghapusan"}
-      </button>
+      {dataPenghapusan.result && dataPenghapusan.result.length > 0 ? (
+        <PDFButton document={pdfDocument} />
+      ) : null}
 
       <div className="card me-4 mt-2 mb-4 shadow-lg">
         <div className="d-flex justify-content-between">
